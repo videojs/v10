@@ -2,10 +2,10 @@ import { resolve } from 'node:path';
 
 import { defineConfig, devices } from '@playwright/test';
 
-import { suiteConfig } from '../../shared/playwright.ts';
+import { suiteConfig, WEB_SERVER_SHUTDOWN } from '../../shared/playwright.ts';
 
-/** CI shards the suite per preset; one value restricts the run to that preset's spec. */
-const preset = process.env.VJSC_SKIN_PRESET;
+/** CI shards the suite by preset; a comma-separated list restricts the run to those presets' specs. */
+const presets = process.env.VJSC_SKIN_PRESET?.split(',').filter(Boolean) ?? [];
 /** The video preset carries twice the cases of the others, so CI splits it further as `current/total`. */
 const shard = /^(\d+)\/(\d+)$/.exec(process.env.VJSC_SKIN_SHARD ?? '');
 
@@ -17,7 +17,7 @@ const shard = /^(\d+)\/(\d+)$/.exec(process.env.VJSC_SKIN_SHARD ?? '');
 export default defineConfig({
   ...suiteConfig('skin-parity'),
   testDir: resolve(import.meta.dirname, 'tests'),
-  testMatch: preset ? `**/vjsc-${preset}-skin-styling.spec.ts` : '**/*.spec.ts',
+  testMatch: presets.length > 0 ? presets.map((preset) => `**/vjsc-${preset}-skin-styling.spec.ts`) : '**/*.spec.ts',
   shard: shard ? { current: Number(shard[1]), total: Number(shard[2]) } : null,
   // The warm-up compiles every skin and the Tailwind entry before the first case, so workers never race cold transforms.
   globalSetup: resolve(import.meta.dirname, 'setup/global.ts'),
@@ -26,7 +26,13 @@ export default defineConfig({
     {
       name: 'vjsc-chromium',
       // Both stacked panels must fit without scrolling: a capture that scrolls moves the pointer off hovered controls.
-      use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:5190', viewport: { width: 1280, height: 1600 } },
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: 'http://localhost:5190',
+        viewport: { width: 1280, height: 1600 },
+        // Linux can rasterize identical text with LCD or grayscale smoothing in different composited panels.
+        launchOptions: { args: ['--disable-lcd-text'] },
+      },
     },
   ],
   // The sandbox hosts the comparison: its compare mode renders the two variants in two frames of the same template.
@@ -36,5 +42,6 @@ export default defineConfig({
     port: 5190,
     reuseExistingServer: !process.env.CI,
     timeout: 300_000,
+    gracefulShutdown: WEB_SERVER_SHUTDOWN,
   },
 });

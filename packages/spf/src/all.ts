@@ -22,6 +22,7 @@ export type {
   HlsJsonChapters,
 } from './media/hls/parse-json-chapters';
 export { APPLE_HLS_CHAPTERS_DATA_ID, parseHlsJsonChapters } from './media/hls/parse-json-chapters';
+export { findSessionDataUri } from './media/hls/session-data';
 export { parseMediaPlaylist } from './media/hls/parse-media-playlist';
 export { parseMultivariantPlaylist } from './media/hls/parse-multivariant';
 export { resolveUrl } from './media/hls/resolve-url';
@@ -31,14 +32,9 @@ export { resolveUrl } from './media/hls/resolve-url';
 // =============================================================================
 
 export type { QualityConfig } from './media/abr/quality-selection';
-export { DEFAULT_QUALITY_CONFIG, selectQuality } from './media/abr/quality-selection';
+export { DEFAULT_QUALITY_CONFIG } from './media/abr/quality-selection';
 export type { BandwidthConfig, BandwidthState } from './network/bandwidth-estimator';
-export {
-  DEFAULT_BANDWIDTH_CONFIG,
-  getBandwidthEstimate,
-  hasGoodEstimate,
-  sampleBandwidth,
-} from './network/bandwidth-estimator';
+export { DEFAULT_BANDWIDTH_CONFIG, getBandwidthEstimate, sampleBandwidth } from './network/bandwidth-estimator';
 
 // =============================================================================
 // Buffer Management (P8, P9)
@@ -95,7 +91,7 @@ export {
 } from './media/dom/mse/mediasource-setup';
 export type { AddChaptersTracksOptions } from './media/dom/text/chapters-tracks';
 export { addChaptersTracksToMedia, removeAllChaptersTracksFromMedia } from './media/dom/text/chapters-tracks';
-export type { ResponseLike } from './network/fetch';
+export { loadChaptersTracks } from './media/dom/text/load-chapters-tracks';
 export { fetchResolvable, getResponseText } from './network/fetch';
 
 // =============================================================================
@@ -115,8 +111,10 @@ export { syncPreload } from './playback/behaviors/sync-preload';
 // =============================================================================
 
 export type {
+  SwitchAudioTrackConfig,
   SwitchTextTrackConfig,
   SwitchVideoTrackConfig,
+  TrackSwitchingSharedConfig,
   TrackSwitchingState,
 } from './playback/behaviors/track-switching';
 export {

@@ -43,6 +43,8 @@ export async function createHtmlPackageSkins(
       await bundleStyles(graph, skin.modules, {
         label: name,
         files: options.baseStyles ?? [`./styles/${skinBaseStylesheet(skin.preset, skin.theme)}`],
+        // Packaged skins reach browsers without `@scope`; the registry keeps it.
+        flattenScopes: true,
       })
     );
   }
@@ -190,7 +192,7 @@ export function createSourceOwnedHtml(template: string): string {
   if (!mediaSlot.test(template)) throw new Error('Rendered HTML Skin has no default media slot.');
 
   return template
-    .replace(mediaSlot, '<!-- Add a compatible media element here. -->')
+    .replace(mediaSlot, '<!-- Add a compatible media component here. -->')
     .replace(/<slot name="[^"]+">\s*([\s\S]*?)\s*<\/slot>/g, '$1')
     .replaceAll('&amp;', '&')
     .replaceAll('&gt;', '>')

@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
-import { buildMimeCodec } from '../../../../media/dom/mse/mediasource-setup';
 import type { AudioTrack, MaybeResolvedPresentation, Presentation, VideoTrack } from '../../../../media/types';
 import type { BandwidthState } from '../../../../network/bandwidth-estimator';
 import type { SegmentLoaderActor } from '../../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../../actors/dom/source-buffer';
+import { makeSourceBuffer } from '../../../actors/dom/tests/segment-loader-fixtures';
 import {
   type BufferActorsContext,
   type BufferActorsState,
@@ -14,8 +14,7 @@ import {
   setupVideoBufferActors,
 } from '../setup-buffer-actors';
 
-// Mock `createSourceBuffer`; keep the real `buildMimeCodec` so its tests
-// exercise the actual implementation.
+// Mock `createSourceBuffer`; everything else in the module stays real.
 vi.mock('../../../../media/dom/mse/mediasource-setup', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../../media/dom/mse/mediasource-setup')>();
 
@@ -142,35 +141,6 @@ function createPresentationWithTracks(tracks: { video?: VideoTrack; audio?: Audi
   };
 }
 
-describe('buildMimeCodec', () => {
-  it('constructs MIME codec string with single codec', () => {
-    const track = createResolvedVideoTrack();
-    const result = buildMimeCodec(track);
-
-    expect(result).toBe('video/mp4; codecs="avc1.42E01E"');
-  });
-
-  it('constructs MIME codec string with multiple codecs', () => {
-    const track: VideoTrack = {
-      ...createResolvedVideoTrack(),
-      codecs: ['avc1.42E01E', 'mp4a.40.2'],
-    };
-    const result = buildMimeCodec(track);
-
-    expect(result).toBe('video/mp4; codecs="avc1.42E01E,mp4a.40.2"');
-  });
-
-  it('handles empty codecs array', () => {
-    const track: VideoTrack = {
-      ...createResolvedVideoTrack(),
-      codecs: [],
-    };
-    const result = buildMimeCodec(track);
-
-    expect(result).toBe('video/mp4; codecs=""');
-  });
-});
-
 function makeState(initial: BufferActorsState = {}): StateSignals<BufferActorsState> {
   return {
     presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
@@ -223,6 +193,56 @@ function setupSetupBufferActors(initialState: BufferActorsState = {}, initialCon
 describe('setupVideoBufferActors + setupAudioBufferActors', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('accounts for completed init and media through the production tracked fetch', async () => {
+    const { createSourceBuffer } = await import('../../../../media/dom/mse/mediasource-setup');
+    const { createSegmentLoaderActor } = await import('../../../actors/dom/segment-loader');
+    const actual = await vi.importActual<typeof import('../../../actors/dom/segment-loader')>(
+      '../../../actors/dom/segment-loader'
+    );
+    const sourceBuffer = makeSourceBuffer();
+
+    vi.mocked(createSourceBuffer).mockReturnValueOnce(sourceBuffer);
+    vi.mocked(createSegmentLoaderActor).mockImplementationOnce(actual.createSegmentLoaderActor);
+    const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      return new Response(
+        new ReadableStream<Uint8Array>({
+          start(controller) {
+            for (let i = 0; i < 3; i++) controller.enqueue(new Uint8Array(50_000));
+
+            controller.close();
+          },
+        })
+      );
+    });
+    const track = createResolvedVideoTrack();
+    const { state, context, cleanup } = setupSetupBufferActors(
+      { presentation: createPresentationWithTracks({ video: track }), selectedVideoTrackId: track.id },
+      { mediaSource: makeMediaSource() }
+    );
+
+    try {
+      await vi.waitFor(() => expect(context.videoSegmentLoaderActor.get()).toBeDefined());
+      const loader = context.videoSegmentLoaderActor.get()!;
+      const buffer = context.videoBufferActor.get()!;
+
+      loader.send({ type: 'load', track, range: { start: 0, end: 30 } });
+
+      await vi.waitFor(() => {
+        expect(buffer.snapshot.get().context.initTrackId).toBe('video-1');
+        expect(buffer.snapshot.get().context.segments.map(({ id, partial }) => ({ id, partial }))).toEqual([
+          { id: 'seg-1', partial: undefined },
+        ]);
+        expect(buffer.snapshot.get().value).toBe('idle');
+        expect(loader.snapshot.get().value).toBe('idle');
+      });
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(state.bandwidthState.get()?.bytesSampled).toBe(300_000);
+    } finally {
+      cleanup();
+      fetch.mockRestore();
+    }
   });
 
   it('creates video buffer + loader actors for video-only source', async () => {
@@ -474,11 +494,20 @@ describe('setupVideoBufferActors + setupAudioBufferActors', () => {
 
     expect(createSegmentLoaderActor).toHaveBeenCalledTimes(1);
 
+    const bufferActor = context.videoBufferActor.get()!;
+    let bufferStateAtLoaderDestroy: string | undefined;
+
+    loaderDestroy.mockImplementation(() => {
+      bufferStateAtLoaderDestroy = bufferActor.snapshot.get().value;
+    });
+
     // Detach mediaSource → state machine transitions to 'preconditions-unmet'
     context.mediaSource.set(undefined);
 
     await vi.waitFor(() => {
       expect(loaderDestroy).toHaveBeenCalled();
+      expect(bufferStateAtLoaderDestroy).toBe('idle');
+      expect(bufferActor.snapshot.get().value).toBe('destroyed');
       expect(context.videoBufferActor.get()).toBeUndefined();
       expect(context.videoSegmentLoaderActor.get()).toBeUndefined();
     });

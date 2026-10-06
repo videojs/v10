@@ -13,6 +13,7 @@ describe('formatTime', () => {
   it('formats minutes and seconds', () => {
     expect(formatTime(60)).toBe('1:00');
     expect(formatTime(90)).toBe('1:30');
+    expect(formatTime(90, undefined, { locale: 'en' })).toBe('1:30');
     expect(formatTime(125)).toBe('2:05');
     expect(formatTime(599)).toBe('9:59');
     expect(formatTime(600)).toBe('10:00');
@@ -53,12 +54,6 @@ describe('formatTime', () => {
     expect(formatTime(NaN)).toBe('0:00');
     expect(formatTime(Infinity)).toBe('0:00');
     expect(formatTime(-Infinity)).toBe('0:00');
-  });
-
-  it('defaults to English digital formatting', () => {
-    const english = formatTime(90, undefined, { locale: 'en' });
-
-    expect(formatTime(90)).toBe(english);
   });
 
   it('uses locale digits', () => {
@@ -111,6 +106,19 @@ describe('formatTimeAsPhrase', () => {
   it('supports short and narrow unit styles', () => {
     expect(formatTimeAsPhrase(125, { locale: 'en', style: 'short' })).toBe('2 min, 5 sec');
     expect(formatTimeAsPhrase(125, { locale: 'en', style: 'narrow' })).toBe('2m 5s');
+  });
+
+  it('joins units without `Intl.ListFormat`', () => {
+    const listFormat = Intl.ListFormat;
+
+    Object.defineProperty(Intl, 'ListFormat', { value: undefined, configurable: true, writable: true });
+
+    try {
+      expect(formatTimeAsPhrase(125, { locale: 'en-GB' })).toBe('2 minutes, 5 seconds');
+      expect(formatTimeAsPhrase(125, { locale: 'en-GB', style: 'narrow' })).toBe('2m 5s');
+    } finally {
+      Object.defineProperty(Intl, 'ListFormat', { value: listFormat, configurable: true, writable: true });
+    }
   });
 
   it('handles invalid values', () => {

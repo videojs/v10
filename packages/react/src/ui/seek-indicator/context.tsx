@@ -1,8 +1,10 @@
-import type { SeekIndicatorCore } from '@videojs/core';
+'use client';
+
+import type { SeekIndicatorState } from '@videojs/core';
 import { createContext, type ProviderProps, useContext } from 'react';
 
 export interface SeekIndicatorContextValue {
-  state: SeekIndicatorCore.State;
+  state: SeekIndicatorState;
 }
 
 const SeekIndicatorContext = createContext<SeekIndicatorContextValue | null>(null);

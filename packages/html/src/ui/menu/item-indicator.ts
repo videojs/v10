@@ -3,6 +3,10 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import { UIElement } from '../ui-element';
 
+/**
+ * Decorative checked-state mark inside a menu item, hidden from assistive technology. It stays `hidden` unless
+ * `checked` or `force-mount` is set; option radio groups set `checked` on the indicators in the items they generate.
+ */
 export class MenuItemIndicatorElement extends UIElement {
   static readonly tagName = 'media-menu-item-indicator';
 

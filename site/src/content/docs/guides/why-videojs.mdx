@@ -19,7 +19,7 @@ Let's dig into when you'd want to use Video.js, starting with the question we he
 
 ## Why not `<video>`?
 
-The native `<video>` tag is great if you can describe your video as an image with a play button. Past that, the gaps show up quickly.
+The native `<video>` tag is enough for a short clip that plays without controls. Once viewers control playback, the gaps show up quickly.
 
 ### Cross-browser inconsistency
 
@@ -57,6 +57,20 @@ Chrome, Safari, and Firefox each render the default `<video>` controls different
     <figcaption class="mt-2 text-center">Firefox</figcaption>
   </figure>
 </ContentWidth>
+
+### Accessibility
+
+The browser's controls bring their own accessibility behavior, and it differs by browser. Once you replace them, accessibility is your job: ARIA roles and labels that follow player state, keyboard controls and shortcuts, focus management, screen reader announcements when playback changes, controls that work with touch, tooltips and menus that stay on screen, and respect for reduced-motion and contrast preferences. Video.js components and skins handle these by default, following the WAI-ARIA Authoring Practices.
+
+<DocsLinkCard slug="guides/accessibility">Learn more about accessibility</DocsLinkCard>
+
+### Player state
+
+Custom controls need to know what the media is doing. Even something as simple as "playing" or "buffering" comes from several events, behaves differently across browsers, streaming engines, and services like YouTube, and has to reset when the source changes. Wiring that by hand is fragile, and in React it quickly leads to tangled effects and extra renders.
+
+Video.js keeps playback state in one player store that every component reads. Components reflect state as data attributes such as `data-paused`, so your CSS follows the player without extra code, and controls a browser can't support, such as picture-in-picture, hide themselves. In React, `usePlayer` with a selector re-renders a component only when the state it selects changes.
+
+<DocsLinkCard slug="guides/architecture">Learn more about the architecture</DocsLinkCard>
 
 ### Video interactions
 
@@ -150,13 +164,13 @@ The player feels like the rest of your app.
   </TabsPanel>
 </TabsRoot>
 
-### Eject and own
+### Source you can change
 
-Most player libraries draw a line between "configurable through props" and "fork the source." Cross the line and you're on your own. Video.js lets you eject any skin and walk away with the source: components in your framework's language that you can read and change. The skin you ship is yours; the rest of the player keeps working underneath it.
+Most player libraries draw a line between "configurable through props" and "fork the source." Cross the line and you're on your own. Video.js lets you add the files for any skin to your project: components in your framework's language that you can read and change. The rest of the player keeps working underneath it.
 
-We don't want to cram every possible player into one configuration API. Packaged skins cover common visual changes. For everything else, eject early and compose the UI you need.
+We don't want to cram every possible player into one configuration API. Packaged skins cover common visual changes. For everything else, add the skin source to your project and compose the UI you need.
 
-<DocsLinkCard slug="guides/customize-skins" anchor="eject-and-edit-a-skin">Customize skins</DocsLinkCard>
+<DocsLinkCard slug="guides/customize-skins" anchor="style-skin-source">Customize skins</DocsLinkCard>
 
 ### AI-native DX
 

@@ -1,3 +1,5 @@
+'use client';
+
 import { MenuContentDataAttrs, type MenuState } from '@videojs/core';
 import { isMenuNavigationKey } from '@videojs/core/dom';
 import { forwardRef, useCallback, useLayoutEffect, useRef } from 'react';
@@ -31,7 +33,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     wasActiveRef.current = isActive;
 
     if (isActive && !wasActive) {
-      const frame = requestAnimationFrame(() => menu.highlightFirstItem({ preventScroll: true }));
+      const frame = requestAnimationFrame(() => menu.highlightInitialItem({ preventScroll: true }));
 
       return () => cancelAnimationFrame(frame);
     }

@@ -1,8 +1,18 @@
-import clsx from 'clsx';
+import {
+  DEFAULT_REGISTRY_PRESET,
+  defaultInstallationTemplate,
+  installationProjectFiles,
+  type RegistryFramework,
+  registrySkinSelection,
+  resolveInstallationTemplate,
+  resolveRegistryStyling,
+  shadcnProjectConfiguration,
+  shadcnProjectSetup,
+} from '@videojs/installation';
 
+import { useRegistryFramework, useRegistryStyling } from '@/components/installation/useRegistryFramework';
 import { useSelection } from '@/components/installation/useSelection';
-import { shared } from '@/components/typography/styles';
-import { type RegistryFramework, registrySkinSelection } from '@/utils/installation/shadcn';
+import { withSelectionMarker } from '@/components/installation/withSelectionMarker';
 
 import RegistryCommandClient from './RegistryCommandClient';
 
@@ -10,29 +20,38 @@ interface Props {
   framework: RegistryFramework;
 }
 
-/** The source-install command for the skin the installation page's pickers chose. */
-export default function InstallationRegistryCommandClient({ framework }: Props) {
+/** The registry command for the skin the installation page's pickers chose. */
+function InstallationRegistryCommandClient({ framework }: Props) {
   const $useCase = useSelection('useCase');
   const $skin = useSelection('skin');
-  const $installMethod = useSelection('installMethod');
+  const selectedFramework = useRegistryFramework(framework);
+  const $template = useSelection('template', defaultInstallationTemplate(selectedFramework));
+  const template = resolveInstallationTemplate(selectedFramework, $template);
+  const styling = resolveRegistryStyling(framework, useRegistryStyling());
+  const projectFiles = installationProjectFiles(selectedFramework, template);
+  const configuration = shadcnProjectConfiguration(selectedFramework, template, styling, projectFiles.componentsAlias);
   const selection = registrySkinSelection({ useCase: $useCase, skin: $skin });
+  const command = (optionalInit: boolean) => (
+    <RegistryCommandClient
+      defaultSkin={selection?.item ?? DEFAULT_REGISTRY_PRESET}
+      framework={framework}
+      items={[]}
+      optionalInit={optionalInit}
+      theme={selection?.theme ?? 'default'}
+    />
+  );
 
-  if (!selection) {
+  // Without a separate configuration step, the registry commands carry the optional init for an existing project.
+  if (shadcnProjectSetup(configuration, 'existing') === 'init') {
     return (
-      <p className={clsx(shared.p, shared.prose)}>
-        {$useCase === 'background-video'
-          ? 'The background video skin cannot be ejected.'
-          : 'Select the Default or Minimal skin above to copy its source.'}
-      </p>
+      <>
+        <div data-installation-project-content="new">{command(false)}</div>
+        <div data-installation-project-content="existing">{command(true)}</div>
+      </>
     );
   }
 
-  return (
-    <RegistryCommandClient
-      framework={framework}
-      items={[selection.item]}
-      runner={$installMethod === 'cdn' ? 'npm' : $installMethod}
-      theme={selection.theme}
-    />
-  );
+  return command(false);
 }
+
+export default withSelectionMarker(InstallationRegistryCommandClient);

@@ -1,13 +1,83 @@
 ---
 title: Translation phrases
 description: Semantic i18n keys, their English defaults, and the player UI that uses them
+apis:
+  - '@videojs/react/i18n/text/airplay'
+  - '@videojs/react/i18n/text/buttons'
+  - '@videojs/react/i18n/text/captions'
+  - '@videojs/react/i18n/text/cast'
+  - '@videojs/react/i18n/text/common'
+  - '@videojs/react/i18n/text/container'
+  - '@videojs/react/i18n/text/errors'
+  - '@videojs/react/i18n/text/fullscreen'
+  - '@videojs/react/i18n/text/live'
+  - '@videojs/react/i18n/text/menu'
+  - '@videojs/react/i18n/text/pip'
+  - '@videojs/react/i18n/text/playback'
+  - '@videojs/react/i18n/text/seek'
+  - '@videojs/react/i18n/text/slider'
+  - '@videojs/react/i18n/text/status'
+  - '@videojs/react/i18n/text/time'
+  - '@videojs/react/i18n/text/volume'
+  - '@videojs/html/i18n/text/airplay'
+  - '@videojs/html/i18n/text/buttons'
+  - '@videojs/html/i18n/text/captions'
+  - '@videojs/html/i18n/text/cast'
+  - '@videojs/html/i18n/text/common'
+  - '@videojs/html/i18n/text/container'
+  - '@videojs/html/i18n/text/errors'
+  - '@videojs/html/i18n/text/fullscreen'
+  - '@videojs/html/i18n/text/live'
+  - '@videojs/html/i18n/text/menu'
+  - '@videojs/html/i18n/text/pip'
+  - '@videojs/html/i18n/text/playback'
+  - '@videojs/html/i18n/text/seek'
+  - '@videojs/html/i18n/text/slider'
+  - '@videojs/html/i18n/text/status'
+  - '@videojs/html/i18n/text/time'
+  - '@videojs/html/i18n/text/volume'
 ---
 
 import DocsLink from '@/components/docs/DocsLink.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 
 Video.js uses opaque semantic keys so English copy can change without breaking translation packs. English defaults are defined in `packages/core/src/core/i18n/locales/en.ts`. Both HTML and React controls use the same keys.
 
-Locale packs and provider overrides use nested objects, so `buttons.play` is authored as `{ buttons: { play: '…' } }`. The dotted form is used by translators and the HTML `<media-text token>` attribute.
+<FrameworkCase frameworks={["react"]}>
+Locale packs and provider overrides use nested objects, so `buttons.play` is authored as `{ buttons: { play: '…' } }`. Translators use the dotted form.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Locale packs and provider overrides use nested objects, so `buttons.play` is authored as `{ buttons: { play: '…' } }`. Translators and the `<media-text token>` attribute use the dotted form.
+</FrameworkCase>
+
+## Text descriptors
+
+Each key also ships as a text descriptor: an object with the `key` and its English default `text`. Descriptors are grouped by the key's first segment and named after the rest, so `buttons.play` is `playText` in the `buttons` module and `container.label` is `labelText` in `container`. Pass one to a translator, or to <DocsLink slug="reference/api/translate-text">`translateText`</DocsLink>, to get the active locale's copy with English as the fallback.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { useTranslator } from '@videojs/react/i18n';
+import { playText } from '@videojs/react/i18n/text/buttons';
+
+function PlayLabel() {
+  const t = useTranslator();
+
+  return <span>{t(playText)}</span>;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+import { createTranslator, getI18nTranslations } from '@videojs/html/i18n';
+import { playText } from '@videojs/html/i18n/text/buttons';
+
+const t = createTranslator(getI18nTranslations('fr'), 'fr');
+
+t(playText); // 'Lecture' once French is registered, else 'Play'
+```
+</FrameworkCase>
 
 ## Playback controls
 
@@ -34,6 +104,7 @@ Locale packs and provider overrides use nested objects, so `buttons.play` is aut
 | `cast.connecting` | Connecting | Cast button |
 | `airplay.start` | Start AirPlay | AirPlay button |
 | `airplay.stop` | Stop AirPlay | AirPlay button |
+| `container.label` | Media player | Player container aria label |
 
 ## Time and volume
 
@@ -52,6 +123,7 @@ Locale packs and provider overrides use nested objects, so `buttons.play` is aut
 | `time.toggleElapsed` | `Toggle between elapsed and remaining time.` | Elapsed-time toggle aria description |
 | `time.toggleDuration` | `Toggle between duration and remaining time.` | Duration toggle aria description |
 | `time.position` | `{current} of {duration}` | Time slider value text |
+| `time.unknown` | Media not loaded, unknown time. | Time display aria label and time slider value text before a duration is known |
 | `playback.rate` | Playback rate `{rate}` | Playback-rate button and radio group |
 | `volume.mutedValue` | `{percent}, muted` | Muted volume slider value text |
 | `volume.muted` | Muted | Volume input feedback |
@@ -69,6 +141,7 @@ Locale packs and provider overrides use nested objects, so `buttons.play` is aut
 | `status.fullscreen` | Fullscreen | Input feedback after entering fullscreen |
 | `status.pip` | Picture in picture | Input feedback after entering picture-in-picture |
 | `status.exitPip` | Exit picture in picture | Input feedback after exiting picture-in-picture |
+| `status.seekedTo` | Seeked to `{time}` | Status announcer after a seek |
 
 ## Errors
 
@@ -79,6 +152,7 @@ Locale packs and provider overrides use nested objects, so `buttons.play` is aut
 | `errors.decode` | This media could not be played. It may be corrupted, or your browser may not support its format. | Media error dialog for `MEDIA_ERR_DECODE` |
 | `errors.source` | This media could not be loaded. It may be unavailable, or your browser may not support its format. | Media error dialog for `MEDIA_ERR_SRC_NOT_SUPPORTED` |
 | `errors.encrypted` | This media could not be played because it could not be decrypted. | Media error dialog for `MEDIA_ERR_ENCRYPTED` |
+| `errors.unplayable` | This media is unsupported by the player. | Media error dialog when the player cannot play a source the browser supports |
 | `errors.title` | Something went wrong. | Generic media error dialog title |
 | `errors.unexpected` | An unexpected error occurred. | Generic media error dialog fallback description |
 | `common.empty` | `''` | Empty description for a custom media error |

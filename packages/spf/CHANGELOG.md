@@ -1,5 +1,92 @@
 # Changelog
 
+## [10.0.1](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0...@videojs/spf@10.0.1) (2026-10-02)
+
+
+### Miscellaneous Chores
+
+* **@videojs/spf:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/media bumped to 10.0.1
+    * @videojs/utils bumped to 10.0.1
+
+## [10.0.0](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-rc.5...@videojs/spf@10.0.0) (2026-10-01)
+
+
+### Features
+
+* **packages:** release Video.js 10.0.0 as stable ([#3058](https://github.com/videojs/v10/issues/3058)) ([37477fc](https://github.com/videojs/v10/commit/37477fc187f36fc2ab3cbc0db7c1b2d3fc6bcca9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/media bumped to 10.0.0
+    * @videojs/utils bumped to 10.0.0
+
+## [10.0.0-rc.5](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-rc.4...@videojs/spf@10.0.0-rc.5) (2026-10-01)
+
+
+### Miscellaneous Chores
+
+* **@videojs/spf:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/media bumped to 10.0.0-rc.5
+    * @videojs/utils bumped to 10.0.0-rc.5
+
+## [10.0.0-rc.4](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-rc.3...@videojs/spf@10.0.0-rc.4) (2026-09-26)
+
+
+### Miscellaneous Chores
+
+* **@videojs/spf:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/media bumped to 10.0.0-rc.4
+    * @videojs/utils bumped to 10.0.0-rc.4
+
+## [10.0.0-rc.3](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-rc.2...@videojs/spf@10.0.0-rc.3) (2026-09-25)
+
+
+### Features
+
+* **spf:** add EME-based DRM support to the HLS engine ([#2291](https://github.com/videojs/v10/issues/2291)) ([fd6785e](https://github.com/videojs/v10/commit/fd6785e00df4ed705ed4c9479fcfdfbaf221f7e1))
+* **spf:** support apple json chapters from ext-x-session-data ([#2737](https://github.com/videojs/v10/issues/2737)) ([f3c2caf](https://github.com/videojs/v10/commit/f3c2caf5abcbe78e7f2d93f6a2603ef4f20741ab))
+
+
+### Bug Fixes
+
+* **packages:** guard Intl.ListFormat and AbortSignal.any ([#2964](https://github.com/videojs/v10/issues/2964)) ([14aceee](https://github.com/videojs/v10/commit/14aceee2c813b65076bcbcf9613467ae3a8fe5de))
+* **site:** improve markdown for agents ([#2883](https://github.com/videojs/v10/issues/2883)) ([d5c8e3c](https://github.com/videojs/v10/commit/d5c8e3cde77cbbe74ecc6878dbd7862db8628bfa))
+
+
+### Performance Improvements
+
+* **site:** faster docs dev server start ([#2698](https://github.com/videojs/v10/issues/2698)) ([33d3887](https://github.com/videojs/v10/commit/33d38873ed5337a5695eaa426a5ebfbea61356d2))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/media bumped to 10.0.0-rc.3
+    * @videojs/utils bumped to 10.0.0-rc.3
+
 ## [10.0.0-rc.2](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-rc.1...@videojs/spf@10.0.0-rc.2) (2026-09-09)
 
 

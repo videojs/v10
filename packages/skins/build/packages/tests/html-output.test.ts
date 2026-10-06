@@ -2,19 +2,23 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 const workspaceDir = resolve(import.meta.dirname, '../../../../..');
 const outputRoot = resolve(workspaceDir, 'packages/html/src/internal/skins');
 const skins = [
+  'compat-video',
+  'compat-audio',
+  'compat-live-video',
+  'compat-live-audio',
   'default-video',
-  'minimal-video',
+  'neutral-video',
   'default-audio',
-  'minimal-audio',
+  'neutral-audio',
   'default-live-video',
-  'minimal-live-video',
+  'neutral-live-video',
   'default-live-audio',
-  'minimal-live-audio',
+  'neutral-live-audio',
 ] as const;
 
 describe('generated HTML package skins', () => {
@@ -37,14 +41,44 @@ describe('generated HTML package skins', () => {
     expect(registeredTags).toEqual(tags);
     expect(registeredIcons).toEqual(iconNames);
     expect(stylesheet.length).toBeGreaterThan(10_000);
+    expect(stylesheet).toContain('.media-container');
 
     if (skin.endsWith('video')) {
-      expect(template).toMatch(/<media-title class="media-title">\s*<\/media-title>/);
       expect(template).not.toContain('media-metadata');
+      expect(template).toMatch(/<media-title class="media-title">\s*<\/media-title>/);
       expect(tags).toContain('title');
       expect(stylesheet).toContain('.media-title:not([data-visible])');
     } else {
       expect(tags).not.toContain('title');
+    }
+
+    if (skin.startsWith('compat-')) {
+      expect(template).toContain('family="compat"');
+      expect(registration).toContain("from '../../../icons/compat';");
+      expect(tags).toEqual(
+        expect.arrayContaining(['play-button', 'mute-button', 'volume-popover', 'volume-slider', 'captions-button'])
+      );
+
+      if (skin !== 'compat-live-audio') expect(tags).toContain('menu');
+    }
+
+    if (skin === 'compat-video' || skin === 'compat-audio') {
+      expect(tags).toContain('time-slider');
+      expect(tags).toContain('time-slider-chapters');
+    }
+
+    if (skin === 'compat-live-video' || skin === 'compat-live-audio') {
+      expect(tags).not.toContain('time-slider');
+      expect(tags).not.toContain('time');
+      expect(tags).not.toContain('quality-radio-group');
+      expect(tags).not.toContain('audio-track-radio-group');
+      expect(tags).not.toContain('playback-rate-radio-group');
+    }
+
+    if (skin === 'compat-live-video') {
+      expect(tags).toContain('captions-radio-group');
+      expect(template.match(/<media-captions-button\b/g)).toHaveLength(1);
+      expect(template).not.toContain('media-settings-button');
     }
 
     for (const tag of registeredTags) {

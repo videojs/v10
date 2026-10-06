@@ -46,6 +46,8 @@ export default function CardRadioGroup<T extends string = string>({
       // SAFETY: every rendered Radio.Root receives an option value of type T, so the group can only report one back.
       onValueChange={(newValue) => onChange(newValue as T)}
       aria-label={ariaLabel}
+      // Every card group on the site is an installation choice.
+      data-ph-capture-attribute-location="installation-options"
       className={twMerge(clsx('grid auto-rows-fr gap-3'), className)}
       style={{ gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, ${minColumnWidth}), 1fr))` }}
     >
@@ -56,17 +58,19 @@ export default function CardRadioGroup<T extends string = string>({
           <Radio.Root
             key={option.value}
             value={option.value}
+            data-card-value={option.value}
             disabled={option.disabled}
             className={clsx(
-              'group relative flex min-w-0 text-left transition duration-150 ease-out select-none',
-              'rounded-xl corner-squircle border bg-surface',
+              'group relative flex min-w-0 text-left select-none',
+              'rounded-xl corner-squircle border bg-surface ring-1 ring-transparent',
+              'transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out',
               layout === 'tile' ? 'flex-col gap-3 p-4' : 'items-center gap-3 p-3',
               'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold',
               option.disabled
                 ? 'cursor-not-allowed opacity-50'
                 : 'cursor-pointer intent:-translate-y-0.5 intent:shadow-md motion-reduce:intent:translate-y-0',
               isSelected
-                ? 'border-accent bg-surface-raised shadow-sm ring-1 ring-accent'
+                ? 'border-accent bg-surface-raised shadow-sm ring-accent'
                 : 'border-line intent:border-line-strong'
             )}
           >
@@ -91,7 +95,7 @@ export default function CardRadioGroup<T extends string = string>({
             <span
               aria-hidden="true"
               className={clsx(
-                'absolute flex size-5 items-center justify-center rounded-full border transition',
+                'absolute flex size-5 items-center justify-center rounded-full border transition-[color,background-color,border-color,opacity,transform] duration-200',
                 layout === 'tile' ? 'top-3 right-3' : 'top-1/2 right-3 -translate-y-1/2',
                 isSelected
                   ? 'scale-100 border-accent bg-accent text-manila-light opacity-100'

@@ -1,3 +1,5 @@
+'use client';
+
 import type { EngineAdapter } from '@videojs/media';
 import type { RefCallback } from 'react';
 import { useCallback, useLayoutEffect, useRef } from 'react';
@@ -12,6 +14,7 @@ import { useCallback, useLayoutEffect, useRef } from 'react';
  * from tearing the engine down and rebuilding it.
  *
  * @param media - Playback adapter to attach and detach.
+ * @internal
  */
 export function useAttachMedia<T extends Element>(media: EngineAdapter): RefCallback<T> {
   const elementRef = useRef<T | null>(null);

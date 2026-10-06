@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
 import type { TaskLike } from '../../../core/tasks/task';
-import { SVTA_UNSUPPORTED_DRM_SYSTEM, type SvtaError } from '../../../media/errors';
+import { SVTA_UNSUPPORTED_DRM_SYSTEM, SVTA_UNSUPPORTED_ENCRYPTION_METHOD, type SvtaError } from '../../../media/errors';
 import type {
   MaybeResolvedPresentation,
   PartiallyResolvedAudioTrack,
@@ -146,24 +146,48 @@ http://example.com/segment2.m4s
   });
 
   it('does not resolve when no track is selected', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch');
-
+    const track: PartiallyResolvedVideoTrack = {
+      type: 'video',
+      id: 'track-1',
+      url: 'http://example.com/variant1.m3u8',
+      bandwidth: 1_000_000,
+      mimeType: 'video/mp4',
+      codecs: [],
+    };
     const presentation: Presentation = {
       id: 'pres-1',
       url: 'http://example.com/playlist.m3u8',
-      selectionSets: [],
       startTime: 0,
+      selectionSets: [
+        {
+          id: 'video-set',
+          type: 'video',
+          switchingSets: [{ id: 'switching-1', type: 'video', tracks: [track] }],
+        },
+      ],
     };
-
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(
+      async () =>
+        new Response(`#EXTM3U
+#EXT-X-TARGETDURATION:10
+#EXTINF:10.0,
+segment1.m4s
+#EXT-X-ENDLIST`)
+    );
     const state = makeState({ presentation });
-
     const reactor = resolveVideoTrack.setup({ state });
 
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    try {
+      await Promise.resolve();
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-1'))).toBe(false);
 
-    expect(fetchSpy).not.toHaveBeenCalled();
-
-    reactor.destroy();
+      state.selectedVideoTrackId.set('track-1');
+      await vi.waitFor(() => expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-1'))).toBe(true));
+      expect(fetchSpy).toHaveBeenCalledOnce();
+    } finally {
+      reactor.destroy();
+    }
   });
 });
 
@@ -306,8 +330,8 @@ http://example.com/subtitle1.webvtt
   });
 });
 
-describe('resolveVideoTrack — concurrent resolution', () => {
-  it('resolves both tracks concurrently when selectedTrackId changes mid-resolution', async () => {
+describe('resolveVideoTrack', () => {
+  it('supersedes an in-flight resolution when the selection changes', async () => {
     const trackA: PartiallyResolvedVideoTrack = {
       type: 'video',
       id: 'track-a',
@@ -346,34 +370,47 @@ describe('resolveVideoTrack — concurrent resolution', () => {
 ${segUrl}
 #EXT-X-ENDLIST`;
 
-    vi.spyOn(globalThis, 'fetch').mockImplementation((requestOrUrl: RequestInfo | URL) => {
-      const url = requestOrUrl instanceof Request ? requestOrUrl.url : String(requestOrUrl);
-      if (url.includes('track-a')) return Promise.resolve(new Response(makePlaylist('http://example.com/a-seg1.m4s')));
+    let requestA: Request | undefined;
+    let settleA!: () => void;
+    const onAbort = vi.fn();
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation((input) => {
+      const request = input as Request;
 
-      return Promise.resolve(new Response(makePlaylist('http://example.com/b-seg1.m4s')));
+      if (!request.url.includes('track-a')) {
+        return Promise.resolve(new Response(makePlaylist('http://example.com/b-seg1.m4s')));
+      }
+
+      requestA = request;
+      return new Promise<Response>((resolve, reject) => {
+        const abort = () => {
+          onAbort();
+          reject(new DOMException('aborted', 'AbortError'));
+        };
+
+        request.signal.addEventListener('abort', abort, { once: true });
+        settleA = () => {
+          request.signal.removeEventListener('abort', abort);
+          resolve(new Response(makePlaylist('http://example.com/a-seg1.m4s')));
+        };
+      });
     });
-
     const reactor = resolveVideoTrack.setup({ state });
 
-    state.selectedVideoTrackId.set('track-b');
+    try {
+      await vi.waitFor(() => expect(requestA).toBeDefined());
+      state.selectedVideoTrackId.set('track-b');
+      await vi.waitFor(() => expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-b'))).toBe(true));
 
-    await vi.waitFor(() => {
-      const pres = state.presentation.get()!;
-
-      expect(isResolvedTrack(findTrackById(pres, 'track-a')!)).toBe(true);
-      expect(isResolvedTrack(findTrackById(pres, 'track-b')!)).toBe(true);
-    });
-
-    const fetchedUrls = vi.mocked(globalThis.fetch).mock.calls.map((call) => {
-      const arg: RequestInfo | URL = call[0];
-
-      return arg instanceof Request ? arg.url : String(arg);
-    });
-
-    expect(fetchedUrls.filter((u: string) => u.includes('track-a'))).toHaveLength(1);
-    expect(fetchedUrls.filter((u: string) => u.includes('track-b'))).toHaveLength(1);
-
-    reactor.destroy();
+      expect(requestA!.signal.aborted).toBe(true);
+      expect(onAbort).toHaveBeenCalledOnce();
+      expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-a'))).toBe(false);
+      expect(state.failedCdns.get()).toBeUndefined();
+      expect(fetchSpy.mock.calls.map(([input]) => (input as Request).url)).toEqual([trackA.url, trackB.url]);
+    } finally {
+      reactor.destroy();
+      settleA();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
   });
 
   it('does not fetch the same track twice when state changes rapidly', async () => {
@@ -401,28 +438,36 @@ ${segUrl}
 
     const state = makeState({ presentation, selectedVideoTrackId: 'track-a' });
 
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(
-      async () =>
-        new Response(`#EXTM3U
+    let release!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      await pending;
+      return new Response(`#EXTM3U
 #EXT-X-TARGETDURATION:10
 #EXTINF:10.0,
 http://example.com/a-seg1.m4s
-#EXT-X-ENDLIST`)
-    );
-
+#EXT-X-ENDLIST`);
+    });
     const reactor = resolveVideoTrack.setup({ state });
 
-    // Trigger multiple state changes while track-a is resolving.
-    state.selectedVideoTrackId.set('track-a');
-    state.selectedVideoTrackId.set('track-a');
+    try {
+      expect(fetchSpy).toHaveBeenCalledOnce();
+      state.selectedVideoTrackId.set(undefined);
+      await Promise.resolve();
+      state.selectedVideoTrackId.set('track-a');
+      await Promise.resolve();
+      expect(fetchSpy).toHaveBeenCalledOnce();
 
-    await vi.waitFor(() => {
-      expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-a')!)).toBe(true);
-    });
-
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
-
-    reactor.destroy();
+      release();
+      await vi.waitFor(() => expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-a'))).toBe(true));
+      expect(fetchSpy).toHaveBeenCalledOnce();
+    } finally {
+      reactor.destroy();
+      release();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
   });
 });
 
@@ -758,20 +803,24 @@ http://example.com/audio-seg1.m4s
 
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(PDT_PLAYLIST));
 
-    const reactor = resolveAudioTrack.setup({ state, config: { gateFirstParse: () => false } });
+    const gate = vi.fn(() => false);
+    const reactor = resolveAudioTrack.setup({ state, config: { gateFirstParse: gate } });
 
-    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+    try {
+      await vi.waitFor(() => expect(gate).toHaveBeenCalled());
+      expect(fetchSpy).toHaveBeenCalledOnce();
 
-    // Source reset: leaving 'presentation-resolved' aborts the runner, which
-    // rejects the gate wait — the task dies instead of parsing into the new
-    // source (rejection is suppressed by the runner; nothing unhandled).
-    state.presentation.set(undefined);
-    await new Promise((resolve) => setTimeout(resolve, 10));
+      state.presentation.set(undefined);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      gate.mockClear();
+      state.presentation.set({ url: 'http://example.com/next.m3u8' });
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(state.presentation.get()).toBeUndefined();
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
-
-    reactor.destroy();
+      expect(gate).not.toHaveBeenCalled();
+      expect(fetchSpy).toHaveBeenCalledOnce();
+    } finally {
+      reactor.destroy();
+    }
   });
 });
 
@@ -845,13 +894,45 @@ http://example.com/segment1.m4s
     reactor.destroy();
   });
 
-  it('reports unsupported DRM when the playlist is encrypted', async () => {
-    const state = setup('#EXT-X-KEY:METHOD=SAMPLE-AES,URI="skd://k"');
+  it('reports unsupported DRM when the playlist is DRM-encrypted', async () => {
+    const state = setup('#EXT-X-KEY:METHOD=SAMPLE-AES,URI="skd://k",KEYFORMAT="com.apple.streamingkeydelivery"');
     const reactor = resolveVideoTrack.setup({ state, config: { reportUnsupportedTrackConditions } });
 
     await flush();
 
     expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_UNSUPPORTED_DRM_SYSTEM]);
+    reactor.destroy();
+  });
+
+  it('reports an unsupported encryption method for a clear-key (identity) playlist', async () => {
+    // METHOD=AES-128 with no KEYFORMAT is clear-key over HTTP, not DRM.
+    const state = setup('#EXT-X-KEY:METHOD=AES-128,URI="https://example.com/key.bin"');
+    const reactor = resolveVideoTrack.setup({ state, config: { reportUnsupportedTrackConditions } });
+
+    await flush();
+
+    expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_UNSUPPORTED_ENCRYPTION_METHOD]);
+    reactor.destroy();
+  });
+
+  it('hands the seam the whole config alongside the resolved track', async () => {
+    // An extended reporter reads its own props (e.g. `drm`) off the config rather
+    // than closing over them, so the behavior must pass the config through.
+    const state = setup();
+    const reportUnsupportedTrackConditions = vi.fn(() => []);
+    const drm = { 'com.example': { licenseUrl: 'https://license.example.com' } };
+    // A variable, not a literal: the engine config carries props (`drm`) the
+    // behavior's own config slice doesn't name, and that is the point.
+    const config = { reportUnsupportedTrackConditions, drm };
+    const reactor = resolveVideoTrack.setup({ state, config });
+
+    await flush();
+
+    expect(reportUnsupportedTrackConditions).toHaveBeenCalledTimes(1);
+    expect(reportUnsupportedTrackConditions).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'track-1' }),
+      expect.objectContaining({ reportUnsupportedTrackConditions, drm })
+    );
     reactor.destroy();
   });
 

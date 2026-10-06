@@ -16,47 +16,67 @@ const registrySkins = {
       import('@registry-html-default/components/videojs/video/skin.html?raw'),
       import('@registry-html-default/components/videojs/video/skin'),
     ]),
-  'video/minimal': () =>
+  'video/neutral': () =>
     Promise.all([
-      import('@registry-html-minimal/components/videojs/video/skin.html?raw'),
-      import('@registry-html-minimal/components/videojs/video/skin'),
+      import('@registry-html-neutral/components/videojs/video/skin.html?raw'),
+      import('@registry-html-neutral/components/videojs/video/skin'),
+    ]),
+  'video/compat': () =>
+    Promise.all([
+      import('@registry-html-compat/components/videojs/video/skin.html?raw'),
+      import('@registry-html-compat/components/videojs/video/skin'),
     ]),
   'live-video/default': () =>
     Promise.all([
       import('@registry-html-default/components/videojs/live-video/skin.html?raw'),
       import('@registry-html-default/components/videojs/live-video/skin'),
     ]),
-  'live-video/minimal': () =>
+  'live-video/neutral': () =>
     Promise.all([
-      import('@registry-html-minimal/components/videojs/live-video/skin.html?raw'),
-      import('@registry-html-minimal/components/videojs/live-video/skin'),
+      import('@registry-html-neutral/components/videojs/live-video/skin.html?raw'),
+      import('@registry-html-neutral/components/videojs/live-video/skin'),
+    ]),
+  'live-video/compat': () =>
+    Promise.all([
+      import('@registry-html-compat/components/videojs/live-video/skin.html?raw'),
+      import('@registry-html-compat/components/videojs/live-video/skin'),
     ]),
   'audio/default': () =>
     Promise.all([
       import('@registry-html-default/components/videojs/audio/skin.html?raw'),
       import('@registry-html-default/components/videojs/audio/skin'),
     ]),
-  'audio/minimal': () =>
+  'audio/neutral': () =>
     Promise.all([
-      import('@registry-html-minimal/components/videojs/audio/skin.html?raw'),
-      import('@registry-html-minimal/components/videojs/audio/skin'),
+      import('@registry-html-neutral/components/videojs/audio/skin.html?raw'),
+      import('@registry-html-neutral/components/videojs/audio/skin'),
+    ]),
+  'audio/compat': () =>
+    Promise.all([
+      import('@registry-html-compat/components/videojs/audio/skin.html?raw'),
+      import('@registry-html-compat/components/videojs/audio/skin'),
     ]),
   'live-audio/default': () =>
     Promise.all([
       import('@registry-html-default/components/videojs/live-audio/skin.html?raw'),
       import('@registry-html-default/components/videojs/live-audio/skin'),
     ]),
-  'live-audio/minimal': () =>
+  'live-audio/neutral': () =>
     Promise.all([
-      import('@registry-html-minimal/components/videojs/live-audio/skin.html?raw'),
-      import('@registry-html-minimal/components/videojs/live-audio/skin'),
+      import('@registry-html-neutral/components/videojs/live-audio/skin.html?raw'),
+      import('@registry-html-neutral/components/videojs/live-audio/skin'),
+    ]),
+  'live-audio/compat': () =>
+    Promise.all([
+      import('@registry-html-compat/components/videojs/live-audio/skin.html?raw'),
+      import('@registry-html-compat/components/videojs/live-audio/skin'),
     ]),
 } satisfies Record<`${SkinPreset}/${Skin}`, SkinLoader>;
 
 /** A skin shipped as markup: where the page's media goes, and where a slotted poster image goes. */
 export interface SkinTemplate {
   readonly markup: string;
-  /** The node the media element replaces. */
+  /** The node the media component replaces. */
   readonly media: (container: HTMLElement) => ChildNode | null;
   /** The node a slotted poster replaces, or that is unwrapped to its own children when none is slotted. */
   readonly poster: (container: HTMLElement) => Element | null;
@@ -70,7 +90,7 @@ const registryTemplate = (markup: string): SkinTemplate => ({
 });
 
 /**
- * Define an element that stamps a skin template around its own children: the media element takes the template's media
+ * Define an element that stamps a skin template around its own children: the media component takes the template's media
  * position, an `<img slot="poster">` child takes the poster's, and the container's classes and attributes move onto the
  * host so the page's frame classes still apply.
  */
@@ -101,7 +121,7 @@ export function defineTemplateSkin(tagName: string, source: SkinTemplate): strin
       }
 
       const marker = source.media(container);
-      if (!marker) throw new Error(`Skin ${tagName} has no place for the media element.`);
+      if (!marker) throw new Error(`Skin ${tagName} has no place for the media component.`);
 
       const poster = this.querySelector(':scope > [slot="poster"]');
 
@@ -150,7 +170,7 @@ function findMediaMarker(root: HTMLElement): Comment | null {
   let node = walker.nextNode();
 
   while (node) {
-    if (node instanceof Comment && node.textContent.includes('Add a compatible media element here')) return node;
+    if (node instanceof Comment && node.textContent.includes('Add a compatible media component here')) return node;
 
     node = walker.nextNode();
   }
@@ -163,7 +183,9 @@ export async function loadRegistrySkinTag(preset: SkinPreset, skin: Skin): Promi
   const tagName = registrySkinTag(preset, skin);
   if (customElements.get(tagName)) return tagName;
 
-  const [module] = await registrySkins[`${preset}/${skin}`]();
+  const load = registrySkins[`${preset}/${skin}`];
+
+  const [module] = await load();
 
   return defineTemplateSkin(tagName, registryTemplate(module.default));
 }

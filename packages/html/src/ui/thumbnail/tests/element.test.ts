@@ -1,6 +1,6 @@
 import type { AnyPlayerStore } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
-import type { MediaTextTrackState } from '@videojs/media';
+import type { MediaTextTrackState, MediaThumbnailsTrack } from '@videojs/media';
 import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
@@ -8,16 +8,12 @@ import { playerContext } from '../../../player/context';
 import { UIElement } from '../../ui-element';
 import { ThumbnailElement } from '../element';
 
-function createTextTrackStore(
-  thumbnailTrackCrossOrigin: MediaTextTrackState['thumbnailTrackCrossOrigin']
-): AnyPlayerStore {
+function createTextTrackStore(crossOrigin: MediaThumbnailsTrack['crossOrigin']): AnyPlayerStore {
   return createStore<unknown>()<MediaTextTrackState>({
     name: 'textTrack',
     state: () => ({
       chaptersCues: [],
-      thumbnailCues: [],
-      thumbnailTrackSrc: null,
-      thumbnailTrackCrossOrigin,
+      thumbnailsTrack: { cues: [], src: null, crossOrigin },
       textTrackList: [],
       subtitlesShowing: false,
       toggleSubtitles: vi.fn(),
@@ -52,7 +48,7 @@ function nextFrame(): Promise<void> {
  * than reading the first one.
  */
 async function renderCrossOrigin(
-  mediaCrossOrigin: MediaTextTrackState['thumbnailTrackCrossOrigin'],
+  mediaCrossOrigin: MediaThumbnailsTrack['crossOrigin'],
   configure?: (el: ThumbnailElement) => void
 ): Promise<string | null> {
   const provider = document.createElement('test-thumbnail-player') as TestPlayerProviderElement;
@@ -91,6 +87,28 @@ describe('ThumbnailElement', () => {
     expect(fallback!.getAttribute('aria-hidden')).toBe('true');
     expect(fallback!.getAttribute('src')).toBe('thumb.jpg');
     expect(thumbnail.querySelector('img')).toBeNull();
+  });
+
+  it('sets data-hidden when no thumbnails are available', async () => {
+    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+
+    document.body.append(thumbnail);
+    await thumbnail.updateComplete;
+
+    expect(thumbnail.hasAttribute('data-hidden')).toBe(true);
+  });
+
+  it('does not have data-hidden when thumbnails match', async () => {
+    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+    const img = document.createElement('img');
+
+    Object.defineProperty(img, 'complete', { value: false, configurable: true });
+    thumbnail.thumbnails = [{ url: 'thumb.jpg', startTime: 0 }];
+    thumbnail.append(img);
+    document.body.append(thumbnail);
+    await thumbnail.updateComplete;
+
+    expect(thumbnail.hasAttribute('data-hidden')).toBe(false);
   });
 
   it('uses a supplied light-DOM image in place of the fallback', async () => {
@@ -302,12 +320,12 @@ describe('ThumbnailElement', () => {
   });
 
   describe('crossorigin', () => {
-    it('inherits the media element CORS mode when unset', async () => {
+    it('inherits the media component CORS mode when unset', async () => {
       await expect(renderCrossOrigin('anonymous')).resolves.toBe('anonymous');
       await expect(renderCrossOrigin('use-credentials')).resolves.toBe('use-credentials');
     });
 
-    it('sets nothing when the media element is not in CORS mode', async () => {
+    it('sets nothing when the media component is not in CORS mode', async () => {
       await expect(renderCrossOrigin(null)).resolves.toBeNull();
     });
 
@@ -360,7 +378,7 @@ describe('ThumbnailElement', () => {
 
     it('does not inherit for thumbnails supplied directly', async () => {
       // Images set through the property may live anywhere, so they carry no
-      // relationship to the media element's CORS mode.
+      // relationship to the media component's CORS mode.
       const attribute = await renderCrossOrigin('anonymous', (el) => {
         el.thumbnails = [{ url: 'https://images.example.com/sprite.jpg', startTime: 0 }];
       });

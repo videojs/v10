@@ -1,5 +1,5 @@
 import { cleanup, render } from '@testing-library/react';
-import type { MediaTextTrackState } from '@videojs/media';
+import type { MediaThumbnailsTrack } from '@videojs/media';
 import { createRef, type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
@@ -8,12 +8,10 @@ import { createPlayerWrapper } from '../../../testing/mocks';
 
 afterEach(cleanup);
 
-function wrapper(thumbnailTrackCrossOrigin: MediaTextTrackState['thumbnailTrackCrossOrigin'] = null) {
+function wrapper(crossOrigin: MediaThumbnailsTrack['crossOrigin'] = null) {
   return createPlayerWrapper({
     chaptersCues: [],
-    thumbnailCues: [],
-    thumbnailTrackSrc: null,
-    thumbnailTrackCrossOrigin,
+    thumbnailsTrack: { cues: [], src: null, crossOrigin },
     textTrackList: [],
     subtitlesShowing: false,
     toggleSubtitles: vi.fn(),
@@ -40,12 +38,12 @@ function DefaultThumbnail({
 
 /** Render a thumbnail and return the `crossorigin` attribute on its image. */
 function renderCrossOrigin(
-  thumbnailTrackCrossOrigin: MediaTextTrackState['thumbnailTrackCrossOrigin'],
+  crossOrigin: MediaThumbnailsTrack['crossOrigin'],
   imageProps: Thumbnail.ImageProps = {},
   rootProps: Thumbnail.RootProps = {}
 ): string | null {
   const { container } = render(<DefaultThumbnail rootProps={rootProps} imageProps={imageProps} />, {
-    wrapper: wrapper(thumbnailTrackCrossOrigin),
+    wrapper: wrapper(crossOrigin),
   });
 
   return container.querySelector('[data-testid="image"]')!.getAttribute('crossorigin');
@@ -64,6 +62,14 @@ describe('Thumbnail', () => {
     expect(getByTestId('image').tagName).toBe('IMG');
     expect(getByTestId('image').getAttribute('src')).toBe('thumbnail.jpg');
     expect(getByTestId('image').getAttribute('decoding')).toBe('async');
+    expect(getByTestId('image').getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('keeps image props on Thumbnail.Image', () => {
+    const { getByTestId } = render(<DefaultThumbnail imageProps={{ crossOrigin: 'anonymous', loading: 'eager' }} />);
+
+    expect(getByTestId('image').getAttribute('crossorigin')).toBe('anonymous');
+    expect(getByTestId('image').getAttribute('loading')).toBe('eager');
   });
 
   it('reports state on the root', () => {
@@ -147,12 +153,12 @@ describe('Thumbnail', () => {
   });
 
   describe('crossOrigin', () => {
-    it('inherits the media element CORS mode when unset', () => {
+    it('inherits the media component CORS mode when unset', () => {
       expect(renderCrossOrigin('anonymous')).toBe('anonymous');
       expect(renderCrossOrigin('use-credentials')).toBe('use-credentials');
     });
 
-    it('sets nothing when the media element is not in CORS mode', () => {
+    it('sets nothing when the media component is not in CORS mode', () => {
       expect(renderCrossOrigin(null)).toBeNull();
     });
 

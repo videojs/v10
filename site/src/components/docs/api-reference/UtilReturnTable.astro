@@ -52,7 +52,7 @@ const fieldsToggleColumn = fields.some(([, field]) => Boolean(field.description 
         colspan={1}
         toggleColumn
       >
-        <td class="w-full">
+        <td class="w-full" data-apiref-cell="type">
           <MarkdownCode code={returnValue.type} />
         </td>
       </DetailRow>

@@ -17,10 +17,12 @@ import { collectDispatchedEvents, collectFires } from './event-handler.js';
 import { abbreviateType, formatDetailedType } from './formatter.js';
 import {
   expressionText,
+  getJSDoc,
   getJSDocDescription,
   type NamedDeclaration,
   type OxcProject,
   OxcProject as Project,
+  parameterPattern,
   type ResolvedMember,
   type ResolvedType,
   type SourceFile,
@@ -1071,6 +1073,7 @@ function extractReactReference(
 
   let target: MediaTargetTag | undefined;
   let acceptsNativeProps = false;
+  let mediaRefType: string | undefined;
   let defaultsExpression: Expression | undefined;
 
   walkAst(file.program, (node) => {
@@ -1078,6 +1081,12 @@ function extractReactReference(
       acceptsNativeProps = node.extends.some((heritage) =>
         /(?:Video|Audio)HTMLAttributes/.test(sourceText(file, heritage))
       );
+
+      for (const heritage of node.extends) {
+        const match = /^MediaRefProps<\s*(\w+)\s*>$/.exec(sourceText(file, heritage));
+
+        if (match) mediaRefType = match[1];
+      }
     }
 
     if (node.type === 'VariableDeclarator' && staticName(node.id) === source.className && node.init) {
@@ -1127,7 +1136,22 @@ function extractReactReference(
     }
   }
 
-  return { target, acceptsNativeProps, props };
+  const mediaRef = mediaRefType ? { type: mediaRefType, ...importedFrom(file, mediaRefType) } : undefined;
+
+  return { target, acceptsNativeProps, props, ...(mediaRef ? { mediaRef } : {}) };
+}
+
+/** The module a top-level import binds `name` from, so docs can show where to import a type the source names. */
+function importedFrom(file: SourceFile, name: string): { module?: string } {
+  for (const statement of file.program.body) {
+    if (statement.type !== 'ImportDeclaration') continue;
+
+    if (statement.specifiers.some((specifier) => specifier.local.name === name)) {
+      return { module: statement.source.value };
+    }
+  }
+
+  return {};
 }
 
 function extractPublicMethodNames(filePath: string, className: string, project: OxcProject): string[] {
@@ -1140,7 +1164,9 @@ function extractPublicMethodNames(filePath: string, className: string, project: 
       member.kind !== 'method' ||
       member.static ||
       member.accessibility === 'private' ||
-      member.accessibility === 'protected'
+      member.accessibility === 'protected' ||
+      member.key.type === 'PrivateIdentifier' ||
+      getJSDoc(resolved.file, member)?.tags.has('internal')
     ) {
       return [];
     }
@@ -1238,15 +1264,7 @@ function functionFromDeclaration(
 function parameterName(parameter: ParamPattern): string | undefined {
   const pattern = parameterPattern(parameter);
 
-  return pattern?.type === 'Identifier' ? pattern.name : undefined;
-}
-
-function parameterPattern(parameter: ParamPattern): import('oxc-parser').BindingPattern | undefined {
-  if (parameter.type === 'RestElement') return parameter.argument;
-
-  if (parameter.type === 'TSParameterProperty') return parameter.parameter;
-
-  return parameter;
+  return pattern.type === 'Identifier' ? pattern.name : undefined;
 }
 
 function staticStringClassProperty(declaration: Class, name: string): string | undefined {

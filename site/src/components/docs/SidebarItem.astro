@@ -1,8 +1,10 @@
 ---
 import ArrowUpRight from '@/assets/icons/arrow-up-right.svg?react';
 import ApiStabilityBadge from '@/components/docs/ApiStabilityBadge.astro';
+import { getLinkDestination } from '@/components/typography/linkDestination';
 import type { DocStability, SidebarItem as SidebarItemType, SupportedFramework } from '@/types/docs';
 import { isLink, isSection } from '@/types/docs';
+import { buildDocsUrl, isDocsGuideActive } from '@/utils/docs/routing';
 
 /**
  * One flat sidebar entry. Depth 0 is a section heading inside the active tab, deeper sections render as sub-headings,
@@ -22,7 +24,7 @@ const { item, framework, docTitles, docStabilities, depth = 0, indicatorTransiti
 const currentPath = Astro.url.pathname;
 const isHidden = !isSection(item) && !isLink(item) && item.hidden === true;
 const stability = !isSection(item) && !isLink(item) ? docStabilities.get(item.slug) : undefined;
-const isActive = !isSection(item) && !isLink(item) && `/docs/framework/${framework}/${item.slug}` === currentPath;
+const isActive = !isSection(item) && !isLink(item) && isDocsGuideActive(framework, item.slug, currentPath);
 
 // The active indicator is a separate element rather than the link's own border so a view transition can move it.
 const linkClass = [
@@ -84,6 +86,7 @@ const linkClass = [
       class:list={linkClass}
       style={`padding-left: calc(var(--spacing) * ${depth * 4})`}
       href={item.href}
+      data-ph-capture-attribute-destination={getLinkDestination(item.href)}
     >
       {item.devOnly ? "[Dev only] " : ""}
       <span class="min-w-0 flex-1">{item.sidebarLabel}</span>
@@ -93,8 +96,9 @@ const linkClass = [
     <a
       aria-current={isActive ? "page" : undefined}
       class:list={linkClass}
+      data-docs-slug={item.slug}
       style={`padding-left: calc(var(--spacing) * ${depth * 4})`}
-      href={`/docs/framework/${framework}/${item.slug}`}
+      href={buildDocsUrl(framework, item.slug)}
     >
       {isActive && (
         <span

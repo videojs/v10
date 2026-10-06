@@ -43,7 +43,13 @@ import basicUsageHtmlTs from "@/components/docs/demos/status-announcer/html/css/
 
 ## Behavior
 
+<FrameworkCase frameworks={["react"]}>
 `StatusAnnouncer` watches player-store snapshots, so it reports changes made by buttons, sliders, custom controls, or direct player actions. It does not depend on <DocsLink slug="reference/components/hotkey">`Hotkey`</DocsLink> or <DocsLink slug="reference/components/gesture">`Gesture`</DocsLink> events.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<media-status-announcer>` watches player-store snapshots, so it reports changes made by buttons, sliders, custom controls, or direct player actions. It does not depend on <DocsLink slug="reference/components/hotkey">`<media-hotkey>`</DocsLink> or <DocsLink slug="reference/components/gesture">`<media-gesture>`</DocsLink> events.
+</FrameworkCase>
 
 The first snapshot establishes a baseline without announcing it. Later changes are handled in two groups:
 
@@ -68,7 +74,13 @@ The custom element receives labels from the nearest player i18n context.
 
 ## Styling
 
+<FrameworkCase frameworks={["react"]}>
 `StatusAnnouncer` is not visually hidden by the primitive. Apply a visually-hidden class while keeping it in the accessibility tree. Do not use `display: none`, `visibility: hidden`, or the `hidden` attribute.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<media-status-announcer>` is not visually hidden by the primitive. Apply a visually-hidden class while keeping it in the accessibility tree. Do not use `display: none`, `visibility: hidden`, or the `hidden` attribute.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 ```css
@@ -108,17 +120,37 @@ Add a `className` to the component:
 
 ## Accessibility
 
-The `status` role provides implicit polite live-region behavior, so the component does not add an explicit `aria-live` attribute. Keep one announcer inside each player `Container` whose state changes should be reported.
+The `status` role provides implicit polite live-region behavior, so the component does not add an explicit `aria-live` attribute.
 
-Debounced volume and completed-seek announcements are suppressed while an element with `role="slider"` inside the same Container has focus. The focused slider provides its own value feedback, and suppressing the separate status message avoids duplicate announcements. A focused slider outside that Container does not suppress it.
+<FrameworkCase frameworks={["react"]}>
+Keep one announcer inside each player `Container` whose state changes should be reported.
+</FrameworkCase>
 
+<FrameworkCase frameworks={["html"]}>
+Keep one announcer inside each player `<media-container>` whose state changes should be reported.
+</FrameworkCase>
+
+Debounced volume and completed-seek announcements are suppressed while an element with `role="slider"` inside the same container has focus. The focused slider provides its own value feedback, and suppressing the separate status message avoids duplicate announcements. A focused slider outside that container does not suppress it.
+
+<FrameworkCase frameworks={["react"]}>
 Use <DocsLink slug="reference/components/seek-indicator">`SeekIndicator`</DocsLink> for temporary visual seek feedback. Keep that visual value out of a live region; `StatusAnnouncer` owns the accessible announcement.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Use <DocsLink slug="reference/components/seek-indicator">`<media-seek-indicator>`</DocsLink> for temporary visual seek feedback. Keep that visual value out of a live region; `<media-status-announcer>` owns the accessible announcement.
+</FrameworkCase>
 
 ## Examples
 
 ### Basic Usage
 
+<FrameworkCase frameworks={["react"]}>
 Use the playback button for an immediate announcement and the mute button for a debounced announcement. The sliders provide their own focused value feedback, so `StatusAnnouncer` suppresses its duplicate volume and completed-seek message.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Use the playback button for an immediate announcement and the mute button for a debounced announcement. The sliders provide their own focused value feedback, so `<media-status-announcer>` suppresses its duplicate volume and completed-seek message.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
   <StyleCase styles={["css"]}>

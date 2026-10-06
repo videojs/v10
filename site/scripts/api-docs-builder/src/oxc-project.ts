@@ -11,6 +11,7 @@ import type {
   ImportDeclaration,
   Node,
   ObjectExpression,
+  ParamPattern,
   Program,
   PropertyKey,
   TSSignature,
@@ -124,7 +125,7 @@ export class OxcProject {
           path.join(packageRoot, 'src', 'playback', 'adapters', subpath),
           path.join(packageRoot, 'src', 'playback', 'engines', subpath),
         ]
-      : [path.join(packageRoot, 'src', 'index')];
+      : [path.join(packageRoot, 'src', 'index'), path.join(packageRoot, 'src', 'core', 'index')];
 
     for (const candidate of sourceCandidates) {
       const resolved = resolveFile(candidate);
@@ -242,7 +243,7 @@ export class OxcProject {
       unwrapped.typeName.type === 'Identifier' ? type.substitutions?.get(unwrapped.typeName.name) : undefined;
     if (substituted) return substituted;
 
-    const declaration = this.#resolveTypeDeclaration(type.file.filePath, unwrapped.typeName);
+    const declaration = this.resolveTypeDeclaration(type.file.filePath, unwrapped.typeName);
     if (!declaration) return undefined;
 
     const declarationType = typeFromDeclaration(declaration.declaration);
@@ -292,8 +293,9 @@ export class OxcProject {
 
     const declaration =
       reference.type === 'TSTypeReference'
-        ? this.#resolveTypeDeclaration(type.file.filePath, reference.typeName)
+        ? this.resolveTypeDeclaration(type.file.filePath, reference.typeName)
         : undefined;
+    if (declaration?.file.filePath.includes(`${path.sep}node_modules${path.sep}`)) return [];
 
     if (!declaration || declaration.declaration.type !== 'TSInterfaceDeclaration') {
       if (declaration?.declaration.type === 'ClassDeclaration') {
@@ -321,7 +323,8 @@ export class OxcProject {
 
     const iface = declaration.declaration;
     const parameters = iface.typeParameters?.params ?? [];
-    const substitutions = new Map<string, ResolvedType>(type.substitutions);
+    // Only the interface's own type parameters are in scope inside it; the caller's names mean nothing there.
+    const substitutions = new Map<string, ResolvedType>();
     const referenceArgs = reference.type === 'TSTypeReference' ? (reference.typeArguments?.params ?? []) : [];
 
     parameters.forEach((parameter, index) => {
@@ -360,7 +363,16 @@ export class OxcProject {
     return members;
   }
 
-  #resolveTypeDeclaration(filePath: string, name: import('oxc-parser').TSTypeName): ResolvedDeclaration | undefined {
+  /** Whether a file exports its local declaration `name`, under any name. */
+  isExported(file: SourceFile, name: string): boolean {
+    for (const entry of this.#index(file).namedExports.values()) {
+      if (entry.local === name && !entry.source) return true;
+    }
+
+    return false;
+  }
+
+  resolveTypeDeclaration(filePath: string, name: import('oxc-parser').TSTypeName): ResolvedDeclaration | undefined {
     if (name.type === 'Identifier') return this.resolveName(filePath, name.name);
 
     const parts = typeNameText(name).split('.');
@@ -369,12 +381,27 @@ export class OxcProject {
     if (!file) return undefined;
 
     const index = this.#index(file);
-    const source = index.namespaceImports.get(root) ?? index.imports.get(root)?.source;
+    const namespaceSource = index.namespaceImports.get(root);
+    const imported = index.imports.get(root);
+    const source = namespaceSource ?? imported?.source;
 
     if (source) {
       const target = this.resolveModule(filePath, source);
 
       if (target) {
+        if (imported) {
+          const importedDeclaration = this.resolveExport(target, imported.imported);
+
+          if (importedDeclaration) {
+            const importedName = declarationName(importedDeclaration.declaration) ?? imported.imported;
+            const nested = this.resolveName(
+              importedDeclaration.file.filePath,
+              [importedName, ...parts.slice(1)].join('.')
+            );
+            if (nested) return nested;
+          }
+        }
+
         return this.resolveName(target, parts.join('.')) ?? this.resolveExport(target, parts.slice(1).join('.'));
       }
     }
@@ -599,6 +626,37 @@ export function unwrapObjectExpression(expression: Expression | null | undefined
   const unwrapped = unwrapExpression(expression);
 
   return unwrapped.type === 'ObjectExpression' ? unwrapped : undefined;
+}
+
+/** The binding a parameter declares, looking through a rest element or a constructor parameter property. */
+export function parameterPattern(parameter: ParamPattern): BindingPattern {
+  if (parameter.type === 'RestElement') return parameter.argument;
+
+  if (parameter.type === 'TSParameterProperty') return parameter.parameter;
+
+  return parameter;
+}
+
+/**
+ * The type a parameter declares, wherever the parser hangs it. A default value (`name = value`) wraps the pattern in an
+ * `AssignmentPattern` whose `left` carries the annotation, and a rest parameter (`...name: T[]`) keeps it on the rest
+ * element rather than on its argument.
+ */
+export function parameterTypeAnnotation(parameter: ParamPattern): TSType | undefined {
+  if (parameter.type === 'RestElement' && parameter.typeAnnotation) return parameter.typeAnnotation.typeAnnotation;
+
+  const pattern = parameterPattern(parameter);
+  const target = pattern.type === 'AssignmentPattern' ? pattern.left : pattern;
+
+  return target.typeAnnotation?.typeAnnotation ?? undefined;
+}
+
+/** A parameter is optional when marked `?`, given a default value, or declared as a rest parameter. */
+export function isOptionalParameter(parameter: ParamPattern): boolean {
+  const pattern = parameterPattern(parameter);
+  if (parameter.type === 'RestElement' || pattern.type === 'AssignmentPattern') return true;
+
+  return 'optional' in pattern && !!pattern.optional;
 }
 
 export function unwrapType(type: TSType): TSType {
@@ -1006,7 +1064,9 @@ function declarationNames(declaration: Declaration): string[] {
   return name ? [name] : [];
 }
 
-function declarationName(declaration: Declaration): string | undefined {
+function declarationName(declaration: NamedDeclaration): string | undefined {
+  if (declaration.type === 'VariableDeclarator') return staticName(declaration.id);
+
   if (
     declaration.type === 'FunctionDeclaration' ||
     declaration.type === 'TSDeclareFunction' ||
@@ -1089,6 +1149,11 @@ function isDeclarationExported(file: SourceFile, declaration: NamedDeclaration):
   );
 }
 
+/** Compiler and linter directives sit between a declaration and its JSDoc without detaching it. */
+const DIRECTIVE_COMMENT = /\/\/\s*(?:@ts-(?:expect-error|ignore|nocheck)|(?:eslint|oxlint)-disable-next-line)\b[^\n]*/g;
+
 function isJSDocBindingGap(gap: string): boolean {
-  return /^(?:\s|export\b|default\b|declare\b|abstract\b|async\b|const\b|let\b|var\b|readonly\b|static\b)*$/.test(gap);
+  return /^(?:\s|export\b|default\b|declare\b|abstract\b|async\b|const\b|let\b|var\b|readonly\b|static\b)*$/.test(
+    gap.replace(DIRECTIVE_COMMENT, '')
+  );
 }

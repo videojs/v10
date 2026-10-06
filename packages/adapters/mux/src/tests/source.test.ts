@@ -33,25 +33,15 @@ describe('createMuxVideoURL', () => {
     );
   });
 
-  it('appends playback params as snake_case query params', () => {
-    const url = new URL(
-      createMuxVideoURL({
-        playbackId: 'abc123',
-        playback: { maxResolution: '1080p', renditionOrder: 'desc', extraParam: 'x', skip: undefined },
-      })!
-    );
-
-    expect(url.searchParams.get('max_resolution')).toBe('1080p');
-    expect(url.searchParams.get('rendition_order')).toBe('desc');
-    expect(url.searchParams.get('extra_param')).toBe('x');
-    expect(url.searchParams.has('skip')).toBe(false);
-  });
-
   it('appends manifest modifiers as snake_case query params', () => {
     const url = new URL(
       createMuxVideoURL({
         playbackId: 'abc123',
         playback: {
+          maxResolution: '1080p',
+          renditionOrder: 'desc',
+          extraParam: 'x',
+          skip: undefined,
           redundantStreams: true,
           rokuTrickPlay: true,
           defaultSubtitlesLang: 'en-US',
@@ -64,6 +54,10 @@ describe('createMuxVideoURL', () => {
       })!
     );
 
+    expect(url.searchParams.get('max_resolution')).toBe('1080p');
+    expect(url.searchParams.get('rendition_order')).toBe('desc');
+    expect(url.searchParams.get('extra_param')).toBe('x');
+    expect(url.searchParams.has('skip')).toBe(false);
     expect(url.searchParams.get('redundant_streams')).toBe('true');
     expect(url.searchParams.get('roku_trick_play')).toBe('true');
     expect(url.searchParams.get('default_subtitles_lang')).toBe('en-US');
@@ -95,6 +89,13 @@ describe('createMuxVideoURL', () => {
 describe('parseMuxVideoURL', () => {
   it('extracts the playbackId', () => {
     expect(parseMuxVideoURL('https://stream.mux.com/abc123.m3u8')).toEqual({ playbackId: 'abc123' });
+  });
+
+  it('parses stream URLs without the .m3u8 extension', () => {
+    expect(parseMuxVideoURL('https://stream.mux.com/abc123?max_resolution=1080p&token=jwt')).toEqual({
+      playbackId: 'abc123',
+      playback: { maxResolution: '1080p', token: 'jwt' },
+    });
   });
 
   it('extracts a custom domain', () => {
@@ -143,6 +144,7 @@ describe('parseMuxVideoURL', () => {
     expect(parseMuxVideoURL('not a url')).toBeUndefined();
     expect(parseMuxVideoURL('https://example.com/video.m3u8')).toBeUndefined();
     expect(parseMuxVideoURL('https://stream.mux.com/abc123/highest.mp4')).toBeUndefined();
+    expect(parseMuxVideoURL('https://stream.mux.com/abc123.mp4')).toBeUndefined();
   });
 
   it('round-trips through createMuxVideoURL', () => {

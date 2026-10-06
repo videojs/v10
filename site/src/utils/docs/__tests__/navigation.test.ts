@@ -4,6 +4,7 @@ import { currentFramework } from '@/stores/preferences';
 
 import {
   DOCS_FRAMEWORK_NAVIGATION_INFO,
+  findVisibleActiveSidebarLink,
   initializeDocsNavigation,
   savePageScrollForNavigation,
   syncFrameworkPreferenceFromUrl,
@@ -25,17 +26,63 @@ describe('syncFrameworkPreferenceFromUrl', () => {
     currentFramework.set('react');
     document.cookie = `${FRAMEWORK_COOKIE}=react; path=/`;
 
-    syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/framework/html/guides/installation'));
+    void syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/framework/html/guides/installation'));
 
     expect(currentFramework.get()).toBe('html');
     expect(getFrameworkPreferenceClient()).toBe('html');
+  });
+
+  it('synchronizes canonical installation routes', () => {
+    currentFramework.set('react');
+    document.cookie = `${FRAMEWORK_COOKIE}=react; path=/`;
+
+    void syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/cdn'));
+
+    expect(currentFramework.get()).toBe('html');
+    expect(getFrameworkPreferenceClient()).toBe('html');
+  });
+
+  it('synchronizes the query-controlled Shadcn framework', async () => {
+    currentFramework.set('react');
+    document.cookie = `${FRAMEWORK_COOKIE}=react; path=/`;
+
+    await syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=html'));
+
+    expect(currentFramework.get()).toBe('html');
+    expect(getFrameworkPreferenceClient()).toBe('html');
+  });
+
+  it('falls back from a Vue Shadcn query to HTML', async () => {
+    await syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue'));
+
+    expect(currentFramework.get()).toBe('html');
+    expect(getFrameworkPreferenceClient()).toBe('html');
+  });
+
+  it('uses the saved preference when the Shadcn query is missing', async () => {
+    currentFramework.set('react');
+    document.cookie = `${FRAMEWORK_COOKIE}=html; path=/`;
+
+    await syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs/guides/installation/shadcn'));
+
+    expect(currentFramework.get()).toBe('html');
+    expect(getFrameworkPreferenceClient()).toBe('html');
+  });
+
+  it('leaves the Shadcn address bar to the installation stores', () => {
+    window.history.replaceState({ index: 2 }, '', '/docs/guides/installation/shadcn?framework=vue&template=next');
+
+    initializeDocsNavigation();
+
+    expect(window.location.search).toBe('?framework=vue&template=next');
+    expect(window.history.state).toEqual({ index: 2 });
   });
 
   it('does not change the preference for a framework-agnostic route', () => {
     currentFramework.set('html');
     document.cookie = `${FRAMEWORK_COOKIE}=html; path=/`;
 
-    syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs'));
+    void syncFrameworkPreferenceFromUrl(new URL('https://videojs.org/docs'));
 
     expect(currentFramework.get()).toBe('html');
     expect(getFrameworkPreferenceClient()).toBe('html');
@@ -52,6 +99,7 @@ describe('framework navigation scroll', () => {
     window.history.replaceState(null, '', '/');
     document.documentElement.removeAttribute('data-base-ui-scroll-locked');
     document.body.scrollTop = 0;
+    document.body.replaceChildren();
     vi.restoreAllMocks();
   });
 
@@ -64,6 +112,27 @@ describe('framework navigation scroll', () => {
       url: '/docs/framework/react/guides/installation',
       scrollY: 275,
     });
+  });
+
+  it('restores against the visible active link when another framework sidebar is hidden', () => {
+    document.body.innerHTML = `
+      <aside id="docs-sidebar">
+        <div hidden><a aria-current="page">React installation</a></div>
+        <div><a aria-current="page">HTML installation</a></div>
+      </aside>
+    `;
+    const aside = document.getElementById('docs-sidebar')!;
+    const [hiddenLink, visibleLink] = aside.querySelectorAll<HTMLElement>('a');
+    const visibleRect = visibleLink!.getBoundingClientRect();
+    const hiddenRects = Object.assign([] as DOMRect[], { item: () => null }) satisfies DOMRectList;
+    const visibleRects = Object.assign([visibleRect], {
+      item: (index: number) => (index === 0 ? visibleRect : null),
+    }) satisfies DOMRectList;
+
+    vi.spyOn(hiddenLink!, 'getClientRects').mockReturnValue(hiddenRects);
+    vi.spyOn(visibleLink!, 'getClientRects').mockReturnValue(visibleRects);
+
+    expect(findVisibleActiveSidebarLink(aside)).toBe(visibleLink);
   });
 
   it('saves the locked body position while a Base UI popup is open', () => {
@@ -94,6 +163,25 @@ describe('framework navigation scroll', () => {
 
     expect(scrollTo).toHaveBeenCalledWith({ left: 0, top: 420 });
     expect(window.sessionStorage.getItem('vjs-page-scroll')).toBeNull();
+  });
+
+  it('preserves an installation method nav position when content above it changes height', () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    const scrollY = vi.spyOn(window, 'scrollY', 'get').mockReturnValue(900);
+    const nav = document.createElement('nav');
+
+    nav.dataset.installationMethodNav = '';
+    document.body.append(nav);
+    vi.spyOn(nav, 'getBoundingClientRect').mockReturnValue({ top: 240 } as DOMRect);
+
+    savePageScrollForNavigation('/docs/framework/html/guides/installation-shadcn', '[data-installation-method-nav]');
+
+    vi.spyOn(nav, 'getBoundingClientRect').mockReturnValue({ top: 320 } as DOMRect);
+    window.history.replaceState(null, '', '/docs/framework/html/guides/installation-shadcn');
+    initializeDocsNavigation();
+
+    expect(scrollY).toHaveBeenCalled();
+    expect(scrollTo).toHaveBeenCalledWith({ left: 0, top: 980 });
   });
 
   it('restores only the latest handoff when a framework navigation is superseded', () => {

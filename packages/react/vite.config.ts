@@ -1,3 +1,7 @@
+import { globSync } from 'node:fs';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { defineConfig } from 'vite-plus';
 import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
@@ -6,7 +10,9 @@ import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 import { reactCompilerPlugin } from '../../build/react-compiler.ts';
 import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
 import { LOCALES, localeAliases } from '../core/src/core/i18n/locales.ts';
+import packageJson from './package.json' with { type: 'json' };
 
+const packageDir = dirname(fileURLToPath(import.meta.url));
 const srcDir = new URL('./src', import.meta.url).pathname;
 const srcAlias = { '@': srcDir };
 const localeTags = [...LOCALES, ...localeAliases(LOCALES)];
@@ -20,16 +26,25 @@ const i18nLocaleEntries = Object.fromEntries([
   ...localeTags.map((tag) => [`i18n/locales/${tag}/register`, `src/i18n/locales/${tag}/register.ts`]),
 ]);
 
+const i18nTextEntries = Object.fromEntries(
+  globSync('src/i18n/text/*.ts', { cwd: packageDir }).map((file) => [file.replace('src/', '').replace('.ts', ''), file])
+);
+
 const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   ...packageBuildConfig(mode, 'browser'),
   // Flavor modules sit beside their element's index rather than under one, so
   // they need their own entries to stay separate chunks: importing one flavor
   // must never pull the other engine in with it.
-  entry: ['src/**/index.{ts,tsx}', 'src/media/*/{hls-js,spf}.tsx', i18nLocaleEntries],
+  entry: ['src/**/index.{ts,tsx}', 'src/media/*/{hls-js,spf}.tsx', i18nLocaleEntries, i18nTextEntries],
   alias: srcAlias,
   // Pack does not yet preserve exact public CSS entry filenames, so retain the
   // focused source-to-dist copy until its CSS entry support can replace it.
   plugins: [reactCompilerPlugin(), copyCssPlugin({ outDir: `dist/${mode}`, rebuild: false })],
+  // `packageBuildConfig` supplies `__DEV__`; a `define` here replaces it, so restate it alongside the version.
+  define: {
+    __DEV__: mode === 'dev' ? 'true' : 'false',
+    __PLAYER_VERSION__: JSON.stringify(packageJson.version),
+  },
 });
 
 export default defineConfig({
@@ -38,14 +53,17 @@ export default defineConfig({
       build: {
         command: 'vp pack',
         dependsOn: [...workspaceTaskDependencies(), '@videojs/skins#generate'],
-        input: cachedTaskInputs,
-        output: ['dist/**'],
+        cache: {
+          input: cachedTaskInputs,
+          output: ['dist/**'],
+        },
       },
       'test:ci': packageTestTask(),
     },
   },
   define: {
     __DEV__: 'true',
+    __PLAYER_VERSION__: JSON.stringify(packageJson.version),
   },
   resolve: {
     alias: srcAlias,
@@ -55,6 +73,11 @@ export default defineConfig({
     conditions: ['browser', 'development', 'module', 'import', 'default'],
   },
   test: {
+    // Vitest v4 compatibility: preserve mock call history.
+    // Remove after tests no longer rely on calls from setup or earlier tests.
+    // https://viteplus.dev/guide/vitest-v5#remove-unneeded-compatibility-settings
+    // https://vitest.dev/guide/migration/#clearmocks-is-enabled-by-default
+    clearMocks: false,
     environment: 'jsdom',
     include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts', 'tests/**/*.test.ts'],
   },

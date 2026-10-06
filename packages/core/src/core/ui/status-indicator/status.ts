@@ -2,7 +2,7 @@ import { DEFAULT_INPUT_INDICATOR_LABELS, type InputIndicatorLabels } from '../in
 import type { InputActionEvent, MediaSnapshot } from '../input-action';
 import { deriveVolumeStatus } from '../volume-indicator/status';
 
-export type IndicatorStatus =
+export type BuiltInIndicatorStatus =
   | 'pause'
   | 'play'
   | 'volume-off'
@@ -15,17 +15,24 @@ export type IndicatorStatus =
   | 'pip'
   | 'exit-pip';
 
-/** Predicted display details for a supported status-indicator action. */
-export interface StatusDetails {
-  /** Visual status corresponding to the predicted post-action state. */
-  status: IndicatorStatus;
-  /** Translated label for the predicted status. */
+/** Built-in indicator statuses plus any custom status returned by `deriveCustomStatus`. */
+export type IndicatorStatus = BuiltInIndicatorStatus | (string & {});
+
+/** Display details for a status-indicator update. */
+export interface StatusDetails<Status extends IndicatorStatus = BuiltInIndicatorStatus> {
+  /** Visual status reflected on `data-status`. */
+  status: Status;
+  /** Label for the predicted status. Built-in statuses use translated labels. */
   label: string;
-  /** Predicted volume percentage for volume actions, otherwise `null`. */
+  /** Shown instead of `label` when not `null`. Built-in statuses use it for the predicted volume percentage. */
   value: string | null;
 }
 
-/** Derives the predicted visual status from an input action and its pre-action media snapshot. */
+/**
+ * Derives the predicted visual status from an input action and its pre-action media snapshot.
+ *
+ * @internal
+ */
 export function deriveStatus(
   event: InputActionEvent,
   snapshot: MediaSnapshot,
@@ -56,7 +63,7 @@ export function deriveStatus(
       };
     }
     case 'toggleFullscreen': {
-      const fullscreen = snapshot.fullscreen !== undefined ? !snapshot.fullscreen : true;
+      const fullscreen = snapshot.isFullscreen !== undefined ? !snapshot.isFullscreen : true;
 
       return {
         status: fullscreen ? 'fullscreen' : 'exit-fullscreen',
@@ -65,7 +72,7 @@ export function deriveStatus(
       };
     }
     case 'togglePictureInPicture': {
-      const pip = snapshot.pip !== undefined ? !snapshot.pip : true;
+      const pip = snapshot.isPictureInPicture !== undefined ? !snapshot.isPictureInPicture : true;
 
       return {
         status: pip ? 'pip' : 'exit-pip',
@@ -78,7 +85,11 @@ export function deriveStatus(
   }
 }
 
-/** Returns the volume percentage when present, then the translated status label. */
+/**
+ * Returns the volume percentage when present, then the translated status label.
+ *
+ * @internal
+ */
 export function getStatusIndicatorDisplayValue(state: { value: string | null; label: string | null }): string {
   return state.value ?? state.label ?? '';
 }

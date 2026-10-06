@@ -2,7 +2,7 @@ import type { CompareMode } from '@app/compare';
 import { Badge } from '@app/components/ui/badge';
 import { Button } from '@app/components/ui/button';
 import { useSidebar } from '@app/components/ui/sidebar';
-import { SKIN_SOURCES, type SKINS } from '@app/constants';
+import { SKINS, SKIN_SOURCES } from '@app/constants';
 import { PLATFORM_LABELS, SKIN_LABELS, SKIN_SOURCE_LABELS, STYLING_LABELS } from '@app/labels';
 import { hasSkinChoice, hasTailwindSkin, MEDIA, MEDIA_IDS, type MediaId } from '@app/media';
 import { skinSourceAvailable, tailwindSkinAvailable } from '@app/shared/skin-sources';
@@ -27,8 +27,6 @@ type NavbarProps = {
   optionsId: string;
 };
 
-const SKIN_OPTIONS: readonly Skin[] = ['default', 'minimal'] satisfies readonly (typeof SKINS)[number][];
-
 /** What plays: the platform, the media, and its source. The skin controls sit in the preview's header below. */
 export function Navbar({
   platform,
@@ -48,12 +46,12 @@ export function Navbar({
   return (
     <header className="border-border bg-background flex h-14 shrink-0 items-center gap-4 border-b px-4">
       <div className="flex items-center gap-2">
-        <svg viewBox="0 0 90 90" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
-          <path fill="#fcb116" d="M0 0h90v90H0z" />
-          <path fill="#f26222" d="M0 22.5h90V90H0z" />
-          <path fill="#ea3837" d="M0 45h90v45H0z" />
-          <path fill="#a83b71" d="M0 67.5h90V90H0z" />
-          <path d="M71.954 45L28.046 73.125v-56.25L71.954 45z" fill="#ebe4c1" />
+        <svg viewBox="0 0 209 209" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#ffa81b" d="M0 0h209v209H0z" />
+          <path fill="#ff6200" d="M0 80h209v129H0z" />
+          <path fill="#eb3132" d="M0 142h209v67H0z" />
+          <path fill="#cc3566" d="M0 187h209v22H0z" />
+          <path d="M167.09 104.5L65.13 169.81V39.19l101.96 65.31z" fill="#ebe4c1" />
         </svg>
         <span className="text-foreground text-base font-semibold tracking-tight whitespace-nowrap">Video.js</span>
         <Badge variant="outline">{version}</Badge>
@@ -168,7 +166,7 @@ export function SkinControls({
         label="Skin"
         value={skin}
         onChange={(v) => onSkinChange(v as Skin)}
-        options={SKIN_OPTIONS.map((s) => ({ value: s, label: SKIN_LABELS[s] }))}
+        options={SKINS.map((value) => ({ value, label: SKIN_LABELS[value] }))}
         disabled={!hasSkinChoice(media)}
       />
 

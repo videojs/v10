@@ -100,4 +100,16 @@
       interpolate-size: allow-keywords;
     }
   }
+
+  /* Without the Popover API nothing hides a closed popup, so hide it until its component opens it or while it exits. */
+  @supports not selector(:popover-open) {
+    :where(.media-skin) [popover]:not([data-open], [data-ending-style]) {
+      display: none !important;
+    }
+
+    /* Popups stay inside the player without the top layer, so let them extend past the short audio bar. */
+    .media-skin:is([data-preset="audio"], [data-preset="live-audio"]) {
+      overflow: visible !important;
+    }
+  }
 }

@@ -8,6 +8,7 @@ const UTIL_SLUG_OVERRIDES: Record<string, string> = {
   createI18n: 'create-i18n',
   createTranslator: 'create-translator',
   I18nProvider: 'i18n-provider',
+  I18nController: 'i18n-controller',
 };
 
 export function utilReferenceSlug(name: string): string {

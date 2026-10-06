@@ -7,6 +7,8 @@ export interface RelatedLink {
   slug: string;
   label: string;
   anchor?: string;
+  /** Frameworks the item applies to; omitted means every framework. */
+  frameworks?: string[];
 }
 
 /** Heading text for the single section that replaces the authored "Related …" headings. */
@@ -56,7 +58,8 @@ function isBlankText(node: Node, ctx: MdastVisitorContext): boolean {
 
 /**
  * A list item qualifies when its only meaningful content is one `<DocsLink slug="…">label</DocsLink>`. MDX parses a tag
- * that fills the line as a flow element and an inline one as a text element inside a paragraph; accept both.
+ * that fills the line as a flow element and an inline one as a text element inside a paragraph; accept both. A
+ * `frameworks="react"` attribute limits the item to the listed frameworks.
  */
 function readItem(item: Node, ctx: MdastVisitorContext): RelatedLink | null {
   let content = (asJsx(item).children ?? []).filter((child) => !isBlankText(child, ctx));
@@ -76,6 +79,13 @@ function readItem(item: Node, ctx: MdastVisitorContext): RelatedLink | null {
 
   if (anchor) related.anchor = anchor;
 
+  const frameworks = stringAttribute(asJsx(link), 'frameworks')
+    ?.split(',')
+    .map((framework) => framework.trim())
+    .filter(Boolean);
+
+  if (frameworks?.length) related.frameworks = frameworks;
+
   return related;
 }
 
@@ -93,20 +103,14 @@ function readList(list: Node, ctx: MdastVisitorContext): RelatedLink[] | null {
   return items.length > 0 ? items : null;
 }
 
-/**
- * Sätteri materialises a fresh object per child, so identity fails, and byte offsets drift past multi-byte characters;
- * the starting line is stable on both sides and identifies a node among its siblings.
- */
+/** Sätteri materialises a fresh object per child, so `parent.children.indexOf(node)` fails; `ctx.indexOf` does not. */
 function siblingIndex(node: Node, ctx: MdastVisitorContext): { siblings: readonly Node[]; index: number } | null {
   const parent = ctx.parent(node);
-  if (!parent) return null;
+  const index = ctx.indexOf(node);
+  if (!parent || index === undefined) return null;
 
   // SAFETY: a node's parent is a container whose children are MDAST nodes, including the node itself.
-  const siblings = parent.children as readonly Node[];
-  const line = node.position?.start.line;
-  const index = siblings.findIndex((sibling) => sibling.type === node.type && sibling.position?.start.line === line);
-
-  return index === -1 ? null : { siblings, index };
+  return { siblings: parent.children as readonly Node[], index };
 }
 
 /** "Related components" → "Components"; a bare "Related" has no group label. */

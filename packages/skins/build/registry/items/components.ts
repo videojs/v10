@@ -11,6 +11,7 @@ import { reactHelperDependency } from './support.ts';
 const customizationOnlyComponents = new Set([
   'audio-track-menu',
   'button',
+  'button-tooltip',
   'captions-menu',
   'captions-submenu',
   'playback-rate-submenu',
@@ -46,7 +47,7 @@ export function componentItem(
     directives: ['use client'],
     target: `ui/${meta.name}.tsx`,
     theme: [
-      ...(target.theme === 'minimal' ? ['styles/themes/minimal.css'] : []),
+      ...(target.theme === 'neutral' ? ['styles/themes/neutral.css'] : []),
       'styles/base.css',
       'styles/audio/theme.css',
       'styles/video/captions.css',

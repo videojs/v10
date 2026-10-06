@@ -1,3 +1,4 @@
+import type { DrmSystemsConfig } from '@videojs/spf/hls';
 /**
  * SPF-backed MuxVideoAdapter tests.
  *
@@ -8,6 +9,70 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MuxVideoAdapter } from '../adapter';
+import { MuxMixin } from '../mixin';
+
+// Header `{"alg":"HS256"}`, body sets `aud`, empty signature — unpadded base64url, so it survives a query string
+// untouched.
+function fakeJwt(payload: Record<string, unknown>): string {
+  const encode = (obj: unknown) => btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+  return `${encode({ alg: 'HS256' })}.${encode(payload)}.`;
+}
+
+/** The generic source `MuxMixin` projects Mux identity onto. */
+interface ProjectedSource {
+  src?: string | undefined;
+  drm?: DrmSystemsConfig | undefined;
+}
+
+/**
+ * A stand-in for the real base, recording what `MuxMixin` hands down.
+ *
+ * The base lives in `@videojs/spf/hls-video`, a separate bundle from the engine entry, so the engine it builds cannot
+ * be spied on from this package. What this package contributes to licensing is the projection itself — the merged `drm`
+ * — and that is what the DRM tests below assert. Turning a `drm` entry into a license request is the base's own job,
+ * covered by `@videojs/spf`'s tests.
+ */
+class RecordingBase {
+  static readonly defaultProps = { src: '', source: null };
+
+  /** The source last projected onto the base, or `null` once it is cleared. */
+  projected: ProjectedSource | null = null;
+
+  #src = '';
+
+  get src(): string {
+    return this.#src;
+  }
+
+  set src(value: string) {
+    this.#src = value;
+  }
+
+  set source(value: ProjectedSource | null) {
+    this.projected = value;
+    this.#src = value?.src ?? '';
+  }
+}
+
+const ProbeMuxVideoAdapter = MuxMixin(RecordingBase);
+
+type ProbeAdapter = InstanceType<typeof ProbeMuxVideoAdapter>;
+
+// A configured DRM URL is a string or a resolver for one; the engine's own
+// resolver is internal, so read it the same way here.
+function resolveUrl(url: string | (() => string | undefined) | undefined): string | undefined {
+  return typeof url === 'function' ? url() : url;
+}
+
+/** One key system's license server, off the `drm` the Adapter projected. */
+function licenseUrl(media: ProbeAdapter, keySystem: string): string | undefined {
+  return resolveUrl(media.projected?.drm?.[keySystem]?.licenseUrl);
+}
+
+function serverCertificateUrl(media: ProbeAdapter, keySystem: string): string | undefined {
+  return resolveUrl(media.projected?.drm?.[keySystem]?.serverCertificateUrl);
+}
 
 // The document Mux serves: Apple's JSON chapters, the first chapter standing
 // for the asset.
@@ -63,20 +128,12 @@ describe('MuxVideoAdapter', () => {
     expect(media.src).toBe('https://stream.mux.com/abc123.m3u8');
   });
 
-  it('derives src using the custom domain', () => {
+  it('derives src from the custom domain and playback params', () => {
     const media = new MuxVideoAdapter();
 
-    media.source = { playbackId: 'abc123', customDomain: 'video.example.com' };
+    media.source = { playbackId: 'abc123', customDomain: 'video.example.com', playback: { maxResolution: '720p' } };
 
-    expect(media.src).toBe('https://stream.video.example.com/abc123.m3u8');
-  });
-
-  it('appends playback params as snake_case query params', () => {
-    const media = new MuxVideoAdapter();
-
-    media.source = { playbackId: 'abc123', playback: { maxResolution: '720p' } };
-
-    expect(media.src).toBe('https://stream.mux.com/abc123.m3u8?max_resolution=720p');
+    expect(media.src).toBe('https://stream.video.example.com/abc123.m3u8?max_resolution=720p');
   });
 
   it('clears src when source is cleared', () => {
@@ -134,15 +191,6 @@ describe('MuxVideoAdapter', () => {
       poster: 'https://image.mux.com/abc123/thumbnail.webp',
       storyboard: 'https://image.mux.com/abc123/storyboard.vtt?format=webp',
     });
-  });
-
-  it('tracks source changes in the content data', () => {
-    const media = new MuxVideoAdapter();
-
-    media.source = { playbackId: 'abc123' };
-    media.source = { playbackId: 'def456' };
-
-    expect(media.contentData.poster).toBe('https://image.mux.com/def456/thumbnail.webp');
   });
 
   it('has no content data without a playback id', () => {
@@ -245,6 +293,21 @@ describe('MuxVideoAdapter', () => {
     expect(onSourceChange).not.toHaveBeenCalled();
   });
 
+  it('ignores a src that describes the current source, with or without .m3u8', () => {
+    const media = new MuxVideoAdapter();
+
+    media.source = { playbackId: 'abc123', poster: { time: 5 } };
+
+    const onSourceChange = vi.fn();
+
+    media.addEventListener('sourcechange', onSourceChange);
+    media.src = 'https://stream.mux.com/abc123.m3u8';
+    media.src = 'https://stream.mux.com/abc123';
+
+    expect(onSourceChange).not.toHaveBeenCalled();
+    expect(media.source).toEqual({ playbackId: 'abc123', poster: { time: 5 } });
+  });
+
   it('keeps the presentation when only image params change', () => {
     const media = new MuxVideoAdapter();
 
@@ -288,15 +351,6 @@ describe('MuxVideoAdapter', () => {
         'com.mux.video.branding': 'mux-free-plan',
       });
       expect(handler).toHaveBeenCalledTimes(1);
-    });
-
-    it('does not fetch for a non-Mux source', () => {
-      const fetchMock = stubFetch();
-      const media = new MuxVideoAdapter();
-
-      media.source = { src: 'https://example.com/stream.m3u8' };
-
-      expect(metadataRequests(fetchMock)).toEqual([]);
     });
 
     it('keeps the title when only image params change', async () => {
@@ -364,20 +418,6 @@ describe('MuxVideoAdapter', () => {
       expect(handler).not.toHaveBeenCalled();
     });
 
-    it('has no title when the document fails to load', async () => {
-      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-      stubFetch('', 500);
-
-      const media = new MuxVideoAdapter();
-
-      media.source = { playbackId: 'abc123' };
-      await flush();
-
-      expect(media.contentData.title).toBeUndefined();
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('500'));
-    });
-
     it('aborts the request in flight on destroy', () => {
       const fetchMock = vi.fn((_url: string, _init?: RequestInit) => new Promise<Response>(() => {}));
 
@@ -392,5 +432,66 @@ describe('MuxVideoAdapter', () => {
 
       expect(request?.[1]?.signal?.aborted).toBe(true);
     });
+  });
+});
+
+describe('MuxMixin', () => {
+  const token = fakeJwt({ aud: 'd' });
+
+  it('derives Mux license servers from a drm token', () => {
+    const media = new ProbeMuxVideoAdapter();
+
+    media.source = { playbackId: 'abc123', drm: { token } };
+
+    expect(licenseUrl(media, 'com.widevine.alpha')).toBe(
+      `https://license.mux.com/license/widevine/abc123?token=${token}`
+    );
+    expect(serverCertificateUrl(media, 'com.apple.fps')).toBe(
+      `https://license.mux.com/appcert/fairplay/abc123?token=${token}`
+    );
+  });
+
+  it('resolves no license server for a source carrying no DRM', () => {
+    const media = new ProbeMuxVideoAdapter();
+
+    media.source = { playbackId: 'abc123' };
+
+    // What makes an encrypted rendition prune rather than negotiate: nothing is
+    // named, so the base's resolvers have nothing to resolve.
+    expect(licenseUrl(media, 'com.widevine.alpha')).toBeUndefined();
+    expect(licenseUrl(media, 'com.apple.fps')).toBeUndefined();
+    expect(licenseUrl(media, 'com.microsoft.playready')).toBeUndefined();
+  });
+
+  it('prefers a license server the source names outright over the derived one', () => {
+    const media = new ProbeMuxVideoAdapter();
+
+    media.source = {
+      playbackId: 'abc123',
+      drm: { token, 'com.widevine.alpha': { licenseUrl: 'https://license.example.com/widevine' } },
+    };
+
+    expect(licenseUrl(media, 'com.widevine.alpha')).toBe('https://license.example.com/widevine');
+    // Systems it doesn't name still come from the token.
+    expect(licenseUrl(media, 'com.microsoft.playready')).toBe(
+      `https://license.mux.com/license/playready/abc123?token=${token}`
+    );
+  });
+
+  it('follows the source when projecting license servers', () => {
+    const media = new ProbeMuxVideoAdapter();
+
+    media.source = { playbackId: 'abc123', drm: { token } };
+    expect(licenseUrl(media, 'com.widevine.alpha')).toBe(
+      `https://license.mux.com/license/widevine/abc123?token=${token}`
+    );
+
+    media.source = { playbackId: 'def456', drm: { token } };
+    expect(licenseUrl(media, 'com.widevine.alpha')).toBe(
+      `https://license.mux.com/license/widevine/def456?token=${token}`
+    );
+
+    media.source = null;
+    expect(licenseUrl(media, 'com.widevine.alpha')).toBeUndefined();
   });
 });

@@ -16,12 +16,15 @@ import {
   selectVolume,
 } from '../store/selectors';
 
+/** @internal */
 export type CoordinatorEvent = GestureActivateEvent | HotkeyActivateEvent;
 
+/** @internal */
 export interface MediaSnapshotStore {
   readonly state: object;
 }
 
+/** @internal */
 export function toInputActionEvent(event: CoordinatorEvent): InputActionEvent {
   return {
     action: event.action,
@@ -32,6 +35,7 @@ export function toInputActionEvent(event: CoordinatorEvent): InputActionEvent {
   };
 }
 
+/** @internal */
 export function getMediaSnapshot(store: MediaSnapshotStore | undefined): MediaSnapshot {
   if (!store) return {};
 
@@ -45,16 +49,17 @@ export function getMediaSnapshot(store: MediaSnapshotStore | undefined): MediaSn
     volume: selectVolume(state)?.volume,
     muted: selectVolume(state)?.muted,
     playbackRate: selectPlaybackRate(state)?.playbackRate,
-    fullscreen: selectFullscreen(state)?.fullscreen,
+    isFullscreen: selectFullscreen(state)?.isFullscreen,
     subtitlesShowing: textTrack?.subtitlesShowing,
     subtitlesAvailable: textTrack ? (textTrack.textTrackList ?? []).some(isCaptionOrSubtitleTrack) : undefined,
-    pip: selectPiP(state)?.pip,
+    isPictureInPicture: selectPiP(state)?.isPictureInPicture,
     currentTime: time?.currentTime,
     duration: time?.duration,
     seeking: time?.seeking,
   };
 }
 
+/** @internal */
 export function subscribeToInputActions(
   container: HTMLElement,
   callback: (event: InputActionEvent) => void
@@ -71,6 +76,7 @@ export function subscribeToInputActions(
 
 const indicatorVisibilityCoordinators = new WeakMap<HTMLElement, IndicatorVisibilityCoordinator>();
 
+/** @internal */
 export function getIndicatorVisibilityCoordinator(container: HTMLElement): IndicatorVisibilityCoordinator {
   let coordinator = indicatorVisibilityCoordinators.get(container);
 

@@ -21,10 +21,10 @@ export interface ThumbnailImageProps {
   /**
    * CORS setting forwarded to the inner `<img>`.
    *
-   * Left unset, this follows the media element: a cross-origin thumbnail `<track>` only loads when the media is
+   * Left unset, this follows the media component: a cross-origin thumbnail `<track>` only loads when the media is
    * CORS-enabled, so the sprite sheets its cues point at are fetched with that same mode. Pass `null` to opt out and
    * fetch them without CORS. Thumbnails supplied directly never inherit, since they need not be related to the media
-   * element at all.
+   * component at all.
    *
    * `''` is a value like any other, read as Anonymous by the CORS-settings attribute rules — it does not opt out.
    */
@@ -44,6 +44,7 @@ export interface ThumbnailState {
   hidden: boolean;
 }
 
+/** @internal */
 export class ThumbnailCore {
   findActiveThumbnail(thumbnails: ThumbnailImage[], time: number): ThumbnailImage | undefined {
     return findLastAtOrBefore(thumbnails, time, (thumbnail) => thumbnail.startTime);
@@ -138,7 +139,7 @@ export class ThumbnailCore {
    *
    * `null` opts out and drops the attribute. Any other explicit value wins, including `''`, which the CORS-settings
    * attribute reads as Anonymous. Otherwise the inherited mode applies, which renderers supply only for
-   * `<track>`-sourced thumbnails since a list set directly may point at a host unrelated to the media element.
+   * `<track>`-sourced thumbnails since a list set directly may point at a host unrelated to the media component.
    */
   resolveCrossOrigin(
     explicit: ThumbnailCrossOrigin | undefined,
@@ -169,6 +170,7 @@ export class ThumbnailCore {
   }
 }
 
+/** @internal */
 export namespace ThumbnailCore {
   export type Props = ThumbnailProps & ThumbnailImageProps;
   export type RootProps = ThumbnailProps;

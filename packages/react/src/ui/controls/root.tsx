@@ -1,4 +1,6 @@
-import { ControlsCore, ControlsDataAttrs, type ControlsProps } from '@videojs/core';
+'use client';
+
+import { ControlsCore, ControlsDataAttrs, type ControlsProps, type ControlsState } from '@videojs/core';
 import { logMissingFeature, selectControls } from '@videojs/core/dom';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
@@ -39,5 +41,5 @@ export function ControlsRoot({
 
 export namespace ControlsRoot {
   export type Props = ControlsRootProps;
-  export type State = ControlsCore.State;
+  export type State = ControlsState;
 }

@@ -7,18 +7,22 @@ import { useAttachMedia } from '../../utils/use-attach-media';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 import { type MediaEventProps, useMediaEvents } from '../../utils/use-media-events';
 import { useMediaInstance } from '../../utils/use-media-instance';
+import { type MediaRefProps, useMediaRef } from '../../utils/use-media-ref';
 import { useSyncProps } from '../../utils/use-sync-props';
 
-export interface YouTubeVideoProps extends Partial<YouTubeAdapterProps>, MediaEventProps<YouTubeAdapter> {
+export interface YouTubeVideoProps
+  extends Partial<YouTubeAdapterProps>, MediaEventProps<YouTubeAdapter>, MediaRefProps<YouTubeAdapter> {
+  /** `<video>` spelling of `autoplay`, accepted so markup ports across. An explicit `autoplay` wins. */
+  autoPlay?: boolean | undefined;
   children?: ReactNode;
 }
 
 export const YouTubeVideo = forwardRef<HTMLIFrameElement, YouTubeVideoProps>(function YouTubeVideo(
-  { children, ...rawProps },
+  { children, mediaRef, autoPlay = false, autoplay = autoPlay, ...rawProps },
   ref
 ) {
   const media = useMediaInstance(YouTubeAdapter);
-  const props: Partial<YouTubeAdapterProps> & Record<string, unknown> = { ...rawProps };
+  const props: Partial<YouTubeAdapterProps> & Record<string, unknown> = { ...rawProps, autoplay };
   const [initialSrc] = useState(() =>
     // `source.src` is the only other way to name a video, so honor it when `src` is absent.
     buildYouTubeIframeSrc(props.src || props.source?.src || '', { ...YouTubeAdapter.defaultProps, ...props })
@@ -28,8 +32,9 @@ export const YouTubeVideo = forwardRef<HTMLIFrameElement, YouTubeVideoProps>(fun
     media
   );
   const attachRef = useAttachMedia(media);
+  const exposeRef = useMediaRef(media, mediaRef);
   // Listeners first: `attach()` dispatches `loadstart` synchronously.
-  const composedRef = useComposedRefs(eventsRef, attachRef, ref);
+  const composedRef = useComposedRefs(eventsRef, attachRef, exposeRef, ref);
 
   return (
     <iframe

@@ -3,6 +3,7 @@
 import type { CollectionEntry } from 'astro:content';
 import { getCollection, render } from 'astro:content';
 import ArrowUpRight from '@/assets/icons/arrow-up-right.svg?react';
+import { TableOfContents } from '@/components/docs/TableOfContents';
 import FormattedDate from '@/components/FormattedDate.astro';
 import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
 import Blog from '@/layouts/Blog.astro';
@@ -19,15 +20,16 @@ export async function getStaticPaths() {
 type Props = CollectionEntry<'changelog'>;
 
 const entry = Astro.props;
-const { Content } = await render(entry);
+const { Content, headings } = await render(entry);
 
 const title = `v${entry.data.version}`;
 const description =
   entry.data.description || `What's new in Video.js ${title} — new features, bug fixes, and improvements.`;
 ---
 
-<Blog title={[title, "Changelog"]} description={description}>
+<Blog title={`${title} Changelog`} description={description}>
   <MarkdownAlternate slot="head" />
+  <TableOfContents client:idle headings={headings} railOnly />
   <article
     class="@container text-p2 sm:text-p15"
     data-search-content
@@ -41,6 +43,7 @@ const description =
     >
       <div
         class="mb-3 flex flex-col gap-2 font-display text-h4 font-bold text-accent uppercase sm:flex-row sm:gap-4"
+        data-llms-ignore
       >
         <FormattedDate date={entry.data.date} />
         {
@@ -55,8 +58,14 @@ const description =
       <h1 class="mb-2 font-display text-h2 leading-tight uppercase sm:text-h15">
         {title}
       </h1>
+      <div hidden data-llms-only>
+        <p>
+          Released {entry.data.date.toISOString().slice(0, 10)}.{entry.data.breaking && " Contains breaking changes."}
+        </p>
+      </div>
       <a
         href={entry.data.compareUrl}
+        data-ph-capture-attribute-destination="github"
         class="inline-flex items-center gap-1 underline intent:decoration-gold"
         target="_blank"
         rel="noopener noreferrer"

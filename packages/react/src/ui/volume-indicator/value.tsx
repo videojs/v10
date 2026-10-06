@@ -1,4 +1,6 @@
-import { getVolumeIndicatorDisplayValue, type VolumeIndicatorCore } from '@videojs/core';
+'use client';
+
+import { getVolumeIndicatorDisplayValue, type VolumeIndicatorState } from '@videojs/core';
 import type { ForwardedRef } from 'react';
 import { forwardRef } from 'react';
 
@@ -6,7 +8,7 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useVolumeIndicatorContext } from './context';
 
-export interface VolumeIndicatorValueProps extends UIComponentProps<'span', VolumeIndicatorCore.State> {}
+export interface VolumeIndicatorValueProps extends UIComponentProps<'span', VolumeIndicatorState> {}
 
 export const VolumeIndicatorValue = forwardRef(function VolumeIndicatorValue(
   componentProps: VolumeIndicatorValueProps,

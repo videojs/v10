@@ -1,0 +1,42 @@
+---
+/** A registry source choice placed beside the command it controls. */
+import ContentWidth from '@/components/frames/ContentWidth.astro';
+import {
+  isInstallationFramework,
+  type InstallationFramework,
+  type RegistryPreset,
+  type RegistryTheme,
+} from '@videojs/installation';
+
+import RegistryOptionsClient from './RegistryOptionsClient';
+
+interface Props {
+  /** Skin selected before the page's skin selector changes it. */
+  defaultSkin?: RegistryPreset;
+  /** Theme selected before the page's theme selector changes it. */
+  defaultTheme?: RegistryTheme;
+  kind: 'catalog' | 'styling';
+  /** Start the skin and theme selectors from the choices made earlier on the installation page. */
+  installation?: boolean;
+  /** Explicit source framework for routes that are not nested under a docs framework. */
+  framework?: InstallationFramework;
+}
+
+const { defaultSkin, defaultTheme, installation = false, kind, framework: frameworkProp } = Astro.props;
+const routeFramework = Astro.params.framework;
+const framework = frameworkProp ?? (isInstallationFramework(routeFramework) ? routeFramework : null);
+if (!framework) throw new Error(`RegistryOptions needs a framework route, received ${routeFramework}.`);
+---
+
+<ContentWidth>
+  <div data-llms-ignore data-ph-capture-attribute-location="installation-options">
+    <RegistryOptionsClient
+      client:idle
+      defaultSkin={defaultSkin}
+      defaultTheme={defaultTheme}
+      framework={framework}
+      installation={installation}
+      kind={kind}
+    />
+  </div>
+</ContentWidth>

@@ -15,6 +15,9 @@ const { date, ...rest } = Astro.props;
       year: "numeric",
       month: "short",
       day: "numeric",
+      // Content dates are date-only values parsed as UTC midnight; formatting in a local zone west of UTC would
+      // show the previous day.
+      timeZone: "UTC",
     })
   }
 </time>

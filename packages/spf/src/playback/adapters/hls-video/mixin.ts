@@ -1,8 +1,11 @@
 import { type MediaStreamType, MediaStreamTypes } from '@videojs/media';
+import { onEvent } from '@videojs/utils/dom';
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 
 import type { Composition } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
+import { DEFAULT_KEY_SYSTEMS } from '../../../media/dom/key-systems';
+import { type DrmSystemsConfig, type KeySystemModule, sourceDrmSystems } from '../../../media/drm';
 import {
   SVTA_NO_SUPPORTED_AUDIO_TRACK,
   SVTA_NO_SUPPORTED_VIDEO_TRACK,
@@ -47,8 +50,51 @@ export type HlsVideoMediaStreamType = MediaStreamType;
 
 export type { HlsVideoMediaError } from './error-surface';
 
+/**
+ * What this Adapter can be pointed at, beyond a bare URL.
+ *
+ * Deliberately narrower than `@videojs/media`'s `HlsSource`: that shape also carries `preferPlayback`, `engine`, and
+ * the rendition caps, none of which this engine can honour — SPF publishes no engine-shaped config, and there is no
+ * native path to prefer. A value typed as the wider shape still assigns here.
+ */
+export interface HlsVideoSource {
+  /** Manifest URL. Mirrors the host's `src` property. */
+  src?: string | undefined;
+  /** MIME type of the source. Takes precedence over inference from `src`. */
+  type?: string | undefined;
+  /**
+   * License servers for protected content, keyed by EME key-system id.
+   *
+   * Read per license request rather than captured, so changing the source changes what is licensed without rebuilding
+   * the engine. Accepts a resolver per URL (see `DrmUrl`) for servers only known once a source is set.
+   */
+  drm?: DrmSystemsConfig | undefined;
+}
+
+/**
+ * What `new HlsVideoAdapter(options)` accepts. The mixin class is forced to `constructor(...args: any[])`, so this is
+ * the type its returned constructor names for the one argument it reads.
+ */
+export type HlsVideoAdapterOptions =
+  | {
+      /**
+       * Engine config forwarded to `createHlsVideoEngine`. Its `drm` merges over the license servers derived from the
+       * current `source.drm`, so an entry here names a server the source does not. With no `keySystems`, `drm` is keyed
+       * by the default systems' ids.
+       */
+      config?: HlsVideoEngineConfig;
+    }
+  | {
+      /**
+       * The same, with `keySystems` narrowed. A constructor cannot be generic per call the way `createHlsVideoEngine`
+       * is, so `drm` is keyed by any id here; the engine still negotiates only what `keySystems` composes.
+       */
+      config: HlsVideoEngineConfig<readonly KeySystemModule[]> & { keySystems: readonly KeySystemModule[] };
+    };
+
 export interface HlsVideoAdapterProps {
   src: string;
+  source: HlsVideoSource | null;
   preload: '' | 'none' | 'metadata' | 'auto';
   disableRemotePlayback: boolean;
   streamType: HlsVideoMediaStreamType;
@@ -128,6 +174,7 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class HlsVideoImpl extends BaseClass {
     static readonly defaultProps: HlsVideoAdapterProps = {
       src: '',
+      source: null,
       preload: '',
       disableRemotePlayback: false,
       streamType: MediaStreamTypes.UNKNOWN,
@@ -148,7 +195,7 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
     }
 
     readonly #engine: Composition<HlsVideoEngineState, HlsVideoEngineContext>;
-    #config: HlsVideoEngineConfig;
+    #config: HlsVideoEngineConfig<readonly KeySystemModule[]>;
     #signals!: HlsVideoEngineSignals;
     #preload: '' | 'none' | 'metadata' | 'auto' = HlsVideoImpl.defaultProps.preload;
     #disableRemotePlayback: boolean = HlsVideoImpl.defaultProps.disableRemotePlayback;
@@ -167,15 +214,32 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
     #stopLiveSync: () => void;
     #stopErrorSync: () => void;
 
-    /** Pending loadstart listener from a deferred play() retry, if any. */
-    #loadstartListener: (() => void) | null = null;
+    /** Aborting a generation cancels all retries, including ones not yet registered. */
+    #playGeneration = new AbortController();
+
+    #source: HlsVideoSource | null = HlsVideoImpl.defaultProps.source;
 
     constructor(...args: any[]) {
       super(...args);
 
-      const { config } = args?.[0] ?? {};
+      // The mixin constructor's `any[]` is TypeScript's rule, not the contract;
+      // the returned constructor names `HlsVideoAdapterOptions`, so this is the
+      // shape callers were checked against.
+      const { config } = (args[0] ?? {}) as HlsVideoAdapterOptions;
 
-      this.#config = config;
+      // Every key system this engine knows gets an entry whose fields read
+      // whatever source is current, so `source.drm` licenses playback without the
+      // engine — built once, here — ever being rebuilt. A system the current
+      // source says nothing about resolves to `undefined`, which prunes its
+      // renditions exactly as naming no server at all does.
+      //
+      // `sourceDrmSystems` closes over `this` but runs before `super()` returns:
+      // safe because nothing resolves during engine construction, the first read
+      // being a capability probe with no presentation set yet.
+      const keySystems: readonly KeySystemModule[] = config?.keySystems ?? DEFAULT_KEY_SYSTEMS;
+      const drm = sourceDrmSystems(() => this.#source?.drm, keySystems);
+
+      this.#config = { ...config, drm: { ...drm, ...config?.drm } };
       this.#engine = this.#createEngine();
 
       // Mirror the engine's live/stream-type detection onto the media surface,
@@ -333,6 +397,10 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
     // -------------------------------------------------------------------------
 
     attach(mediaElement: HTMLMediaElement): void {
+      if (mediaElement !== this.#signals.context.mediaElement.get()) {
+        this.#cancelPendingPlay();
+      }
+
       super.attach?.(mediaElement);
       this.#signals.context.mediaElement.set(mediaElement);
     }
@@ -404,12 +472,45 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
     }
 
     set src(value: string) {
-      // Assigning the URL already playing is not a request to reload it. The
-      // presentation is set from a fresh object every time, so re-resolving an
-      // unchanged URL restarts playback — which is what a caller changing only
-      // the parts of a structured source that describe images, rather than the
-      // stream, would get. The hls.js Media draws the same line: it announces
-      // every source change and loads only when the URL or engine config moves.
+      // Guarded on the URL rather than on source identity: the presentation can
+      // also be written straight to the engine, and clearing `src` has to reach
+      // it either way.
+      if (value === this.src) return;
+
+      // A bare URL names a different asset, so whatever the previous source said
+      // about licensing it no longer applies — same line the Mux flavor draws
+      // when a URL replaces a structured source.
+      this.#source = value ? { src: value } : null;
+      this.#applySrc(value);
+      this.dispatchEvent?.(new Event('sourcechange'));
+    }
+
+    /**
+     * Structured source: the manifest URL plus what a URL cannot carry, which today is the license servers for
+     * protected content. Setting it derives `src`. Assigning the same object back costs nothing — changing anything
+     * takes a new one.
+     *
+     * @fires sourcechange - Fired when `source` changes. Read `source` for the new value.
+     */
+    get source(): HlsVideoSource | null {
+      return this.#source;
+    }
+
+    set source(value: HlsVideoSource | null) {
+      const source = value ?? null;
+      if (source === this.#source) return;
+
+      this.#source = source;
+      this.#applySrc(source?.src ?? '');
+      this.dispatchEvent?.(new Event('sourcechange'));
+    }
+
+    /**
+     * Point the engine at a URL. Assigning the one already playing is not a request to reload it: the presentation is
+     * set from a fresh object every time, so re-resolving an unchanged URL would restart playback — which is what
+     * changing only the licensing half of a source would otherwise cause.
+     */
+    #applySrc(value: string): void {
       if (value === this.src) return;
 
       this.#cancelPendingPlay();
@@ -425,22 +526,22 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
       const mediaElement = this.#signals.context.mediaElement.get();
       if (!mediaElement) return Promise.reject(new Error('HlsVideoAdapterCore: no media element attached'));
 
+      const { signal } = this.#playGeneration;
+
       // Signal play intent — enables loading even with preload="none"
       this.#signals.state.loadActivated.set(true);
 
       return mediaElement.play().catch((err: unknown) => {
+        signal.throwIfAborted();
+
         // If we have a pending HLS source, the rejection may be because MSE
         // hasn't attached a blob URL yet. Wait for loadstart (src assigned
         // by MSE setup) and retry once.
         if (this.src) {
-          return new Promise<void>((resolve, reject) => {
-            const listener = () => {
-              this.#loadstartListener = null;
-              mediaElement.play().then(resolve, reject);
-            };
+          return onEvent(mediaElement, 'loadstart', { signal }).then(() => {
+            signal.throwIfAborted();
 
-            this.#loadstartListener = listener;
-            mediaElement.addEventListener('loadstart', listener, { once: true });
+            return mediaElement.play();
           });
         }
 
@@ -499,18 +600,14 @@ export function HlsVideoMixin<Base extends Constructor<any>>(BaseClass: Base) {
     }
 
     #cancelPendingPlay(): void {
-      if (!this.#loadstartListener) return;
-
-      const mediaElement = this.#signals.context.mediaElement.get();
-
-      mediaElement?.removeEventListener('loadstart', this.#loadstartListener);
-      this.#loadstartListener = null;
+      this.#playGeneration.abort();
+      this.#playGeneration = new AbortController();
     }
   }
 
   // `MixinReturn` sources statics from `Base`, so the adapter's own static needs
   // adding back to the type or callers can't read it.
-  return HlsVideoImpl as unknown as MixinReturn<Base, HlsVideoAdapterAPI> & {
+  return HlsVideoImpl as unknown as MixinReturn<Base, HlsVideoAdapterAPI, [options?: HlsVideoAdapterOptions]> & {
     readonly alternativeMediaSuggestion: string | undefined;
     readonly defaultProps: HlsVideoAdapterProps;
   };

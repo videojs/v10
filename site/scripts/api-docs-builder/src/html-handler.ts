@@ -16,9 +16,20 @@ export function extractHtml(
 
   let tagName = '';
   const properties = new Set<string>();
+  const members = new Set<string>();
 
   for (const resolved of hierarchy) {
     for (const member of resolved.declaration.body.body) {
+      const isInstanceMember =
+        (member.type === 'PropertyDefinition' || (member.type === 'MethodDefinition' && member.kind !== 'method')) &&
+        !member.static &&
+        member.key.type !== 'PrivateIdentifier' &&
+        member.accessibility !== 'private' &&
+        member.accessibility !== 'protected';
+      const memberName = isInstanceMember ? staticName(member.key) : undefined;
+
+      if (memberName && memberName !== 'constructor') members.add(memberName);
+
       if (member.type !== 'PropertyDefinition' || !member.static) continue;
 
       const name = staticName(member.key);
@@ -64,5 +75,5 @@ export function extractHtml(
       return description ? { name, description } : { name };
     });
 
-  return tagName ? { tagName, properties: [...properties], events } : null;
+  return tagName ? { tagName, properties: [...properties], members: [...members], events } : null;
 }

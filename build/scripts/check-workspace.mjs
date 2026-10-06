@@ -4,13 +4,9 @@
  * Validates that manually-maintained lists across config files stay in sync with the actual package structure. Run via
  * `pnpm check:workspace`.
  *
- * Checks: 1. CI test coverage — every testable package is tested in CI 2. Commitlint scopes — every package dir is a
- * valid commit scope 3. Root tsconfig references — every composite project is referenced 4. Package metadata —
- * non-private packages have required fields 5. Release-please config — every versioned package is registered 6. Bundled
- * docs — package publishing wires include generated docs 7. Define imports — no bare side-effect imports from relative
- * paths 8. i18n locales — tag lists match locale files and generated stubs 9. Agent context — portable skill metadata,
- * compatibility imports, and budgets 10. Internal records — organized design docs, frontmatter, and lifecycle status
- * 11. mise tool pins — optional mise.toml agrees with the canonical version pins
+ * Checks CI test coverage, commitlint scopes, root tsconfig references, package metadata, release configuration,
+ * bundled docs, relative side-effect imports, i18n locales, agent context, internal records, and optional mise tool
+ * pins.
  */
 import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
@@ -200,8 +196,35 @@ const REQUIRED_FIELDS = ['sideEffects', 'files', 'exports'];
 /** Required only when the package has a root "." export. */
 const ROOT_EXPORT_FIELDS = ['main', 'module', 'types'];
 
-/** Packages excluded from metadata checks. CLI is bin-only — sideEffects/exports don't apply. */
-const METADATA_EXCLUDE = new Set(['cli']);
+/** The only package that publishes an executable. It is bin-only, so library fields don't apply. */
+const CLI_PACKAGE_DIR = 'cli';
+
+/**
+ * `npx @videojs/cli` runs the package's only bin, which installs globally as `videojs`, and every cold run downloads
+ * its dependencies, so the CLI stays one bundled file with no runtime dependencies.
+ */
+function cliMetadataWarnings(pkg) {
+  const warnings = [];
+
+  if (
+    JSON.stringify(Object.keys(pkg.bin ?? {})) !== JSON.stringify(['videojs']) ||
+    typeof pkg.bin.videojs !== 'string'
+  ) {
+    warnings.push(`${pkg.name}: "bin" should be { "videojs": "<path>" } so \`npx ${pkg.name}\` runs its only command`);
+  }
+
+  if (JSON.stringify(pkg.files) !== JSON.stringify(['dist'])) {
+    warnings.push(`${pkg.name}: "files" should be ["dist"]`);
+  }
+
+  for (const field of ['dependencies', 'peerDependencies', 'optionalDependencies']) {
+    if (Object.keys(pkg[field] ?? {}).length > 0) {
+      warnings.push(`${pkg.name}: "${field}" should be empty; bundle workspace code into the bin instead`);
+    }
+  }
+
+  return warnings;
+}
 
 function checkPackageMetadata() {
   const warnings = [];
@@ -211,12 +234,17 @@ function checkPackageMetadata() {
     // Skip private packages — they're internal.
     if (pkg.private) continue;
 
-    // Skip packages that don't need library metadata.
-    if (METADATA_EXCLUDE.has(packageDirName(dir))) continue;
-
-    // publishConfig.access is required for scoped public packages.
     if (pkg.publishConfig?.access !== 'public') {
       warnings.push(`${pkg.name}: missing publishConfig.access = "public"`);
+    }
+
+    if (dir === CLI_PACKAGE_DIR) {
+      warnings.push(...cliMetadataWarnings(pkg));
+      continue;
+    }
+
+    if (pkg.bin !== undefined) {
+      warnings.push(`${pkg.name}: remove "bin"; command line tools ship in @videojs/cli`);
     }
 
     for (const field of REQUIRED_FIELDS) {
@@ -294,17 +322,10 @@ function checkBundledDocs() {
     }
   }
 
-  const cli = readPackageJson('cli');
-  const expectedCliCopy = 'node --import tsx ../../site/scripts/copy-package-docs.ts cli';
-
-  if (cli.scripts?.['copy-docs'] !== expectedCliCopy) {
-    warnings.push(`${cli.name}: copy-docs script should be \`${expectedCliCopy}\``);
-  }
-
   return { ok: warnings.length === 0, warnings };
 }
 
-// ── Check 7: Define imports ──────────────────────────────────────────────────
+// ── Check 8: Define imports ──────────────────────────────────────────────────
 
 /**
  * Preset and UI define modules are side-effect-only registration entrypoints. Media and extension define modules retain

@@ -5,6 +5,7 @@ import {
   getElementPadding,
   getElementSize,
   getInlineExtent,
+  isPointInElement,
   measureElement,
   measureElementChildren,
 } from '../layout';
@@ -56,12 +57,18 @@ describe('DOM layout utilities', () => {
     const element = document.createElement('div');
 
     element.style.setProperty('width', '80px', 'important');
-    setDimensions(element, { rectWidth: 160, rectHeight: 90 });
+    const measure = vi.spyOn(element, 'getBoundingClientRect').mockImplementation(() => {
+      expect(element.style.getPropertyValue('width')).toBe('max-content');
+      expect(element.style.getPropertyValue('min-width')).toBe('0px');
+
+      return new DOMRect(0, 0, 160, 90);
+    });
 
     expect(measureElement(element, { styles: { width: 'max-content', minWidth: '0px' } })).toEqual({
       width: 160,
       height: 90,
     });
+    expect(measure).toHaveBeenCalledOnce();
     expect(element.style.getPropertyValue('width')).toBe('80px');
     expect(element.style.getPropertyPriority('width')).toBe('important');
     expect(element.style.getPropertyValue('min-width')).toBe('');
@@ -137,5 +144,33 @@ describe('DOM layout utilities', () => {
         measure: (_element, width) => ({ width: width ?? 100, height: 20 }),
       })
     ).toEqual({ width: 0, height: 20 });
+  });
+});
+
+describe('isPointInElement', () => {
+  function element(left: number, top: number, width: number, height: number): Element {
+    const el = document.createElement('div');
+
+    vi.spyOn(el, 'getBoundingClientRect').mockReturnValue(new DOMRect(left, top, width, height));
+    return el;
+  }
+
+  it('contains points inside the box, including its left and top edges', () => {
+    const el = element(10, 20, 100, 50);
+
+    expect(isPointInElement(el, { clientX: 10, clientY: 20 })).toBe(true);
+    expect(isPointInElement(el, { clientX: 60, clientY: 45 })).toBe(true);
+  });
+
+  it('excludes the right and bottom edges and points beyond the box', () => {
+    const el = element(10, 20, 100, 50);
+
+    expect(isPointInElement(el, { clientX: 110, clientY: 45 })).toBe(false);
+    expect(isPointInElement(el, { clientX: 60, clientY: 70 })).toBe(false);
+    expect(isPointInElement(el, { clientX: 5, clientY: 45 })).toBe(false);
+  });
+
+  it('contains nothing when the element has no size', () => {
+    expect(isPointInElement(element(0, 0, 0, 0), { clientX: 0, clientY: 0 })).toBe(false);
   });
 });

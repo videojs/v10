@@ -1,0 +1,31 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import { STEP_CLASS, STEP_NUMBER_CLASS, STEP_TITLE_CLASS } from './DynamicSteps';
+
+interface Props extends HTMLAttributes<'li'> {
+  number: number;
+  title: string;
+}
+
+const { number, title, ...attributes } = Astro.props;
+---
+
+<li
+  {...attributes}
+  class={STEP_CLASS}
+  style="grid-template-columns: 2rem minmax(0, 1fr);"
+>
+  <span
+    aria-hidden="true"
+    data-llms-ignore
+    class={STEP_NUMBER_CLASS}
+  >
+    {number}
+  </span>
+  <div class="min-w-0 pt-1">
+    <h3 class={STEP_TITLE_CLASS} data-step-title>{title}</h3>
+    <div class="[&>*:last-child]:mb-0!">
+      <slot />
+    </div>
+  </div>
+</li>

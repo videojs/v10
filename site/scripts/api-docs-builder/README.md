@@ -67,7 +67,7 @@ site/scripts/api-docs-builder/
     ├── css-vars-handler.ts    # Extracts CSS custom properties
     ├── feature-handler.ts     # Extracts player feature state and actions
     ├── html-handler.ts        # Extracts Lit element info
-    ├── media-element-handler.ts # Extracts media element APIs
+    ├── media-element-handler.ts # Extracts media component APIs
     ├── parts-handler.ts       # Parses index.parts.ts for multi-part components
     ├── preset-handler.ts      # Extracts preset composition
     ├── util-handler.ts        # Extracts util params/return from store/react packages
@@ -80,7 +80,7 @@ site/scripts/api-docs-builder/
 site/src/
 ├── content/generated-component-reference/  # Generated component JSON (gitignored)
 ├── content/generated-feature-reference/    # Generated player feature JSON (gitignored)
-├── content/generated-media-reference/      # Generated media element JSON (gitignored)
+├── content/generated-media-reference/      # Generated media component JSON (gitignored)
 ├── content/generated-preset-reference/     # Generated preset JSON (gitignored)
 ├── content/generated-util-reference/       # Generated util JSON (gitignored)
 └── components/docs/api-reference/
@@ -113,6 +113,19 @@ All dependencies are in `site/package.json` devDependencies.
 Every collection is generated and schema-validated before output changes begin. The writer stages
 serialized files, rejects unsafe or duplicate filenames, and removes obsolete JSON after writing the
 current set. An unexpectedly empty collection fails generation instead of erasing existing output.
+
+## Display type hints
+
+When a conditional or runtime-derived type cannot be represented by the syntax-only formatter, add a `@displayType`
+tag to its alias. Braced type-parameter names are replaced with the reference's resolved arguments:
+
+```ts
+/** @displayType {Store}['state'] */
+export type InferStoreState<Store extends AnyStore> = Store extends { readonly state: infer State } ? State : never;
+```
+
+Keep the hint equivalent to the public meaning of the alias. It only controls API-reference display output and does not
+change the published TypeScript type.
 
 ## Acknowledgements
 

@@ -8,6 +8,7 @@ import { type MenuContextValue, menuContext } from './context';
 import { MenuGroupController } from './group-controller';
 import { MenuRadioItemElement } from './radio-item';
 
+/** Group of mutually exclusive `<media-menu-radio-item>` children; the element itself takes `role="group"`. */
 export class MenuRadioGroupElement extends RadioGroupElement {
   static readonly tagName: string = 'media-menu-radio-group';
 

@@ -1,5 +1,100 @@
 # Changelog
 
+## [10.0.1](https://github.com/videojs/v10/compare/@videojs/store@10.0.0...@videojs/store@10.0.1) (2026-10-02)
+
+
+### Miscellaneous Chores
+
+* **@videojs/store:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.1
+  * devDependencies
+    * @videojs/element bumped to 10.0.1
+  * peerDependencies
+    * @videojs/element bumped to 10.0.1
+
+## [10.0.0](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-rc.5...@videojs/store@10.0.0) (2026-10-01)
+
+
+### Features
+
+* **packages:** release Video.js 10.0.0 as stable ([#3058](https://github.com/videojs/v10/issues/3058)) ([37477fc](https://github.com/videojs/v10/commit/37477fc187f36fc2ab3cbc0db7c1b2d3fc6bcca9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0
+  * devDependencies
+    * @videojs/element bumped to 10.0.0
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0
+
+## [10.0.0-rc.5](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-rc.4...@videojs/store@10.0.0-rc.5) (2026-10-01)
+
+
+### Bug Fixes
+
+* **react:** declare client boundaries per module ([#3079](https://github.com/videojs/v10/issues/3079)) ([39ff910](https://github.com/videojs/v10/commit/39ff910d50567037850ba6f11c2c8883dd7974bb))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-rc.5
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-rc.5
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-rc.5
+
+## [10.0.0-rc.4](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-rc.3...@videojs/store@10.0.0-rc.4) (2026-09-26)
+
+
+### Miscellaneous Chores
+
+* **@videojs/store:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-rc.4
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-rc.4
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-rc.4
+
+## [10.0.0-rc.3](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-rc.2...@videojs/store@10.0.0-rc.3) (2026-09-25)
+
+
+### Bug Fixes
+
+* **site:** improve markdown for agents ([#2883](https://github.com/videojs/v10/issues/2883)) ([d5c8e3c](https://github.com/videojs/v10/commit/d5c8e3cde77cbbe74ecc6878dbd7862db8628bfa))
+
+
+### Performance Improvements
+
+* **site:** faster docs dev server start ([#2698](https://github.com/videojs/v10/issues/2698)) ([33d3887](https://github.com/videojs/v10/commit/33d38873ed5337a5695eaa426a5ebfbea61356d2))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-rc.3
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-rc.3
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-rc.3
+
 ## [10.0.0-rc.2](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-rc.1...@videojs/store@10.0.0-rc.2) (2026-09-09)
 
 

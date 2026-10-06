@@ -8,7 +8,9 @@ import { z } from 'astro/zod';
 
 import { PropDefSchema, StateDefSchema } from './component-reference';
 
-export const ParamDefSchema = PropDefSchema;
+export const ParamDefSchema = PropDefSchema.extend({
+  rest: z.boolean().optional(),
+});
 
 export const ReturnFieldDefSchema = StateDefSchema;
 
@@ -19,9 +21,20 @@ export const ReturnValueSchema = z.object({
   fields: z.record(z.string(), ReturnFieldDefSchema).optional(),
 });
 
+export const UtilTypeParameterSchema = z.object({
+  name: z.string(),
+  constraint: z.string().optional(),
+  default: z.string().optional(),
+  const: z.boolean().optional(),
+});
+
 export const UtilOverloadSchema = z.object({
   label: z.string().optional(),
+  /** A class constructor signature, called with `new`. */
+  construct: z.boolean().optional(),
   description: z.string().optional(),
+  typeParameters: z.array(UtilTypeParameterSchema).optional(),
+  returnType: z.string().optional(),
   parameters: z.record(z.string(), ParamDefSchema),
   returnValue: ReturnValueSchema,
 });
@@ -36,5 +49,6 @@ export const UtilReferenceSchema = z.object({
 export type ParamDef = z.infer<typeof ParamDefSchema>;
 export type ReturnFieldDef = z.infer<typeof ReturnFieldDefSchema>;
 export type ReturnValue = z.infer<typeof ReturnValueSchema>;
+export type UtilTypeParameter = z.infer<typeof UtilTypeParameterSchema>;
 export type UtilOverload = z.infer<typeof UtilOverloadSchema>;
 export type UtilReference = z.infer<typeof UtilReferenceSchema>;

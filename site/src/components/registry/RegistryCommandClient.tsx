@@ -1,52 +1,84 @@
-import { useStore } from '@nanostores/react';
-
-import ClientCode from '@/components/Code/ClientCode';
-import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
-import { registryStyling } from '@/stores/registry';
 import {
   type RegistryFramework,
+  type RegistryPreset,
   type RegistryTheme,
-  registryInstallCommands,
   resolveRegistryStyling,
-  SHADCN_RUNNERS,
-  type ShadcnRunner,
-} from '@/utils/installation/shadcn';
+  shadcnInitCommand,
+  shadcnAddCommand,
+  shadcnRegistryAddCommand,
+} from '@videojs/installation';
+
+import { DynamicStep, DynamicSteps } from '@/components/docs/DynamicSteps';
+import PackageManagerTabs from '@/components/installation/PackageManagerTabs';
+import { useRegistrySkin, useRegistryStyling, useRegistryTheme } from '@/components/installation/useRegistryFramework';
 
 interface Props {
+  /** Skin to add until the page's skin selector changes it. Omit for commands with fixed items. */
+  defaultSkin?: RegistryPreset | undefined;
+  /** Keep the supplied skin and theme fixed instead of following shared page selectors. */
+  fixedSelection?: boolean | undefined;
   framework: RegistryFramework;
   /** Registry item names, without the `@videojs/` namespace. Empty registers the namespace and installs nothing. */
   items: readonly string[];
-  /** Show one package manager instead of tabs, for pages that already asked. */
-  runner?: ShadcnRunner | undefined;
-  /** Theme catalog to register. The default theme uses the shortest registry URL. */
+  /** Initialize an existing compatible app first when it has no components config. */
+  optionalInit?: boolean | undefined;
+  /** Theme to use until the page's theme selector changes it. */
   theme?: RegistryTheme | undefined;
 }
 
-const RUNNERS = Object.keys(SHADCN_RUNNERS) as ShadcnRunner[];
-
-/**
- * The Shadcn commands one install needs: `registry add` points the `@videojs` namespace at the styling catalog the
- * page's select box chose, then `add` installs the items.
- */
-export default function RegistryCommandClient({ framework, items, runner, theme = 'default' }: Props) {
-  const $styling = useStore(registryStyling);
+/** The Shadcn steps that configure the selected Video.js catalog and add its source files. */
+export default function RegistryCommandClient({
+  defaultSkin,
+  fixedSelection = false,
+  framework,
+  items,
+  optionalInit = false,
+  theme = 'default',
+}: Props) {
+  const $skin = useRegistrySkin();
+  const $styling = useRegistryStyling();
+  const $theme = useRegistryTheme();
+  const selectedItems = defaultSkin ? [fixedSelection ? defaultSkin : ($skin ?? defaultSkin)] : items;
+  const selectedTheme = fixedSelection ? theme : ($theme ?? theme);
   const styling = resolveRegistryStyling(framework, $styling);
-  const runners = runner ? [runner] : RUNNERS;
+  const initCommands = optionalInit
+    ? {
+        npm: shadcnInitCommand('npm'),
+        pnpm: shadcnInitCommand('pnpm'),
+        yarn: shadcnInitCommand('yarn'),
+        bun: shadcnInitCommand('bun'),
+      }
+    : null;
+  const registryCommands = {
+    npm: shadcnRegistryAddCommand('npm', framework, styling, selectedTheme),
+    pnpm: shadcnRegistryAddCommand('pnpm', framework, styling, selectedTheme),
+    yarn: shadcnRegistryAddCommand('yarn', framework, styling, selectedTheme),
+    bun: shadcnRegistryAddCommand('bun', framework, styling, selectedTheme),
+  };
+  const addCommands = selectedItems.length
+    ? {
+        npm: shadcnAddCommand('npm', selectedItems),
+        pnpm: shadcnAddCommand('pnpm', selectedItems),
+        yarn: shadcnAddCommand('yarn', selectedItems),
+        bun: shadcnAddCommand('bun', selectedItems),
+      }
+    : null;
 
   return (
-    <TabsRoot>
-      <TabsList label="Package manager">
-        {runners.map((candidate, index) => (
-          <Tab key={candidate} value={candidate} initial={index === 0}>
-            {candidate}
-          </Tab>
-        ))}
-      </TabsList>
-      {runners.map((candidate, index) => (
-        <TabsPanel key={candidate} value={candidate} initial={index === 0}>
-          <ClientCode code={registryInstallCommands(candidate, framework, styling, items, theme)} lang="bash" />
-        </TabsPanel>
-      ))}
-    </TabsRoot>
+    <DynamicSteps>
+      {initCommands && (
+        <DynamicStep number={1} title="Create components.json (optional)">
+          <PackageManagerTabs commands={initCommands} />
+        </DynamicStep>
+      )}
+      <DynamicStep number={initCommands ? 2 : 1} title="Add the Video.js Registry">
+        <PackageManagerTabs commands={registryCommands} />
+      </DynamicStep>
+      {addCommands && (
+        <DynamicStep number={initCommands ? 3 : 2} title="Add the skin source">
+          <PackageManagerTabs commands={addCommands} />
+        </DynamicStep>
+      )}
+    </DynamicSteps>
   );
 }

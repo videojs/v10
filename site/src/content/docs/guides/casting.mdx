@@ -24,9 +24,31 @@ Send playback to an Apple TV over AirPlay or a Chromecast over Google Cast while
 
 <CustomUiNote />
 
+## Installation
+
+Install the Google Cast extension and the hls.js adapter used in the example below. AirPlay needs no extra package:
+
+<FrameworkCase frameworks={["react"]}>
+```bash
+pnpm add @videojs/react @videojs/google-cast @videojs/hlsjs-video
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```bash
+pnpm add @videojs/html @videojs/google-cast @videojs/hlsjs-video
+```
+</FrameworkCase>
+
 ## Recommended approach
 
-Use the <DocsLink slug="reference/components/google-cast">GoogleCast extension</DocsLink> with a <DocsLink slug="reference/components/cast-button">CastButton</DocsLink>, and add an <DocsLink slug="reference/components/airplay-button">AirPlayButton</DocsLink> for Safari. The prebuilt skins already include both buttons; add `GoogleCast` next to a streaming media component to enable the configurable Cast route.
+<FrameworkCase frameworks={["react"]}>
+Use the <DocsLink slug="reference/components/google-cast">GoogleCast extension</DocsLink> with a <DocsLink slug="reference/components/cast-button">CastButton</DocsLink>, and add an <DocsLink slug="reference/components/airplay-button">AirPlayButton</DocsLink> for Safari. The packaged skins already include both buttons; add `GoogleCast` anywhere inside the player to enable the configurable Cast route. It works with any media the player attaches, including a plain `<Video />`.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Use the <DocsLink slug="reference/components/google-cast">`<google-cast>` extension</DocsLink> with a <DocsLink slug="reference/components/cast-button">`<media-cast-button>`</DocsLink>, and add an <DocsLink slug="reference/components/airplay-button">`<media-airplay-button>`</DocsLink> for Safari. The packaged skins already include both buttons; add `<google-cast>` anywhere inside the player to enable the configurable Cast route. It works with any media the player attaches, including a plain `<video>`.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
   <StyleCase styles={["css"]}>
@@ -51,29 +73,61 @@ Use the <DocsLink slug="reference/components/google-cast">GoogleCast extension</
   </StyleCase>
 </FrameworkCase>
 
-The demo pairs the streaming media component with the `GoogleCast` extension in React or `<google-cast>` in HTML. Without that extension, `CastButton` drives the browser's native Remote Playback API instead, which does not provide Video.js receiver or load-request configuration.
+<FrameworkCase frameworks={["react"]}>
+The demo pairs the media component with the `GoogleCast` extension. Without that extension, `CastButton` drives the browser's native Remote Playback API instead, which does not provide Video.js receiver or load-request configuration.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The demo pairs the media component with the `<google-cast>` extension. Without that extension, `<media-cast-button>` drives the browser's native Remote Playback API instead, which does not provide Video.js receiver or load-request configuration.
+</FrameworkCase>
 
 ## How it works
 
 The <DocsLink slug="reference/api/feature-remote-playback">remote playback feature</DocsLink> gives AirPlay and Google Cast one state shape:
 
 - `remotePlaybackAvailability` is `'available'` when a remote device can be reached, `'unavailable'` when the API exists but no device is reachable, and `'unsupported'` when the browser has no remote playback route.
-- `remotePlaybackState` is `'disconnected'`, `'connecting'`, or `'connected'`.
-- `toggleRemotePlayback()` opens the browser's device picker, or disconnects an active session.
+- `remotePlaybackState` is `'disconnected'`, `'connecting'`, or `'connected'`. The AirPlay route reports only `'disconnected'` and `'connected'`; Google Cast also reports `'connecting'`.
+- `promptRemotePlayback()` opens the browser's device picker, including during an active session. Use the picker to connect to a device or return to local playback.
 
 AirPlay uses WebKit's presentation APIs. Google Cast uses a sender and receiver: the browser sends the receiver a media URL and then controls playback. Your UI reads the same Video.js state for either route.
 
 While connected, playback actions — play, pause, seek, volume — proxy to the remote device, and player state keeps reflecting the remote session. Local playback is suspended.
 
-The Google Cast SDK loads only when the `GoogleCast` extension is present in a Chromium browser. Players without that extension and browsers that cannot cast do not load it.
+<FrameworkCase frameworks={["react"]}>
+Control playback and read its state through the player while casting: use the built-in controls or the <DocsLink slug="reference/api/player-store">store actions and state</DocsLink> from `usePlayer`. Don't call methods on the media component or listen for its events to drive or track a session.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Control playback and read its state through the player while casting: use the built-in controls or the <DocsLink slug="reference/api/player-store">store actions and state</DocsLink> on the player element's `store`. Don't call methods on the media component or listen for its events to drive or track a session.
+</FrameworkCase>
+
+For a custom control, call `promptRemotePlayback()` directly from the click handler and catch its promise. It rejects when no remote route exists or the browser refuses the request. A canceled Google Cast picker can also resolve without connecting, so show success only when `remotePlaybackState` is `'connected'`. The built-in buttons handle the request for you.
+
+<FrameworkCase frameworks={["react"]}>
+The Google Cast SDK loads only when the player includes the `GoogleCast` extension and runs in a Chromium browser that can cast.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The Google Cast SDK loads only when the player includes the `<google-cast>` extension and runs in a Chromium browser that can cast.
+</FrameworkCase>
 
 ## Availability and constraints
 
+<FrameworkCase frameworks={["react"]}>
 - Remote playback is asynchronous and can fail mid-session when a device or network disappears. React to `remotePlaybackState` rather than assuming a request succeeds.
 - Google Cast works only in Chromium-based browsers; elsewhere its route reports `'unsupported'`.
 - AirPlay works only in Safari; availability requires an AirPlay device reachable on the network.
-- The remote device fetches the source and tracks itself. Localhost, VPN-only, expired, or cross-origin URLs without the necessary CORS headers will fail on the receiver even if they play in the browser.
-- Set `disableRemotePlayback` on the media element to opt out entirely.
+- The remote device fetches the source and its text tracks on its own. Localhost, VPN-only, expired, or cross-origin URLs without the necessary CORS headers will fail on the receiver even if they play in the browser.
+- Set `disableRemotePlayback` on the media component to opt out entirely.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+- Remote playback is asynchronous and can fail mid-session when a device or network disappears. React to `remotePlaybackState` rather than assuming a request succeeds.
+- Google Cast works only in Chromium-based browsers; elsewhere its route reports `'unsupported'`.
+- AirPlay works only in Safari; availability requires an AirPlay device reachable on the network.
+- The remote device fetches the source and its text tracks on its own. Localhost, VPN-only, expired, or cross-origin URLs without the necessary CORS headers will fail on the receiver even if they play in the browser.
+- Set the `disableremoteplayback` attribute on the media component to opt out entirely.
+</FrameworkCase>
 
 ## Common variations
 
@@ -96,11 +150,23 @@ By default, Video.js sends the current source to Google's Default Media Receiver
 
 </FrameworkCase>
 
-Use `src` and `contentType` when the receiver should load a different source than the browser. `streamType` and `customData` let you describe that source and attach application-specific data. See the <DocsLink slug="reference/components/google-cast">GoogleCast reference</DocsLink> for the exact option types and HTML property mapping.
+<FrameworkCase frameworks={["react"]}>
+Use `src` and `contentType` when the receiver should load a different source than the browser. A YouTube or Vimeo embed needs `src`: the receiver can't play the embed itself, so without it nothing is sent to the receiver. `streamType` and `customData` let you describe that source and attach application-specific data. See the <DocsLink slug="reference/components/google-cast">GoogleCast reference</DocsLink> for the exact option types.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Use `src` and `contentType` when the receiver should load a different source than the browser. A YouTube or Vimeo embed needs `src`: the receiver can't play the embed itself, so without it nothing is sent to the receiver. `streamType` and `customData` let you describe that source and attach application-specific data. See the <DocsLink slug="reference/components/google-cast">`<google-cast>` reference</DocsLink> for the exact option types and attribute-to-property mapping.
+</FrameworkCase>
 
 ### Read connection state
 
+<FrameworkCase frameworks={["react"]}>
 Use `remotePlaybackAvailability` to decide whether to offer a route and `remotePlaybackState` to show whether it is disconnected, connecting, or connected. `CastButton` and `AirPlayButton` already apply these states to their presentation; read them directly only when another part of your app needs them.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Use `remotePlaybackAvailability` to decide whether to offer a route and `remotePlaybackState` to show whether it is disconnected, connecting, or connected. `<media-cast-button>` and `<media-airplay-button>` already apply these states to their presentation; read them directly only when another part of your app needs them.
+</FrameworkCase>
 
 ## Troubleshooting
 
@@ -112,9 +178,13 @@ The Cast button hides when the route is unsupported. In Chromium with no Cast de
 
 The receiver cannot fetch the media. Confirm the source URL is reachable from the device and served with CORS headers, including caption tracks.
 
+### Custom UI shows local playback while casting
+
+The code reads or controls the media component directly. Read playback state from the player store and call its actions instead; only the player reflects the remote session.
+
 ### The UI freezes on "connecting"
 
-The user dismissed the picker or the device disconnected. `remotePlaybackState` returns to `'disconnected'`; drive your UI from that state.
+For Google Cast, track the `promptRemotePlayback()` promise separately from `remotePlaybackState`. Clear your loading indicator when the promise settles. A canceled picker can resolve without connecting. AirPlay does not expose a `'connecting'` phase; show its connected or disconnected state instead.
 
 ## Related components
 

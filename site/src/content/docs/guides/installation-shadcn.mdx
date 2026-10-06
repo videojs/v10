@@ -1,0 +1,221 @@
+---
+title: Shadcn Installation Guide
+description: Add editable React or HTML skin source with the Shadcn registry
+---
+
+import Aside from '@/components/Aside.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import HumanCase from '@/components/docs/HumanCase.astro';
+import Step from '@/components/docs/Step.astro';
+import Steps from '@/components/docs/Steps.astro';
+import ContentWidth from '@/components/frames/ContentWidth.astro';
+import InstallationAgentStart from '@/components/installation/InstallationAgentStart.astro';
+import InstallationOptionsForAgents from '@/components/installation/InstallationOptionsForAgents.astro';
+import JSPicker from '@/components/installation/JSPicker.astro';
+import InstallationMethodNav from '@/components/installation/InstallationMethodNav.astro';
+import InstallationOverview from '@/components/installation/InstallationOverview.astro';
+import InstallationPreview from '@/components/installation/InstallationPreview';
+import MediaSourcePicker from '@/components/installation/MediaSourcePicker';
+import ExtensionPicker from '@/components/installation/ExtensionPicker';
+import ShadcnNextSteps from '@/components/installation/ShadcnNextSteps.astro';
+import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
+import UseCasePicker from '@/components/installation/UseCasePicker';
+import RegistryOptions from '@/components/registry/RegistryOptions.astro';
+import AppSetupPicker from '@/components/installation/AppSetupPicker.astro';
+import RegistryInitCommand from '@/components/registry/RegistryInitCommand.astro';
+import InstallationRegistryCommand from '@/components/registry/InstallationRegistryCommand.astro';
+import ShadcnFrameworkCase from '@/components/registry/ShadcnFrameworkCase.astro';
+import SourceMediaInstall from '@/components/registry/SourceMediaInstall';
+import SourceReactPlayer from '@/components/registry/SourceReactPlayer';
+import SourceHTMLPlayer from '@/components/registry/SourceHTMLPlayer';
+import ProjectCommands from '@/components/installation/ProjectCommands';
+import StartingPointPicker from '@/components/installation/StartingPointPicker';
+
+<InstallationOverview />
+
+## AI Quickstart
+
+<InstallationAgentStart />
+
+<InstallationOptionsForAgents />
+
+<HumanCase>
+
+## Choose your framework
+
+Choose the JavaScript framework for your project.
+
+<ContentWidth margins="lg">
+  <JSPicker />
+</ContentWidth>
+
+## Choose your app
+
+Choose the app environment that controls the setup commands and file locations below.
+
+<ShadcnFrameworkCase framework="react" llmsHeading={false}>
+<AppSetupPicker framework="react" fixedFramework method="shadcn" />
+</ShadcnFrameworkCase>
+
+<ShadcnFrameworkCase framework="html">
+<AppSetupPicker framework="html" fixedFramework method="shadcn" />
+</ShadcnFrameworkCase>
+
+## Choose your use case
+
+Choose the ready-made player that is closest to what you are building. The Shadcn registry does not currently provide the background video skin as source.
+
+<ContentWidth margins="lg">
+  <UseCasePicker client:idle includeBackground={false} />
+</ContentWidth>
+
+<ContentWidth margins="lg">
+  <SkinPickerSection includeNoSkin={false} source />
+</ContentWidth>
+
+<ContentWidth margins="lg">
+  <InstallationPreview client:visible={{ rootMargin: "200px" }} />
+</ContentWidth>
+
+## Choose your media
+
+Choose what the player will play. If that source needs a playback adapter, the installation steps include it.
+
+<ContentWidth margins="lg">
+  <MediaSourcePicker client:idle />
+</ContentWidth>
+
+## Choose your extensions
+
+Add optional behavior to the player. Only extensions that work with your player and media source appear below.
+
+<ContentWidth margins="lg">
+  <ExtensionPicker client:idle />
+</ContentWidth>
+
+## Choose how to install
+
+Choose from the installation options available for your selections.
+
+<InstallationMethodNav />
+
+<ShadcnFrameworkCase framework="react" llmsHeading={false}>
+
+## Choose your styling
+
+Choose how the skin source is styled. New Shadcn apps include Tailwind CSS. For an existing app, choose Tailwind CSS only when the app already uses it.
+
+<RegistryOptions framework="react" kind="styling" />
+
+</ShadcnFrameworkCase>
+
+</HumanCase>
+
+<div data-installation-plan class="contents">
+
+## Prepare your app
+
+Choose whether to create the selected app setup or add editable skin source to a project you already have.
+
+<div data-llms-ignore>
+<ContentWidth margins="lg">
+  <StartingPointPicker client:idle serverTemplate="next" />
+</ContentWidth>
+</div>
+
+<ProjectCommands client:idle method="shadcn" part="create" serverFramework="react" serverTemplate="next" />
+
+<div data-installation-project-content="existing">
+<Aside type="note">
+Commit your work before installing or updating source so you can review every file the CLI adds or replaces.
+</Aside>
+</div>
+
+<div data-shadcn-configuration-section class="contents">
+
+## Configure Shadcn
+
+<ShadcnFrameworkCase framework="react">
+<RegistryInitCommand framework="react" installation />
+</ShadcnFrameworkCase>
+
+<ShadcnFrameworkCase framework="html">
+<RegistryInitCommand framework="html" installation />
+</ShadcnFrameworkCase>
+
+</div>
+
+## Add the skin source
+
+Configure `@videojs`, then add the selected skin source. Shadcn skips the registry command when `components.json` already defines `@videojs`, for example from an earlier install with a different styling or theme. If that URL differs from the one in the command, replace it in `components.json`. Adding the skin overwrites an existing Video.js skin so the selected catalog applies completely. Review and remove obsolete Video.js style files left by an earlier catalog. For HTML source, repeat the media replacement below after an overwrite.
+
+<ShadcnFrameworkCase framework="react">
+<InstallationRegistryCommand framework="react" />
+
+The files are added under `<components alias>/videojs/<preset>`. The registry item also installs `@videojs/react`.
+</ShadcnFrameworkCase>
+
+<ShadcnFrameworkCase framework="html">
+<InstallationRegistryCommand framework="html" />
+
+The files are added under `<components alias>/videojs/<preset>`. The registry item also installs `@videojs/html`.
+</ShadcnFrameworkCase>
+
+<SourceMediaInstall client:idle />
+
+## Add your player
+
+<ShadcnFrameworkCase framework="react">
+Add the player to the file shown for your selected app setup. It imports the player and media from the package, then imports the selected skin from your project.
+
+<ContentWidth>
+  <SourceReactPlayer client:visible={{ rootMargin: "200px" }} />
+</ContentWidth>
+</ShadcnFrameworkCase>
+
+<ShadcnFrameworkCase framework="html">
+The steps below add HTML skin source to a plain HTML app. For Vue or Svelte, use the packaged skins in the <DocsLink slug="guides/installation-vue">Vue guide</DocsLink> or <DocsLink slug="guides/installation-svelte">Svelte guide</DocsLink>.
+
+<Steps>
+  <Step number={1} title="Update the skin markup">
+    <SourceHTMLPlayer client:visible={{ rootMargin: "200px" }} part="media" />
+  </Step>
+  <Step number={2} title="Register custom elements">
+    <SourceHTMLPlayer client:visible={{ rootMargin: "200px" }} part="imports" />
+  </Step>
+  <Step number={3} title="Add the player to your page">
+    <SourceHTMLPlayer client:visible={{ rootMargin: "200px" }} part="player" />
+  </Step>
+</Steps>
+
+</ShadcnFrameworkCase>
+
+## Run your app
+
+Start the app and verify that the selected media plays.
+
+<ProjectCommands client:visible={{ rootMargin: "200px" }} method="shadcn" part="run" serverFramework="react" serverTemplate="next" />
+
+</div>
+
+That's it! You now have a working Video.js player whose skin source lives in your project.
+
+## Change the skin source
+
+<ShadcnFrameworkCase framework="react">
+Start in `<components alias>/videojs/<preset>/skin.tsx`. Follow the [Customize skins](/docs/framework/react/guides/customize-skins#style-skin-source) guide for the files that control layout, colors, controls, and interactions.
+</ShadcnFrameworkCase>
+
+<ShadcnFrameworkCase framework="html">
+Start in `<components alias>/videojs/<preset>/skin.html`. Follow the [Customize skins](/docs/framework/html/guides/customize-skins#style-skin-source) guide for the files that control layout, colors, controls, and interactions.
+</ShadcnFrameworkCase>
+
+## Choose what to do next
+
+<ShadcnFrameworkCase framework="react">
+<ShadcnNextSteps framework="react" />
+</ShadcnFrameworkCase>
+
+<ShadcnFrameworkCase framework="html">
+<ShadcnNextSteps framework="html" />
+</ShadcnFrameworkCase>

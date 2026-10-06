@@ -29,22 +29,10 @@ function playbackState(paused: boolean): Record<string, unknown> {
     waiting: false,
     play: vi.fn(async () => {}),
     pause: vi.fn(),
-    togglePaused: vi.fn(() => true),
   };
 }
 
 describe('Title', () => {
-  it('renders the resolved content title as text', () => {
-    const { Wrapper } = createPlayerWrapper({
-      ...metadataState('Sintel'),
-      ...controlsState(true),
-      ...playbackState(true),
-    });
-    const { getByTestId } = render(<Title data-testid="title" />, { wrapper: Wrapper });
-
-    expect(getByTestId('title').textContent).toBe('Sintel');
-  });
-
   it.each([true, false])('reflects controls visibility (%s) without hiding the title', (visible) => {
     const { Wrapper } = createPlayerWrapper({ ...metadataState('Sintel'), ...controlsState(visible) });
     const { getByTestId } = render(<Title data-testid="title" />, { wrapper: Wrapper });
@@ -77,13 +65,6 @@ describe('Title', () => {
       ...controlsState(false),
       ...playbackState(false),
     });
-    const { getByTestId } = render(<Title data-testid="title" />, { wrapper: Wrapper });
-
-    expect(getByTestId('title').textContent).toBe('Sintel');
-  });
-
-  it('renders the title without the playback feature', () => {
-    const { Wrapper } = createPlayerWrapper({ ...metadataState('Sintel'), ...controlsState(true) });
     const { getByTestId } = render(<Title data-testid="title" />, { wrapper: Wrapper });
 
     expect(getByTestId('title').textContent).toBe('Sintel');

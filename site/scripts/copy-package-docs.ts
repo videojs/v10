@@ -1,4 +1,4 @@
-/** Package site-generated markdown for @videojs/html, @videojs/react, or @videojs/cli. */
+/** Package site-generated markdown for @videojs/html or @videojs/react. */
 import {
   existsSync,
   mkdirSync,
@@ -12,6 +12,13 @@ import {
 import { basename, dirname, join, posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { INSTALLATION_PACKAGE_VERSION, renderInstallationMarkdownSelection } from '../src/utils/installation/markdown';
+import {
+  getInstallationRoutePath,
+  INSTALLATION_ROUTES,
+  INSTALLATION_ROUTE_SEGMENTS,
+} from '../src/utils/installation/routes';
+
 const scriptPath = fileURLToPath(import.meta.url);
 const siteDirectory = resolve(dirname(scriptPath), '..');
 const workspaceRoot = resolve(siteDirectory, '..');
@@ -21,8 +28,7 @@ const PACKAGE_NAMES = {
   react: '@videojs/react',
 } as const;
 
-export type Framework = keyof typeof PACKAGE_NAMES;
-export type PackageDocsTarget = Framework | 'cli';
+export type PackageDocsTarget = keyof typeof PACKAGE_NAMES;
 
 export interface PackageDocumentationOptions {
   target: PackageDocsTarget;
@@ -33,34 +39,137 @@ export interface PackageDocumentationOptions {
 
 const DOCS_SITE_BASE = 'https://videojs.org';
 
+function installationDocuments(
+  framework: PackageDocsTarget
+): ReadonlyArray<readonly [source: string, destination: string]> {
+  return INSTALLATION_ROUTE_SEGMENTS.filter((route) =>
+    INSTALLATION_ROUTES[route].frameworks.some((candidate) => candidate === framework)
+  ).map((route) => [`${getInstallationRoutePath(route).slice(1)}.md`, `${INSTALLATION_ROUTES[route].slug}.md`]);
+}
+
+const INSTALLATION_DOCUMENTS = {
+  html: installationDocuments('html'),
+  react: installationDocuments('react'),
+} satisfies Record<PackageDocsTarget, readonly (readonly [source: string, destination: string])[]>;
+
 function isPackageDocsTarget(value: string): value is PackageDocsTarget {
-  return value === 'cli' || value in PACKAGE_NAMES;
+  return value in PACKAGE_NAMES;
 }
 
 export function stripFooter(content: string): string {
-  return content.replace(/\n+---\n\n(\w+ documentation: https:\/\/.*\n)?All documentation: https:\/\/.*\n*$/, '');
+  return content.replace(/\n+---\n\n(?:\w+ documentation: https:\/\/.*\n)*All documentation: https:\/\/.*\n*$/, '');
 }
 
-export function rewriteLinks(content: string, sourceSlug: string, framework: Framework): string {
+export function rewriteLinks(content: string, sourceSlug: string, framework: PackageDocsTarget): string {
+  const sourceDir = posix.dirname(sourceSlug);
+  let rewritten = content;
+
+  for (const [source, destination] of INSTALLATION_DOCUMENTS[framework]) {
+    const publicPath = `/${source.replace(/\.md$/, '')}`;
+    // Shadcn links pick a framework branch with `?framework=`; the bundled copy holds only this package's branch.
+    const canonicalPattern = new RegExp(
+      `(\\]\\()(?:https?://[^\\s)]+)?${escapeForRegex(publicPath)}(?:\\.md|/)?(?:\\?framework=(\\w+))?(?=[)#])`,
+      'g'
+    );
+
+    rewritten = rewritten.replace(canonicalPattern, (match, prefix: string, linkFramework: string | undefined) =>
+      linkFramework && linkFramework !== framework ? match : prefix + toRelativePath(sourceDir, destination)
+    );
+  }
+
   const frameworkPath = `/docs/framework/${framework}/`;
   const pattern = new RegExp(
     `(\\]\\()(?:https?://[^\\s)]+)?${escapeForRegex(frameworkPath)}([^\\s)#]*?)(\\.md|\\.txt|/)?(?=[)#])`,
     'g'
   );
-  const sourceDir = posix.dirname(sourceSlug);
 
-  return content.replace(pattern, (match, prefix: string, slug: string, extension: string | undefined) => {
+  return rewritten.replace(pattern, (match, prefix: string, slug: string, extension: string | undefined) => {
     if (!slug) return match;
 
     return prefix + toRelativePath(sourceDir, `${slug}${extension === '.txt' ? '.txt' : '.md'}`);
   });
 }
 
+function copyInstallationDocumentation({
+  siteDist,
+  targetDirectory,
+  framework,
+  rewriteLocalLinks,
+  version,
+}: {
+  siteDist: string;
+  targetDirectory: string;
+  framework: PackageDocsTarget;
+  rewriteLocalLinks: boolean;
+  version: string | undefined;
+}): number {
+  let copied = 0;
+
+  for (const [source, destination] of INSTALLATION_DOCUMENTS[framework]) {
+    const sourcePath = join(siteDist, source);
+    if (!existsSync(sourcePath)) throw new Error(`Missing installation documentation source: ${sourcePath}`);
+
+    const raw = stripFooter(readFileSync(sourcePath, 'utf-8'));
+    const params = source.endsWith('/shadcn.md') ? new URLSearchParams({ framework }) : new URLSearchParams();
+    const rendered = renderInstallationMarkdownSelection(
+      raw,
+      `/${source.replace(/\.md$/, '')}`,
+      params,
+      version ?? INSTALLATION_PACKAGE_VERSION,
+      { commandVersion: version ?? null }
+    );
+
+    if (!rendered || rendered.status !== 200) {
+      throw new Error(`Could not render ${source} for ${framework}: ${rendered?.body.trim() ?? 'unknown route'}`);
+    }
+
+    const transformed = rewriteLocalLinks
+      ? rewriteLinks(rendered.body, sourceSlug(destination), framework)
+      : rendered.body;
+    const destinationPath = join(targetDirectory, destination);
+
+    mkdirSync(dirname(destinationPath), { recursive: true });
+    writeFileSync(destinationPath, transformed, 'utf-8');
+    copied += 1;
+  }
+
+  return copied;
+}
+
+/**
+ * The web indexes introduce themselves in terms of `.md` URLs and point at complete files that a package does not
+ * bundle. Inside a package they are files on disk, so restate the header for that setting: which package and version
+ * the copy belongs to and that links are relative paths.
+ */
+export function rewriteIndexHeader(
+  content: string,
+  { framework, version }: { framework: PackageDocsTarget; version: string | undefined }
+): string {
+  const packageName = PACKAGE_NAMES[framework];
+  const versionSuffix = version ? ` v${version}` : '';
+  const context = `Bundled with \`${packageName}\`${versionSuffix}. Links are relative paths to files in this directory.`;
+
+  return (
+    content
+      // The first blockquote line is the header. A section index opens with the section's own description, which stays.
+      .replace(/^> .*$/m, (line) => {
+        const description = line
+          .slice(2)
+          .split(/ ?Every page below/)[0]
+          ?.trim();
+
+        return `> ${description ? `${description} ` : ''}${context}`;
+      })
+      // The framework index also quotes each section's complete file beside its section index.
+      .replace(/ This section in one file \([^)]*\): \S+/g, '')
+  );
+}
+
 export function synthesizeReadme({
   framework,
   version,
 }: {
-  framework: Framework;
+  framework: PackageDocsTarget;
   version: string | undefined;
 }): string {
   const packageName = PACKAGE_NAMES[framework];
@@ -126,20 +235,28 @@ function copyFrameworkDocumentation({
   targetDirectory,
   framework,
   rewriteLocalLinks,
+  version,
 }: {
   sourceDirectory: string;
   targetDirectory: string;
-  framework: Framework;
+  framework: PackageDocsTarget;
   rewriteLocalLinks: boolean;
+  version: string | undefined;
 }): number {
-  const files = walkDocumentation(sourceDirectory);
+  // A complete file concatenates the pages bundled beside it, so a package ships the pages and indexes only.
+  const files = walkDocumentation(sourceDirectory).filter((sourcePath) => basename(sourcePath) !== 'llms-full.txt');
 
   for (const sourcePath of files) {
     const relativePath = posix.relative(sourceDirectory.split(/[\\/]/).join('/'), sourcePath.split(/[\\/]/).join('/'));
     const raw = readFileSync(sourcePath, 'utf-8');
     const withoutFooter = stripFooter(raw);
+    const isIndex = basename(relativePath) === 'llms.txt';
     const transformed = rewriteLocalLinks
-      ? rewriteLinks(withoutFooter, sourceSlug(relativePath), framework)
+      ? rewriteLinks(
+          isIndex ? rewriteIndexHeader(withoutFooter, { framework, version }) : withoutFooter,
+          sourceSlug(relativePath),
+          framework
+        )
       : withoutFooter;
 
     const destinationPath = join(targetDirectory, relativePath);
@@ -157,37 +274,29 @@ export function packageDocumentation({
   packagesDirectory = resolve(workspaceRoot, 'packages'),
   version,
 }: PackageDocumentationOptions): number {
-  const frameworks: Framework[] = target === 'cli' ? ['html', 'react'] : [target];
-  const sources = new Map(
-    frameworks.map((framework) => [framework, join(siteDist, 'docs', 'framework', framework)] as const)
-  );
-
-  for (const sourceDirectory of sources.values()) {
-    if (!existsSync(sourceDirectory)) {
-      throw new Error(`${sourceDirectory} not found — run \`pnpm build:site\` first.`);
-    }
-  }
+  const sourceDirectory = join(siteDist, 'docs', 'framework', target);
+  if (!existsSync(sourceDirectory)) throw new Error(`${sourceDirectory} not found — run \`pnpm build:site\` first.`);
 
   const targetDirectory = join(packagesDirectory, target, 'docs');
   let copiedFiles = 0;
 
   replaceDirectory(targetDirectory, (stagingDirectory) => {
-    for (const framework of frameworks) {
-      const frameworkTarget = target === 'cli' ? join(stagingDirectory, framework) : stagingDirectory;
-      const sourceDirectory = sources.get(framework);
-      if (!sourceDirectory) throw new Error(`Missing documentation source for ${framework}`);
+    copiedFiles += copyFrameworkDocumentation({
+      sourceDirectory,
+      targetDirectory: stagingDirectory,
+      framework: target,
+      rewriteLocalLinks: true,
+      version,
+    });
+    copiedFiles += copyInstallationDocumentation({
+      siteDist,
+      targetDirectory: stagingDirectory,
+      framework: target,
+      rewriteLocalLinks: true,
+      version,
+    });
 
-      copiedFiles += copyFrameworkDocumentation({
-        sourceDirectory,
-        targetDirectory: frameworkTarget,
-        framework,
-        rewriteLocalLinks: target !== 'cli',
-      });
-    }
-
-    if (target !== 'cli') {
-      writeFileSync(join(stagingDirectory, 'README.md'), synthesizeReadme({ framework: target, version }), 'utf-8');
-    }
+    writeFileSync(join(stagingDirectory, 'README.md'), synthesizeReadme({ framework: target, version }), 'utf-8');
   });
 
   return copiedFiles;
@@ -197,7 +306,7 @@ function main(): void {
   const target = process.argv[2];
 
   if (!target || !isPackageDocsTarget(target)) {
-    console.error('Usage: node --import tsx copy-package-docs.ts <html|react|cli>');
+    console.error('Usage: node --import tsx copy-package-docs.ts <html|react>');
     process.exit(1);
   }
 

@@ -1,24 +1,14 @@
 ---
 title: CDN
-description: The files the Video.js CDN serves and the layout rules behind their URLs
+description: Understand the browser-ready bundles, stylesheets, and URL layout published by the Video.js CDN
 ---
 
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-Video.js can run straight from `<script>` tags. Our CDN serves `@videojs/html` in prebuilt, browser-ready bundles which register custom elements. For many pages, it takes only one script tag:
+Start with the <DocsLink slug="guides/installation-cdn">CDN Installation Guide</DocsLink> to load Video.js and add a working player. This guide documents the browser-ready files the CDN serves and the layout rules behind their URLs.
 
-```html title="index.html"
-<script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
-
-<video-player>
-  <video-skin>
-    <video src="video.mp4"></video>
-  </video-skin>
-</video-player>
-```
-
-## URLs
+## CDN URLs
 
 Every file the CDN serves follows one URL pattern:
 
@@ -37,16 +27,17 @@ Each installation <DocsLink slug="guides/presets">preset</DocsLink> ships its bu
 | File | Registers |
 | --- | --- |
 | `video.js` | `<video-player>`, `<video-skin>`, and the UI elements the skin composes |
-| `video-minimal.js` | `<video-player>`, `<video-minimal-skin>`, and the UI elements the minimal skin composes |
+| `video-neutral.js` | `<video-player>`, `<video-neutral-skin>`, and the UI elements the neutral skin composes |
+| `video-compat.js` | `<video-player>`, `<video-compat-skin>`, and the UI elements the compat skin composes |
 | `video-player.js` | `<video-player>` alone, for markup without a packaged skin |
 
-The other presets follow the same pattern. Background video is the exception: one bundle, `background.js`, registers the player, the skin, and the `<background-video>` media element.
+The other presets follow the same pattern. Background video is the exception: one bundle, `background.js`, registers the player, the skin, and the `<background-video>` media component.
 
 A skin bundle registers every UI element its skin is built from. Any element the skin does not compose is its own bundle under `ui/`.
 
 ## UI element bundles
 
-Each <DocsLink slug="guides/ui-components">UI element</DocsLink> is its own bundle under `ui/`, for markup that a skin bundle does not already cover: a player-only bundle, an <DocsLink slug="guides/customize-skins" anchor="eject-and-edit-a-skin">ejected skin</DocsLink> that adds a component the packaged skin lacks, or a <DocsLink slug="reference/components/dialog">dialog</DocsLink> your page opens beside a packaged skin.
+Each <DocsLink slug="guides/ui-components">UI element</DocsLink> is its own bundle under `ui/`, for markup that a skin bundle does not already cover: a player-only bundle, <DocsLink slug="guides/customize-skins" anchor="style-skin-source">skin source</DocsLink> that adds a component the packaged skin lacks, or a <DocsLink slug="reference/components/dialog">dialog</DocsLink> your page opens beside a packaged skin.
 
 ```html
 <script type="module" src="{{VJS10_CDN_BASE}}/video-player.js"></script>
@@ -57,7 +48,7 @@ Each path mirrors its npm subpath: `ui/play-button.js` registers the element tha
 
 ## Media bundles
 
-The default presets play through the browser's own `<video>` and `<audio>`. Every other <DocsLink slug="guides/media-sources">media element</DocsLink> is its own bundle under `media/`, loaded beside the player bundle:
+The default presets play through the browser's own `<video>` and `<audio>`. Every other <DocsLink slug="guides/media-sources">media component</DocsLink> is its own bundle under `media/`, loaded beside the player bundle:
 
 ```html
 <script type="module" src="{{VJS10_CDN_BASE}}/video.js"></script>
@@ -105,10 +96,10 @@ Every JavaScript entry has a `.dev.js` sibling, such as `video.dev.js`, built wi
 
 ## Shared chunks
 
-Everything else at the root, like the content-hashed `default-*.js` files, is a shared chunk the entries import by relative path. Entries share these chunks, so loading several bundles stays cheap. Chunk names change every release: never link a chunk directly, and never copy a lone entry file. To mirror the CDN, copy the whole package directory and keep its layout; <DocsLink slug="guides/self-hosting">Self-host the player</DocsLink> covers it.
+Everything else at the root, including content-hashed files such as `adapter-<hash>.js`, is a shared chunk the entries import by relative path. Entries share these chunks, so loading several bundles stays cheap. Chunk names change every release: never link a chunk directly, and never copy a lone entry file. To mirror the CDN, copy the whole package directory and keep its layout; <DocsLink slug="guides/self-hosting">Self-host the player</DocsLink> covers it.
 
 ## Related guides
 
-- <DocsLink slug="guides/installation">Installation</DocsLink>
+- <DocsLink slug="guides/installation-cdn">CDN Installation Guide</DocsLink>
 - <DocsLink slug="guides/self-hosting">Self-host the player</DocsLink>
 - <DocsLink slug="guides/internationalization">Internationalize the player</DocsLink>

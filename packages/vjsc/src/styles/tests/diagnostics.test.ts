@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { loadDesignSystem } from '../design-system';
 import { diagnoseCompiledCandidate, diagnoseStyles, formatStyleDiagnostic } from '../diagnostics';
@@ -115,6 +115,12 @@ describe('style diagnostics', () => {
     );
 
     expect(diagnostics).toMatchObject([{ code: 'VJSC_STYLE_SCOPE_ESCAPE', kind: 'error' }]);
+  });
+
+  it('accepts variants Tailwind flattens onto the candidate instead of nesting under it', () => {
+    expect(
+      diagnoseCompiledCandidate(rule('flat', ['flat']), 'flat', '.flat[data-open] { display: block; }', new Set())
+    ).toEqual([]);
   });
 });
 

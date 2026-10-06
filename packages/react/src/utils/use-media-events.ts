@@ -1,3 +1,5 @@
+'use client';
+
 import { isFunction } from '@videojs/utils/predicate';
 import { type RefCallback, useCallback, useRef } from 'react';
 
@@ -68,6 +70,7 @@ export type MediaEventProps<Target extends EventTarget = EventTarget> = {
  * @param props - Component props, which may include media event handlers.
  * @param media - Adapter that dispatches the standard media events. Omit it when the rendered element is the media
  *   itself, such as a third-party web component; the listeners then bind to whatever the ref receives.
+ * @internal
  */
 export function useMediaEvents<Props extends Record<string, unknown>>(
   props: Props,
@@ -82,8 +85,8 @@ export function useMediaEvents<Props extends Record<string, unknown>>(
   }
 
   const handlersRef = useLatestRef(handlers);
-  // React 18 signals detach by calling the ref with `null` and ignores the returned cleanup, so the controller is kept
-  // where that call can reach it.
+  // Detach is handled on the `null` call rather than a returned cleanup, which React 18 ignores and warns about; React
+  // 19 makes the same call when no cleanup is returned.
   const controllerRef = useRef<AbortController | null>(null);
 
   const ref = useCallback<RefCallback<EventTarget>>(
@@ -107,8 +110,6 @@ export function useMediaEvents<Props extends Record<string, unknown>>(
 
         target.addEventListener(MEDIA_EVENT_PROPS[prop], listener, { signal: controller.signal });
       }
-
-      return () => controller.abort();
     },
     [media, handlersRef]
   );
@@ -116,6 +117,7 @@ export function useMediaEvents<Props extends Record<string, unknown>>(
   return { ref, props: rest as Omit<Props, MediaEventPropName> };
 }
 
+/** @internal */
 export namespace useMediaEvents {
   export interface Result<Props> {
     /** Ref for the rendered element; compose it ahead of the ref that attaches the media. */

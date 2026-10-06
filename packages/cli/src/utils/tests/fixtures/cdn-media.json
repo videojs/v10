@@ -1,9 +1,0 @@
-[
-  { "id": "dash-video" },
-  { "id": "hlsjs-video" },
-  { "id": "mux-audio" },
-  { "id": "mux-video" },
-  { "id": "native-hls-video" },
-  { "id": "hls-audio" },
-  { "id": "hls-video" }
-]

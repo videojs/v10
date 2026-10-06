@@ -23,6 +23,7 @@ import {
 } from '../../actors/text-track-segment-loader';
 import type { TextTracksActor } from '../../actors/text-tracks';
 import type { TextMessagePipelines, TextTrackSegmentResolver } from '../../primitives/text-segment-load-pipeline';
+import { TEXT_TYPE_CONFIG } from '../../primitives/track-types';
 
 export interface TextTrackActorsContext {
   mediaElement?: HTMLMediaElement | undefined;
@@ -63,7 +64,7 @@ function setupTextTrackActorsSetup({
     const textTrackSegmentLoaderActor = createTextTrackSegmentLoaderActor(
       textTracksActor,
       config.resolveTextTrackSegment,
-      { forwardBuffer: config.forwardBuffer, messagePipelines: config.textMessagePipelines },
+      { forwardBuffer: config.forwardBuffer, messagePipelines: config[TEXT_TYPE_CONFIG.messagePipelinesKey] },
       // Composition deps forwarded into each step (relocation reads the primary A/V origin).
       { state, context, config }
     );

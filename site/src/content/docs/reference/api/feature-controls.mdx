@@ -8,7 +8,7 @@ import FeatureReference from "@/components/docs/api-reference/FeatureReference.a
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
-Read-only — tracks user activity for showing and hiding controls.
+Tracks user activity for showing and hiding controls, with actions to toggle visibility and keep controls shown.
 
 ## Import
 
@@ -35,7 +35,7 @@ function ControlsOverlay({ children }: { children: React.ReactNode }) {
   if (!controls) return null;
 
   return (
-    <div style={{ opacity: controls.visible ? 1 : 0 }}>
+    <div style={{ opacity: controls.controlsVisible ? 1 : 0 }}>
       {children}
     </div>
   );

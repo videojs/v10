@@ -1,13 +1,7 @@
 import { MediaError } from '@videojs/media';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { buildYouTubeIframeSrc, parseYouTubeSource, parseYouTubeVideoId, YouTubeAdapter } from '..';
-
-vi.mock(import('@videojs/utils/dom'), async (importOriginal) => {
-  const mod = await importOriginal();
-
-  return { ...mod, loadScript: vi.fn(async () => {}) };
-});
+import { buildYouTubeIframeSrc, YouTubeAdapter } from '..';
 
 interface StateChangeEvent {
   data: number;
@@ -20,22 +14,30 @@ interface MockPlayerEvents {
 
 class MockPlayer {
   static instances: MockPlayer[] = [];
-  target: unknown;
+  target: HTMLIFrameElement;
   events: MockPlayerEvents | undefined;
   listeners = new Map<string, Set<(event: StateChangeEvent) => void>>();
 
   playVideo = vi.fn();
   pauseVideo = vi.fn();
   seekTo = vi.fn();
-  mute = vi.fn();
-  unMute = vi.fn();
+  mute = vi.fn(() => {
+    this.isMuted.mockReturnValue(true);
+  });
+  unMute = vi.fn(() => {
+    this.isMuted.mockReturnValue(false);
+  });
   isMuted = vi.fn(() => false);
-  setVolume = vi.fn();
+  setVolume = vi.fn((volume: number) => {
+    this.getVolume.mockReturnValue(volume);
+  });
   getVolume = vi.fn(() => 100);
   getDuration = vi.fn(() => 60);
   getCurrentTime = vi.fn(() => 0);
   getPlaybackRate = vi.fn(() => 1);
-  setPlaybackRate = vi.fn();
+  setPlaybackRate = vi.fn((rate: number) => {
+    this.getPlaybackRate.mockReturnValue(rate);
+  });
   getVideoLoadedFraction = vi.fn(() => 0);
   getPlayerState = vi.fn(() => -1);
   loadVideoById = vi.fn();
@@ -47,7 +49,7 @@ class MockPlayer {
   setOption = vi.fn();
   destroy = vi.fn();
 
-  constructor(target: unknown, options?: { events?: MockPlayerEvents }) {
+  constructor(target: HTMLIFrameElement, options?: { events?: MockPlayerEvents }) {
     this.target = target;
     this.events = options?.events;
     MockPlayer.instances.push(this);
@@ -107,10 +109,12 @@ async function flushDeferredEmbed(): Promise<void> {
 }
 
 async function waitForEngine(media: YouTubeAdapter): Promise<MockPlayer> {
-  await vi.waitFor(() => {
-    if (!media.engine) throw new Error('player not created yet');
+  return vi.waitFor(() => {
+    const player = media.engine;
+    if (!(player instanceof MockPlayer)) throw new Error('player not created yet');
+
+    return player;
   });
-  return media.engine as unknown as MockPlayer;
 }
 
 async function attachAndLoad(media: YouTubeAdapter): Promise<{ iframe: HTMLIFrameElement; player: MockPlayer }> {
@@ -126,86 +130,6 @@ async function attachAndLoad(media: YouTubeAdapter): Promise<{ iframe: HTMLIFram
   player.ready();
   return { iframe, player };
 }
-
-describe('parseYouTubeVideoId', () => {
-  it('extracts id from a raw 11-character id', () => {
-    expect(parseYouTubeVideoId('aqz-KE-bpKQ')).toBe('aqz-KE-bpKQ');
-  });
-
-  it('extracts id from watch URL', () => {
-    expect(parseYouTubeVideoId('https://www.youtube.com/watch?v=aqz-KE-bpKQ')).toBe('aqz-KE-bpKQ');
-  });
-
-  it('extracts id from youtu.be short link', () => {
-    expect(parseYouTubeVideoId('https://youtu.be/aqz-KE-bpKQ')).toBe('aqz-KE-bpKQ');
-  });
-
-  it('extracts id from embed, shorts, and live URLs', () => {
-    expect(parseYouTubeVideoId('https://www.youtube.com/embed/aqz-KE-bpKQ')).toBe('aqz-KE-bpKQ');
-    expect(parseYouTubeVideoId('https://www.youtube.com/shorts/aqz-KE-bpKQ')).toBe('aqz-KE-bpKQ');
-    expect(parseYouTubeVideoId('https://www.youtube.com/live/aqz-KE-bpKQ')).toBe('aqz-KE-bpKQ');
-  });
-
-  it('extracts id from nocookie host', () => {
-    expect(parseYouTubeVideoId('https://www.youtube-nocookie.com/watch?v=aqz-KE-bpKQ')).toBe('aqz-KE-bpKQ');
-  });
-
-  it('returns null for empty input', () => {
-    expect(parseYouTubeVideoId('')).toBe(null);
-  });
-
-  it('returns null for non-YouTube URLs', () => {
-    expect(parseYouTubeVideoId('https://example.com/video.mp4')).toBe(null);
-  });
-});
-
-describe('parseYouTubeSource', () => {
-  it('detects playlists', () => {
-    expect(parseYouTubeSource('https://www.youtube.com/playlist?list=PLv3TTBr1W_9tppikBxAE_G6qjWdBljBHJ')).toEqual({
-      id: null,
-      kind: 'playlist',
-      listId: 'PLv3TTBr1W_9tppikBxAE_G6qjWdBljBHJ',
-      startTime: null,
-      noCookie: false,
-    });
-  });
-
-  it('detects playlists in videoseries embed URLs', () => {
-    expect(parseYouTubeSource('https://www.youtube.com/embed/videoseries?list=PLv3TTBr1W_9tppikBxAE')).toEqual({
-      id: null,
-      kind: 'playlist',
-      listId: 'PLv3TTBr1W_9tppikBxAE',
-      startTime: null,
-      noCookie: false,
-    });
-  });
-
-  it('returns null for a videoseries embed URL without a list param', () => {
-    expect(parseYouTubeSource('https://www.youtube.com/embed/videoseries')).toBe(null);
-  });
-
-  it('keeps the video id when a watch URL also has a list param', () => {
-    const parsed = parseYouTubeSource('https://www.youtube.com/watch?v=aqz-KE-bpKQ&list=PLv3TTBr1W_9tppikBxAE');
-
-    expect(parsed?.kind).toBe('video');
-    expect(parsed?.id).toBe('aqz-KE-bpKQ');
-    expect(parsed?.listId).toBe('PLv3TTBr1W_9tppikBxAE');
-  });
-
-  it('parses start times in t param formats', () => {
-    expect(parseYouTubeSource('https://youtu.be/aqz-KE-bpKQ?t=171')?.startTime).toBe(171);
-    expect(parseYouTubeSource('https://youtu.be/aqz-KE-bpKQ?t=171s')?.startTime).toBe(171);
-    expect(parseYouTubeSource('https://youtu.be/aqz-KE-bpKQ?t=2m51s')?.startTime).toBe(171);
-    expect(parseYouTubeSource('https://youtu.be/aqz-KE-bpKQ?t=2m')?.startTime).toBe(120);
-    expect(parseYouTubeSource('https://youtu.be/aqz-KE-bpKQ?t=1h30m15s')?.startTime).toBe(5415);
-    expect(parseYouTubeSource('https://youtu.be/aqz-KE-bpKQ?t=1h')?.startTime).toBe(3600);
-    expect(parseYouTubeSource('https://youtu.be/aqz-KE-bpKQ?t=1h5s')?.startTime).toBe(3605);
-  });
-
-  it('detects the nocookie host', () => {
-    expect(parseYouTubeSource('https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ')?.noCookie).toBe(true);
-  });
-});
 
 describe('buildYouTubeIframeSrc', () => {
   it('builds embed URL with default playsinline, hidden controls, and jsapi enabled', () => {
@@ -308,6 +232,12 @@ describe('buildYouTubeIframeSrc', () => {
   it('uses the nocookie embed base for nocookie sources', () => {
     expect(buildYouTubeIframeSrc('https://www.youtube-nocookie.com/watch?v=aqz-KE-bpKQ')).toContain(
       'https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ'
+    );
+  });
+
+  it('embeds youtube/<id> shorthands from the nocookie host', () => {
+    expect(buildYouTubeIframeSrc('youtube/aqz-KE-bpKQ')).toContain(
+      'https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ?'
     );
   });
 
@@ -580,6 +510,160 @@ describe('YouTubeAdapter', () => {
     player.emit('onStateChange', STATE.CUED);
     expect(loadCompleteSpy).toHaveBeenCalledTimes(1);
     media.detach();
+  });
+
+  it.each(['queued writes', 'applied settings', 'clear and refill', 'writes during replacement'])(
+    'applies a changed caption policy after replacement readiness (%s)',
+    async (scenario) => {
+      const media = new YouTubeAdapter();
+      const src = 'aqz-KE-bpKQ';
+
+      media.source = scenario === 'clear and refill' ? { src, engine: { youtube: { cc_load_policy: 1 } } } : { src };
+      const { iframe, player } = await attachAndLoad(media);
+
+      document.body.append(iframe);
+      // The iframe API removes the embed when its player is destroyed.
+      player.destroy.mockImplementation(() => iframe.remove());
+
+      try {
+        media.volume = 0.5;
+        media.muted = true;
+        media.playbackRate = 1.5;
+
+        if (scenario === 'applied settings' || scenario === 'clear and refill') await flushDeferredEmbed();
+
+        if (scenario === 'clear and refill') {
+          media.source = null;
+          media.src = 'dQw4w9WgXcQ';
+        } else {
+          if (scenario === 'queued writes') media.currentTime = 30;
+
+          media.source = { src, engine: { youtube: { cc_load_policy: 1 } } };
+        }
+
+        if (scenario === 'writes during replacement') {
+          media.volume = 0.7;
+          media.muted = false;
+          media.playbackRate = 2;
+        }
+
+        expect(iframe.isConnected).toBe(true);
+        const replacement = await waitForEngine(media);
+        const loadcomplete = vi.fn();
+
+        media.addEventListener('loadcomplete', loadcomplete);
+        const pending = media.play();
+
+        if (scenario !== 'clear and refill') {
+          player.ready();
+          player.emit('onStateChange', STATE.PLAYING);
+          await flushDeferredEmbed();
+
+          expect(media.readyState).toBe(0);
+          expect(media.paused).toBe(true);
+          expect(loadcomplete).not.toHaveBeenCalled();
+          expect(replacement.playVideo).not.toHaveBeenCalled();
+          expect(replacement.setVolume).not.toHaveBeenCalled();
+        }
+
+        replacement.ready();
+        await pending;
+
+        expect(new URL(iframe.src).searchParams.get('cc_load_policy')).toBe(
+          scenario === 'clear and refill' ? null : '1'
+        );
+        expect(replacement).not.toBe(player);
+        expect(media.readyState).toBe(1);
+        expect(loadcomplete).toHaveBeenCalledTimes(1);
+        expect(replacement.playVideo).toHaveBeenCalledTimes(1);
+        expect(replacement.getVolume()).toBe(scenario === 'writes during replacement' ? 70 : 50);
+        expect(replacement.isMuted()).toBe(scenario !== 'writes during replacement');
+        expect(replacement.getPlaybackRate()).toBe(scenario === 'writes during replacement' ? 2 : 1.5);
+        expect(media.volume).toBe(scenario === 'writes during replacement' ? 0.7 : 0.5);
+        expect(media.muted).toBe(scenario !== 'writes during replacement');
+        expect(media.playbackRate).toBe(scenario === 'writes during replacement' ? 2 : 1.5);
+
+        if (scenario === 'queued writes') expect(replacement.seekTo).toHaveBeenCalledWith(30, true);
+      } finally {
+        media.destroy();
+        iframe.remove();
+      }
+    }
+  );
+
+  it.each(['pending play', 'default mute'])('recreates before readiness without losing the %s', async (scenario) => {
+    const media = new YouTubeAdapter();
+    const src = 'aqz-KE-bpKQ';
+    const iframe = createIframe();
+
+    media.defaultMuted = scenario === 'default mute';
+    media.src = src;
+    document.body.append(iframe);
+    media.attach(iframe);
+    const player = await waitForEngine(media);
+
+    // The iframe API removes the embed when its player is destroyed.
+    player.destroy.mockImplementation(() => iframe.remove());
+
+    try {
+      const pending = media.play();
+
+      media.source = { src, engine: { youtube: { cc_load_policy: 1 } } };
+      const replacement = await vi.waitFor(() => {
+        const engine = media.engine;
+        if (!(engine instanceof MockPlayer) || engine === player) throw new Error('replacement not created yet');
+
+        return engine;
+      });
+
+      replacement.ready();
+      await pending;
+
+      expect(replacement.playVideo).toHaveBeenCalledTimes(1);
+      expect(new URL(iframe.src).searchParams.get('mute')).toBe(scenario === 'default mute' ? '1' : '0');
+      expect(replacement.unMute).not.toHaveBeenCalled();
+    } finally {
+      media.destroy();
+      iframe.remove();
+    }
+  });
+
+  it('keeps settings written before readiness across recreation', async () => {
+    const media = new YouTubeAdapter();
+    const src = 'aqz-KE-bpKQ';
+    const iframe = createIframe();
+
+    media.defaultMuted = true;
+    media.src = src;
+    document.body.append(iframe);
+    media.attach(iframe);
+    const player = await waitForEngine(media);
+
+    // The iframe API removes the embed when its player is destroyed.
+    player.destroy.mockImplementation(() => iframe.remove());
+
+    try {
+      media.volume = 0.5;
+      media.source = { src, engine: { youtube: { cc_load_policy: 1 } } };
+      const replacement = await vi.waitFor(() => {
+        const engine = media.engine;
+        if (!(engine instanceof MockPlayer) || engine === player) throw new Error('replacement not created yet');
+
+        return engine;
+      });
+      const reportedVolumes: number[] = [];
+
+      media.addEventListener('volumechange', () => reportedVolumes.push(media.volume));
+      replacement.ready();
+      await media.play();
+
+      expect(reportedVolumes).toEqual([0.5]);
+      expect(replacement.getVolume()).toBe(50);
+      expect(replacement.unMute).not.toHaveBeenCalled();
+    } finally {
+      media.destroy();
+      iframe.remove();
+    }
   });
 
   it('defers the load when src changes before the player is ready', async () => {
@@ -906,6 +990,24 @@ describe('YouTubeAdapter', () => {
     expect(media.engine).toBe(null);
   });
 
+  it('returns the iframe to its host position after the player removes it on detach', async () => {
+    const media = new YouTubeAdapter();
+    const { iframe, player } = await attachAndLoad(media);
+    const container = document.createElement('div');
+    const sibling = document.createElement('span');
+
+    container.append(iframe, sibling);
+    // The iframe API removes the embed when its player is destroyed.
+    player.destroy.mockImplementation(() => iframe.remove());
+
+    media.detach();
+
+    expect(player.destroy).toHaveBeenCalled();
+    expect(iframe.nextSibling).toBe(sibling);
+    // A framework unmounting the host can still remove the iframe it rendered.
+    expect(() => container.removeChild(iframe)).not.toThrow();
+  });
+
   it('unblocks pending play() when detached before load completes', async () => {
     const media = new YouTubeAdapter();
 
@@ -1017,21 +1119,6 @@ describe('YouTubeAdapter source', () => {
     media.src = 'dQw4w9WgXcQ';
 
     expect(media.source).toEqual({ engine: { youtube: { cc_load_policy: 1 } }, src: 'dQw4w9WgXcQ' });
-  });
-
-  it('reloads when only YouTube player parameters change', async () => {
-    const media = new YouTubeAdapter();
-
-    media.src = 'aqz-KE-bpKQ';
-    const { player } = await attachAndLoad(media);
-
-    player.cueVideoById.mockClear();
-
-    media.source = { src: 'aqz-KE-bpKQ', engine: { youtube: { cc_load_policy: 1 } } };
-    await Promise.resolve();
-
-    expect(player.cueVideoById).toHaveBeenCalledWith({ videoId: 'aqz-KE-bpKQ' });
-    media.detach();
   });
 
   it('serializes YouTube player parameters onto the initial iframe src', () => {

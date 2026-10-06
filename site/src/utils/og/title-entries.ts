@@ -4,7 +4,12 @@ import { BLOG_PAGE_SIZE } from '@/consts';
 import { SUPPORTED_FRAMEWORKS, type SupportedFramework } from '@/types/docs';
 import { filterSidebar, getAllGuideSlugs } from '@/utils/docs/sidebar';
 import { getDocTitle } from '@/utils/docs/title';
-import { getLegacyErrorPages } from '@/utils/errors/legacy-errors';
+import {
+  CANONICAL_INSTALLATION_SLUGS,
+  getInstallationRoutePath,
+  INSTALLATION_ROUTES,
+  INSTALLATION_ROUTE_SEGMENTS,
+} from '@/utils/installation/routes';
 import { normalizeSitePath } from '@/utils/og/normalize-site-path';
 
 const STATIC_PAGES: { path: string; title: string }[] = [
@@ -14,18 +19,9 @@ const STATIC_PAGES: { path: string; title: string }[] = [
   { path: 'about-this-player', title: 'About this player' },
   { path: 'privacy', title: 'Privacy' },
   { path: 'blog', title: 'Blog' },
-  { path: 'errors', title: 'Error codes' },
 ];
 
-export type OgTitleEntryKind =
-  | 'static'
-  | 'blog'
-  | 'blog-index'
-  | 'author'
-  | 'docs'
-  | 'changelog'
-  | 'changelog-index'
-  | 'error';
+export type OgTitleEntryKind = 'static' | 'blog' | 'blog-index' | 'author' | 'docs' | 'changelog' | 'changelog-index';
 export type OgTitleSource = 'static' | 'title' | 'ogTitle' | 'frameworkTitle' | 'name';
 
 export interface OgTitleEntry {
@@ -114,22 +110,13 @@ export async function listOgTitleEntries(): Promise<OgTitleEntry[]> {
     });
   }
 
-  for (const page of getLegacyErrorPages()) {
-    entries.push({
-      kind: 'error',
-      path: page.path.replace(/^\//, ''),
-      title: page.code,
-      source: 'static',
-    });
-  }
-
   const docsCollection = await getCollection('docs');
 
   for (const framework of SUPPORTED_FRAMEWORKS) {
     const allowedSlugs = new Set(getAllGuideSlugs(filterSidebar(framework)));
 
     for (const doc of docsCollection) {
-      if (!allowedSlugs.has(doc.id)) {
+      if (!allowedSlugs.has(doc.id) || CANONICAL_INSTALLATION_SLUGS.has(doc.id)) {
         continue;
       }
 
@@ -144,6 +131,23 @@ export async function listOgTitleEntries(): Promise<OgTitleEntry[]> {
         framework,
       });
     }
+  }
+
+  for (const route of INSTALLATION_ROUTE_SEGMENTS) {
+    const config = INSTALLATION_ROUTES[route];
+    const doc = docsCollection.find((entry) => entry.id === config.slug);
+    if (!doc) throw new Error(`Missing installation document: ${config.slug}`);
+
+    const frameworkTitle = doc.data.frameworkTitle?.[config.framework];
+
+    entries.push({
+      kind: 'docs',
+      path: getInstallationRoutePath(route).replace(/^\//, ''),
+      title: doc.data.ogTitle ?? getDocTitle(doc, config.framework),
+      source: doc.data.ogTitle ? 'ogTitle' : frameworkTitle ? 'frameworkTitle' : 'title',
+      collectionId: doc.id,
+      framework: config.framework,
+    });
   }
 
   return entries;

@@ -26,8 +26,8 @@ const DOC_TYPE_FOLDERS = new Map<string, DocType>([
 
 /**
  * Resolve the document type from a docs collection id such as `guides/autoplay`. The folder is the single source of
- * truth: guides hold every hand-written page, how-to or explanation alike, and reference holds the builder-backed
- * pages. There is no frontmatter override.
+ * truth: guides hold how-to and explanation pages, and reference holds exact API and error-code descriptions. There is
+ * no frontmatter override.
  */
 export function getDocTypeFromId(id: string): DocType {
   const folder = id.split('/')[0] ?? '';
@@ -78,6 +78,17 @@ export function isValidFramework(value: string | undefined | null): value is Sup
   return SUPPORTED_FRAMEWORKS.includes(value as SupportedFramework);
 }
 
+/** Resolve a public installation route segment to the docs framework that renders it. */
+export function resolveDocsFramework(value: string | undefined | null): SupportedFramework | null {
+  if (isValidFramework(value)) return value;
+
+  if (value === 'vue' || value === 'svelte' || value === 'cdn') return 'html';
+
+  if (value === 'shadcn') return 'react';
+
+  return null;
+}
+
 export function isValidStyleForFramework(
   framework: SupportedFramework,
   style: string | undefined | null
@@ -111,7 +122,8 @@ export interface SidebarLink {
 
 export interface Section {
   sidebarLabel: string;
-  llmsDescription?: string;
+  /** One-line summary for the llms.txt indexes; give each framework its own when the section's pages differ. */
+  llmsDescription?: string | Partial<Record<SupportedFramework, string>>;
   frameworks?: SupportedFramework[];
   devOnly?: boolean; // only visible in development mode
   contents: Array<Guide | Section | SidebarLink>;

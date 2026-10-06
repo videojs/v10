@@ -24,6 +24,7 @@ export interface QualityRadioGroupOption extends RadioOption {
 
 export interface QualityRadioGroupState extends RadioOptionsState<QualityRadioGroupOption> {}
 
+/** @internal */
 export const QUALITY_AUTO_VALUE = 'auto';
 
 const STANDARD_RENDITION_SIZES: readonly number[] = [4320, 2160, 1440, 1080, 720, 480, 360, 240];
@@ -93,22 +94,7 @@ function formatRenditionTier(rendition: MediaVideoRendition): string | undefined
   return undefined;
 }
 
-function getRenditionValue(rendition: MediaVideoRendition, index: number): string {
-  return rendition.id || String(index);
-}
-
-function isSameRendition(a: MediaVideoRendition, b: MediaVideoRendition): boolean {
-  if (a.id !== undefined || b.id !== undefined) return a.id === b.id;
-
-  return (
-    a.width === b.width &&
-    a.height === b.height &&
-    a.bitrate === b.bitrate &&
-    a.frameRate === b.frameRate &&
-    a.codec === b.codec
-  );
-}
-
+/** @internal */
 export class QualityRadioGroupCore {
   static readonly defaultProps: NonNullableObject<QualityRadioGroupProps> = {
     label: '',
@@ -166,10 +152,6 @@ export class QualityRadioGroupCore {
     return formatRenditionTier(rendition);
   }
 
-  getRenditionValue(rendition: MediaVideoRendition, index: number): string {
-    return getRenditionValue(rendition, index);
-  }
-
   getAttrs(state: QualityRadioGroupState) {
     return {
       'aria-label': this.getLabel(state),
@@ -187,24 +169,23 @@ export class QualityRadioGroupCore {
     const selectedIndex = media.videoRenditionList.findIndex((rendition) => rendition.selected);
     const availability: QualityRadioGroupState['availability'] =
       media.videoRenditionList.length > 1 ? 'available' : 'unavailable';
-    const toOption = (rendition: MediaVideoRendition, index: number): QualityRadioGroupOption => {
+    const toOption = (rendition: MediaVideoRendition): QualityRadioGroupOption => {
       const tier = this.getRenditionTier(rendition);
       const badge = this.getRenditionBadge(rendition, media.videoRenditionList);
 
       return {
-        value: this.getRenditionValue(rendition, index),
+        value: rendition.id,
         label: this.getRenditionLabel(rendition),
         disabled: false,
         ...(tier && { tier }),
         ...(badge && { badge }),
       };
     };
-    const activeIndex =
-      media.activeVideoRendition === null
-        ? -1
-        : media.videoRenditionList.findIndex((rendition) => isSameRendition(rendition, media.activeVideoRendition!));
+    const { activeVideoRendition } = media;
     const active =
-      media.activeVideoRendition && activeIndex !== -1 ? toOption(media.activeVideoRendition, activeIndex) : undefined;
+      activeVideoRendition && media.videoRenditionList.some((rendition) => rendition.id === activeVideoRendition.id)
+        ? toOption(activeVideoRendition)
+        : undefined;
     const autoOption: QualityRadioGroupOption = {
       value: QUALITY_AUTO_VALUE,
       label: selectedIndex === -1 && active ? autoWithLabelText : autoText,
@@ -214,10 +195,7 @@ export class QualityRadioGroupCore {
 
     this.state.patch({
       options: [autoOption, ...media.videoRenditionList.map(toOption)],
-      value:
-        selectedIndex === -1
-          ? QUALITY_AUTO_VALUE
-          : this.getRenditionValue(media.videoRenditionList[selectedIndex]!, selectedIndex),
+      value: selectedIndex === -1 ? QUALITY_AUTO_VALUE : media.videoRenditionList[selectedIndex]!.id,
       disabled: this.#props.disabled || availability === 'unavailable',
       hidden: availability === 'unavailable',
       availability,
@@ -235,9 +213,7 @@ export class QualityRadioGroupCore {
       return;
     }
 
-    const hasValue = media.videoRenditionList.some(
-      (rendition, index) => this.getRenditionValue(rendition, index) === value
-    );
+    const hasValue = media.videoRenditionList.some((rendition) => rendition.id === value);
     if (!hasValue) return;
 
     media.selectVideoRendition(value);
@@ -248,6 +224,7 @@ export class QualityRadioGroupCore {
   }
 }
 
+/** @internal */
 export namespace QualityRadioGroupCore {
   export type Props = QualityRadioGroupProps;
   export type State = QualityRadioGroupState;

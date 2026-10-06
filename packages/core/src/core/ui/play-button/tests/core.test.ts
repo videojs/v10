@@ -12,7 +12,6 @@ function createMediaState(overrides: Partial<MediaPlaybackState> = {}): MediaPla
     waiting: false,
     play: vi.fn(async () => {}),
     pause: vi.fn(),
-    togglePaused: vi.fn(() => true),
     ...overrides,
   };
 }
@@ -28,22 +27,6 @@ function createState(overrides: Partial<PlayButtonState> = {}): PlayButtonState 
 }
 
 describe('PlayButtonCore', () => {
-  describe('setProps', () => {
-    it('uses default props', () => {
-      const core = new PlayButtonCore();
-      const attrs = core.getAttrs(createState());
-
-      expect(attrs['aria-disabled']).toBeUndefined();
-    });
-
-    it('accepts constructor props', () => {
-      const core = new PlayButtonCore({ disabled: true });
-      const attrs = core.getAttrs(createState());
-
-      expect(attrs['aria-disabled']).toBe('true');
-    });
-  });
-
   describe('getState', () => {
     it('projects data fields from media state', () => {
       const core = new PlayButtonCore();
@@ -150,10 +133,11 @@ describe('PlayButtonCore', () => {
 
     it('calls play when ended', async () => {
       const core = new PlayButtonCore();
-      const media = createMediaState({ ended: true });
+      const media = createMediaState({ paused: false, ended: true });
 
       await core.toggle(media);
       expect(media.play).toHaveBeenCalled();
+      expect(media.pause).not.toHaveBeenCalled();
     });
 
     it('does nothing when disabled', async () => {

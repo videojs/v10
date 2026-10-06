@@ -17,82 +17,15 @@ Before building from scratch, check if an existing approach covers your use case
 <FrameworkCase frameworks={["react"]}>
 - **Change what a control renders**: use the `render` prop on any built-in component. See <DocsLink slug="guides/ui-components">UI components</DocsLink>.
 - **Restyle a control**: use CSS custom properties and data attributes. See <DocsLink slug="guides/ui-components">UI components</DocsLink>.
-- **Rearrange or remove controls**: eject a skin and modify it. See <DocsLink slug="guides/customize-skins" anchor="eject-and-edit-a-skin">Customize skins</DocsLink>.
+- **Rearrange or remove controls**: add the skin source to your project, then modify it. See <DocsLink slug="guides/customize-skins" anchor="style-skin-source">Customize skins</DocsLink>.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 - **Restyle a control**: use CSS custom properties and data attributes. See <DocsLink slug="guides/ui-components">UI components</DocsLink>.
-- **Rearrange or remove controls**: eject a skin and modify it. See <DocsLink slug="guides/customize-skins" anchor="eject-and-edit-a-skin">Customize skins</DocsLink>.
+- **Rearrange or remove controls**: add the skin source to your project, then modify it. See <DocsLink slug="guides/customize-skins" anchor="style-skin-source">Customize skins</DocsLink>.
 </FrameworkCase>
 
 Build a custom component when you need new behavior, a new state display, or integration with an external system.
-
-## Use player state and actions
-
-Need access to player state or actions? You'll want to familiarize yourself with <DocsLink slug="guides/features">features</DocsLink>. Each feature exposes a set. Here are some features you might reach for first:
-
-| State | Actions | Feature |
-|-------|---------|---------|
-| `paused`, `ended` | `play()`, `pause()` | <DocsLink slug="reference/api/feature-playback">Playback</DocsLink> |
-| `currentTime`, `duration` | `seek()` | <DocsLink slug="reference/api/feature-time">Time</DocsLink> |
-| `volume`, `muted` | `setVolume()`, `toggleMuted()` | <DocsLink slug="reference/api/feature-volume">Volume</DocsLink> |
-| `fullscreen` | `requestFullscreen()`, `exitFullscreen()` | <DocsLink slug="reference/api/feature-fullscreen">Fullscreen</DocsLink> |
-
-Browse the full list in the **Features** section of the sidebar.
-
-Features for platform-dependent capabilities also expose one or more **availability** properties (`'available'`, `'unavailable'`, or `'unsupported'`) for hiding controls the platform does not support. See <DocsLink slug="guides/features">Features</DocsLink> for details.
-
-<FrameworkCase frameworks={["react"]}>
-
-Access state and actions with <DocsLink slug="reference/api/use-player">`usePlayer`</DocsLink>:
-
-```tsx
-import { usePlayer } from '@videojs/react';
-
-// Subscribe to state — re-renders only when selected values change
-const paused = usePlayer((s) => s.paused);
-const currentTime = usePlayer((s) => s.currentTime);
-
-// Get the store for dispatching actions (does not subscribe)
-const store = usePlayer();
-
-await store.play();
-store.setVolume(0.5);
-store.seek(30);
-```
-
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-
-Access state and actions with <DocsLink slug="reference/api/player-controller">`PlayerController`</DocsLink> and a feature selector:
-
-```ts
-import { PlayerController, playerContext, selectPlayback } from '@videojs/html';
-
-// Subscribe to a feature — triggers update() when its state changes
-#playback = new PlayerController(this, playerContext, selectPlayback);
-
-// In update():
-const playback = this.#playback.value;
-if (playback?.paused) {
-  playback.play();
-}
-```
-
-Each selector returns both state and actions for that feature. Use separate controllers when you need multiple features (the [full example](#full-example) demonstrates this).
-
-Without a selector, `PlayerController` returns the full store without subscribing to changes:
-
-```ts
-#store = new PlayerController(this, playerContext);
-
-// Call any action
-this.#store.value.play();
-this.#store.value.setVolume(0.5);
-```
-
-</FrameworkCase>
 
 ## Place your component in the player
 
@@ -146,10 +79,6 @@ class SkipIntroButtonElement extends UIElement {
 If your element starts listeners, observers, or other work, stop it in `disconnectedCallback()` and call the superclass lifecycle methods so inherited cleanup runs too. The browser can connect and disconnect the same element many times.
 
 </FrameworkCase>
-
-## Make it accessible
-
-<DocsLinkCard slug="guides/accessibility">Learn more about accessibility in video players</DocsLinkCard>
 
 ## Full example
 
@@ -359,10 +288,10 @@ Custom components read player state and dispatch actions through <DocsLink slug=
 |-------|---------|---------|
 | `paused`, `ended` | `play()`, `pause()` | <DocsLink slug="reference/api/feature-playback">Playback</DocsLink> |
 | `currentTime`, `duration` | `seek()` | <DocsLink slug="reference/api/feature-time">Time</DocsLink> |
-| `volume`, `muted` | `setVolume()`, `toggleMuted()` | <DocsLink slug="reference/api/feature-volume">Volume</DocsLink> |
-| `fullscreen` | `requestFullscreen()`, `exitFullscreen()` | <DocsLink slug="reference/api/feature-fullscreen">Fullscreen</DocsLink> |
+| `volume`, `muted` | `setVolume()`, `setMuted()` | <DocsLink slug="reference/api/feature-volume">Volume</DocsLink> |
+| `isFullscreen` | `requestFullscreen()`, `exitFullscreen()` | <DocsLink slug="reference/api/feature-fullscreen">Fullscreen</DocsLink> |
 
-Browse the full list in the **Features** section of the sidebar.
+The API reference lists every feature with the state and actions it adds.
 
 <FrameworkCase frameworks={["react"]}>
 
@@ -387,7 +316,7 @@ store.seek(30);
 
 <FrameworkCase frameworks={["html"]}>
 
-Extend `MediaElement` from `@videojs/html` so <DocsLink slug="reference/api/player-controller">`PlayerController`</DocsLink> can schedule DOM updates when state changes, and access state and actions with a feature selector:
+Extend `UIElement` from `@videojs/html` so <DocsLink slug="reference/api/player-controller">`PlayerController`</DocsLink> can schedule DOM updates when state changes, and access state and actions with a feature selector:
 
 ```ts
 import { PlayerController, playerContext, selectPlayback } from '@videojs/html';
@@ -410,9 +339,9 @@ Without a selector, `PlayerController` returns the full store without subscribin
 import { createPlayer, PlayerController } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { context } = createPlayer({ features: videoFeatures });
+const { playerContext: videoPlayerContext } = createPlayer({ features: videoFeatures });
 
-#store = new PlayerController(this, context);
+#store = new PlayerController(this, videoPlayerContext);
 
 // Call any action
 this.#store.value?.play();
@@ -421,7 +350,13 @@ this.#store.value?.setVolume(0.5);
 
 </FrameworkCase>
 
-Custom controls also need real button semantics — the examples above set the accessible name, keyboard focus, and (in HTML, where there is no native `<button>`) the ARIA button pattern by hand.
+<FrameworkCase frameworks={["react"]}>
+Custom controls also need real button semantics — the examples above set the accessible name and keyboard focus by hand.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Custom controls also need real button semantics — the examples above set the accessible name, keyboard focus, and (because a custom element is not a native `<button>`) the ARIA button pattern by hand.
+</FrameworkCase>
 
 <DocsLinkCard slug="guides/accessibility">Learn more about accessibility in video players</DocsLinkCard>
 
@@ -448,23 +383,36 @@ Use CSS custom properties and data attributes. See <DocsLink slug="guides/ui-com
 
 ### Rearrange or remove controls
 
-Eject a skin and modify it. See <DocsLink slug="guides/customize-skins" anchor="eject-and-edit-a-skin">Customize skins</DocsLink>.
+Add the skin source to your project and modify it. See <DocsLink slug="guides/customize-skins" anchor="style-skin-source">Customize skins</DocsLink>.
 
 ## Troubleshooting
 
 ### State and actions are typed as `unknown`
 
-You're using the standalone `usePlayer` export or the shared `playerContext`, which don't know which features your player has. In React, import `usePlayer` from your player's preset (for example `@videojs/react/video`), or use the hook returned by `createPlayer` if you built the player with a custom feature set. In HTML, use the typed `context` returned by `createPlayer`.
+<FrameworkCase frameworks={["react"]}>
+You're using the standalone `usePlayer` export, which doesn't know which features your player has. Import `usePlayer` from your player's preset (for example `@videojs/react/video`), or use the hook returned by `createPlayer` if you built the player with a custom feature set.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+You're passing the `playerContext` exported from `@videojs/html`, which doesn't know which features your player has. Pass the context `createPlayer` returns instead, as `videoPlayerContext` does in [How it works](#how-it-works), or use the `PlayerController` that `createPlayer` returns, which is already bound to it and takes no context argument.
+</FrameworkCase>
 
 ### The component renders but never updates
 
-In React, the component sits outside the player (such as `<VideoPlayer>`), so `usePlayer` has no store to subscribe to. In HTML, the element sits outside `<video-player>`, or the class doesn't extend `MediaElement`, so `PlayerController` has nothing to schedule updates on.
+<FrameworkCase frameworks={["react"]}>
+The component sits outside the player (such as `<VideoPlayer>`), so `usePlayer` has no store to subscribe to.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The element sits outside `<video-player>`, or the class doesn't extend `UIElement`, so `PlayerController` has nothing to schedule updates on.
+</FrameworkCase>
 
 ## Related API
 
-- <DocsLink slug="reference/api/use-player">usePlayer</DocsLink>
-- <DocsLink slug="reference/api/player-controller">PlayerController</DocsLink>
-- <DocsLink slug="reference/api/create-player">createPlayer</DocsLink>
+- <DocsLink slug="reference/api/use-player" frameworks="react">usePlayer</DocsLink>
+- <DocsLink slug="reference/api/player-controller" frameworks="html">PlayerController</DocsLink>
+- <DocsLink slug="reference/api/create-player" frameworks="react">createPlayer</DocsLink>
+- <DocsLink slug="reference/api/html-create-player" frameworks="html">createPlayer</DocsLink>
 - <DocsLink slug="reference/components/player-container">Player container</DocsLink>
 
 ## Related guides

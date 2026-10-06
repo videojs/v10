@@ -207,32 +207,60 @@ describe('playbackFeature', () => {
   });
 
   describe('actions', () => {
-    it('play() calls play on target', async () => {
-      const video = createMockVideo({});
+    it('play() publishes the new state without waiting for the play event', async () => {
+      const video = createMockVideo({ paused: true });
 
-      video.play = vi.fn().mockResolvedValue(undefined);
+      // The mock changes `paused` like the media does and fires no events, so only the action can update the store.
+      video.play = vi.fn(() => {
+        Object.defineProperty(video, 'paused', { value: false, configurable: true });
+        return Promise.resolve();
+      });
 
       const store = createStore<PlayerTarget>()(playbackFeature);
 
       store.attach({ media: video, container: null });
+
+      const playing = store.play();
+
+      expect(store.state.paused).toBe(false);
+      expect(store.state.started).toBe(true);
+
+      await playing;
+    });
+
+    it('play() clears ended before the media does on replay', async () => {
+      const video = createMockVideo({ paused: true, ended: true });
+
+      // `ended` stays true until the replay's seek back to the start lands.
+      video.play = vi.fn(() => {
+        Object.defineProperty(video, 'paused', { value: false, configurable: true });
+        return Promise.resolve();
+      });
+
+      const store = createStore<PlayerTarget>()(playbackFeature);
+
+      store.attach({ media: video, container: null });
+
+      expect(store.state.ended).toBe(true);
 
       await store.play();
 
-      expect(video.play).toHaveBeenCalled();
+      expect(store.state.ended).toBe(false);
     });
 
-    it('pause() calls pause on target', () => {
-      const video = createMockVideo({});
+    it('pause() publishes the new state without waiting for the pause event', () => {
+      const video = createMockVideo({ paused: false });
 
-      video.pause = vi.fn();
+      video.pause = vi.fn(() => {
+        Object.defineProperty(video, 'paused', { value: true, configurable: true });
+      });
 
       const store = createStore<PlayerTarget>()(playbackFeature);
 
       store.attach({ media: video, container: null });
-
       store.pause();
 
-      expect(video.pause).toHaveBeenCalled();
+      expect(store.state.paused).toBe(true);
     });
   });
 });

@@ -15,7 +15,7 @@ Almost certainly. Every current browser supports the `<video>` element. However,
 
 ## Why isn't HTML5 video enough?
 
-The native `<video>` tag is great if you can describe your video as an image with a play button. Past that, the gaps show up quickly.
+The native `<video>` tag is enough for a short clip that plays without controls. Once viewers control playback, the gaps show up quickly.
 
 - **Adaptive streaming.** HLS plays natively in Safari and in a few mobile browsers. DASH plays natively nowhere. Everywhere else needs a JavaScript playback engine on top of Media Source Extensions, and a way to swap engines when the source changes.
 - **Consistent controls.** Chrome, Safari, and Firefox each draw their own controls. You can hide them, but you can't restyle or rearrange them.

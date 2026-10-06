@@ -1,5 +1,13 @@
 import { act, cleanup, render, renderHook, screen, waitFor } from '@testing-library/react';
-import { features, metadataFeature, type PlayerStore } from '@videojs/core/dom';
+import {
+  type ExtensionPlayer,
+  features,
+  metadataFeature,
+  type PlayerExtension,
+  type PlayerStore,
+  type PlayerTarget,
+  volumeFeature,
+} from '@videojs/core/dom';
 import { defineSlice } from '@videojs/store';
 import { Component, type ErrorInfo, type ReactNode, StrictMode, useState } from 'react';
 import { renderToString } from 'react-dom/server';
@@ -7,6 +15,8 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { I18nProvider, useLocale } from '../../i18n';
 import { Container } from '../../index';
+import { Video } from '../../media/video';
+import { usePlayerExtension } from '../../utils/use-player-extension';
 import { useContainer, usePlayerContext } from '../context';
 import { createPlayer } from '../create-player';
 
@@ -107,7 +117,7 @@ describe('createPlayer', () => {
       originalStore.destroy();
       expect(originalStore.destroyed).toBe(true);
 
-      // Mirrors the real app: Activity reveals the subtree with an already-attached media element.
+      // Mirrors the real app: Activity reveals the subtree with an already-attached media component.
       expect(() => {
         act(() => {
           setMediaFn(document.createElement('video'));
@@ -144,6 +154,202 @@ describe('createPlayer', () => {
 
       expect(store).not.toBe(destroyedStore);
       expect(store.title).toBe('Replacement title');
+    });
+
+    describe('extensions', () => {
+      class MutedExtension implements PlayerExtension {
+        static instances: MutedExtension[] = [];
+        attach = vi.fn<(target: PlayerTarget) => void>();
+        detach = vi.fn();
+        destroy = vi.fn();
+
+        constructor() {
+          MutedExtension.instances.push(this);
+        }
+
+        get mediaOverride() {
+          return { muted: true };
+        }
+      }
+
+      /** Declares no `mediaOverride`, like Mux Data. */
+      class ObserverExtension implements PlayerExtension {
+        static instances: ObserverExtension[] = [];
+        connect = vi.fn<(player: ExtensionPlayer) => void>();
+        disconnect = vi.fn();
+        attach = vi.fn<(target: PlayerTarget) => void>();
+        detach = vi.fn();
+        destroy = vi.fn();
+
+        constructor() {
+          ObserverExtension.instances.push(this);
+        }
+      }
+
+      function Muted() {
+        usePlayerExtension(MutedExtension);
+        return null;
+      }
+
+      function Observer() {
+        usePlayerExtension(ObserverExtension);
+        return null;
+      }
+
+      afterEach(() => {
+        MutedExtension.instances.length = 0;
+        ObserverExtension.instances.length = 0;
+      });
+
+      it('attaches extensions to a plain video and routes store reads through their overrides', () => {
+        const { Player, usePlayer } = createPlayer({ features: [volumeFeature] });
+        let store!: PlayerStore<[typeof volumeFeature]>;
+
+        function Consumer() {
+          store = usePlayer();
+          return null;
+        }
+
+        const { container } = render(
+          <Player>
+            <Video data-testid="video" />
+            <Muted />
+            <Consumer />
+          </Player>
+        );
+
+        const video = container.querySelector('video')!;
+        const [extension] = MutedExtension.instances;
+
+        expect(extension!.attach).toHaveBeenCalledWith(expect.objectContaining({ media: video }));
+        expect(store.target?.media).not.toBe(video);
+        expect(store.target?.media).toBeInstanceOf(HTMLVideoElement);
+        expect(store.state.muted).toBe(true);
+        expect(video.muted).toBe(false);
+      });
+
+      it('re-attaches the store when an extension mounts after the media', () => {
+        const { Player, usePlayer } = createPlayer({ features: [volumeFeature] });
+        let store!: PlayerStore<[typeof volumeFeature]>;
+
+        function Consumer() {
+          store = usePlayer();
+          return null;
+        }
+
+        function App({ cast }: { cast: boolean }) {
+          return (
+            <Player>
+              <Video />
+              {cast && <Muted />}
+              <Consumer />
+            </Player>
+          );
+        }
+
+        const { container, rerender } = render(<App cast={false} />);
+        const video = container.querySelector('video')!;
+
+        expect(store.target?.media).toBe(video);
+        expect(store.state.muted).toBe(false);
+
+        rerender(<App cast />);
+
+        const [extension] = MutedExtension.instances;
+
+        expect(extension!.attach).toHaveBeenCalledTimes(1);
+        expect(store.target?.media).not.toBe(video);
+        expect(store.state.muted).toBe(true);
+
+        rerender(<App cast={false} />);
+
+        expect(extension!.detach).toHaveBeenCalledTimes(1);
+        expect(store.target?.media).toBe(video);
+        expect(store.state.muted).toBe(false);
+      });
+
+      it('never wraps the media or re-attaches the store for an observer', () => {
+        const { Player, usePlayer } = createPlayer({ features: [volumeFeature] });
+        let store!: PlayerStore<[typeof volumeFeature]>;
+
+        function Consumer() {
+          store = usePlayer();
+          return null;
+        }
+
+        function App({ observe }: { observe: boolean }) {
+          return (
+            <Player>
+              <Video />
+              {observe && <Observer />}
+              <Consumer />
+            </Player>
+          );
+        }
+
+        const { container, rerender } = render(<App observe={false} />);
+        const video = container.querySelector('video')!;
+        const attach = vi.spyOn(store, 'attach');
+
+        rerender(<App observe />);
+
+        const [extension] = ObserverExtension.instances;
+
+        expect(extension!.connect).toHaveBeenCalledWith({ initTime: expect.any(Number) });
+        expect(extension!.attach).toHaveBeenCalledWith(expect.objectContaining({ media: video }));
+        expect(store.target?.media).toBe(video);
+
+        rerender(<App observe={false} />);
+
+        expect(extension!.detach).toHaveBeenCalledTimes(1);
+        expect(extension!.disconnect).toHaveBeenCalledTimes(1);
+        expect(attach).not.toHaveBeenCalled();
+      });
+
+      it('keeps extensions attached when only the container changes', () => {
+        const { Player } = createPlayer({ features: [volumeFeature] });
+        let setContainer!: (container: HTMLElement | null) => void;
+
+        function Consumer() {
+          setContainer = usePlayerContext().setContainer;
+          return null;
+        }
+
+        render(
+          <Player>
+            <Video />
+            <Observer />
+            <Consumer />
+          </Player>
+        );
+
+        const [extension] = ObserverExtension.instances;
+
+        act(() => setContainer(document.createElement('div')));
+        act(() => setContainer(document.createElement('div')));
+
+        expect(extension!.attach).toHaveBeenCalledTimes(1);
+        expect(extension!.detach).not.toHaveBeenCalled();
+      });
+
+      it('detaches extensions with the store on unmount', () => {
+        const { Player } = createPlayer({ features: [volumeFeature] });
+
+        const { unmount } = render(
+          <Player>
+            <Video />
+            <Muted />
+          </Player>
+        );
+
+        const [extension] = MutedExtension.instances;
+
+        expect(extension!.attach).toHaveBeenCalledTimes(1);
+
+        unmount();
+
+        expect(extension!.detach).toHaveBeenCalledTimes(1);
+      });
     });
 
     it('survives React StrictMode without StoreError', () => {
@@ -215,83 +421,49 @@ describe('createPlayer', () => {
       expect(Player.displayName).toBe('VideoPlayer');
     });
 
-    it('renders children', () => {
-      const { Player } = createPlayer({ features: [mockSlice] });
+    it.each([
+      { feature: metadataFeature, prop: 'title', initial: 'Initial title', updated: 'Updated title', cleared: '' },
+      {
+        feature: features.orientationLock,
+        prop: 'orientationLockType',
+        initial: 'portrait',
+        updated: 'natural',
+        cleared: 'landscape',
+      },
+    ])(
+      'seeds $prop for the first render and syncs only changed props after commit',
+      ({ feature, prop, initial, updated, cleared }) => {
+        const { Player, usePlayer } = createPlayer({ features: [feature] });
+        let store!: PlayerStore;
 
-      const { container } = render(
-        <Player>
-          <span data-testid="child">test</span>
-        </Player>
-      );
+        function Consumer() {
+          store = usePlayer();
+          return <span>{String(store[prop])}</span>;
+        }
 
-      expect(container.querySelector('[data-testid="child"]')).toBeTruthy();
-    });
+        const { rerender } = render(
+          <Player {...{ [prop]: initial }}>
+            <Consumer />
+          </Player>
+        );
 
-    it('seeds config inputs for the first render and syncs only changed props after commit', () => {
-      const { Player, usePlayer } = createPlayer({ features: [metadataFeature] });
-      let store!: PlayerStore<[typeof metadataFeature]>;
+        expect(screen.getByText(initial)).toBeTruthy();
 
-      function Consumer() {
-        store = usePlayer();
-        return <span>{store.title}</span>;
+        rerender(
+          <Player {...{ [prop]: updated }}>
+            <Consumer />
+          </Player>
+        );
+        expect(store[prop]).toBe(updated);
+
+        rerender(
+          <Player>
+            <Consumer />
+          </Player>
+        );
+        expect(store[prop]).toBe(cleared);
       }
-
-      const { rerender } = render(
-        <Player title="Initial title">
-          <Consumer />
-        </Player>
-      );
-
-      expect(screen.getByText('Initial title')).toBeTruthy();
-
-      rerender(
-        <Player title="Updated title">
-          <Consumer />
-        </Player>
-      );
-      expect(store.title).toBe('Updated title');
-
-      // Dropping the prop clears the override, leaving what the media carries.
-      rerender(
-        <Player>
-          <Consumer />
-        </Player>
-      );
-      expect(store.title).toBe('');
-    });
-
-    it('applies orientation lock configuration through props', () => {
-      const { Player, usePlayer } = createPlayer({ features: [features.orientationLock] });
-
-      let store!: PlayerStore<[typeof features.orientationLock]>;
-
-      function Consumer() {
-        store = usePlayer();
-        return <span>{store.orientationLockType}</span>;
-      }
-
-      const { rerender } = render(
-        <Player orientationLockType="portrait">
-          <Consumer />
-        </Player>
-      );
-
-      expect(screen.getByText('portrait')).toBeTruthy();
-
-      rerender(
-        <Player orientationLockType="natural">
-          <Consumer />
-        </Player>
-      );
-      expect(store.orientationLockType).toBe('natural');
-
-      rerender(
-        <Player>
-          <Consumer />
-        </Player>
-      );
-      expect(store.orientationLockType).toBe('landscape');
-    });
+    );
 
     it('seeds config inputs during SSR', () => {
       const { Player, usePlayer } = createPlayer({ features: [metadataFeature] });
@@ -318,22 +490,36 @@ describe('createPlayer', () => {
 
       const container = document.createElement('div');
 
-      container.innerHTML = renderToString(
-        <Player title="Hydrated title">
-          <Consumer />
-        </Player>
-      );
+      vi.stubGlobal('window', undefined);
+
+      try {
+        container.innerHTML = renderToString(
+          <Player title="Hydrated title">
+            <Consumer />
+          </Player>
+        );
+      } finally {
+        vi.unstubAllGlobals();
+      }
+
+      const serverSpan = container.querySelector('span');
+
+      expect(serverSpan).not.toBeNull();
+      expect(serverSpan?.textContent).toBe('Hydrated title');
+      const onRecoverableError = vi.fn();
 
       const view = render(
         <Player title="Hydrated title">
           <Consumer />
         </Player>,
-        { container, hydrate: true }
+        { container, hydrate: true, onRecoverableError }
       );
 
       await act(async () => {});
 
       expect(container.textContent).toBe('Hydrated title');
+      expect(onRecoverableError).not.toHaveBeenCalled();
+      expect(container.querySelector('span')).toBe(serverSpan);
       view.unmount();
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
@@ -475,18 +661,6 @@ describe('createPlayer', () => {
   });
 
   describe('usePlayer', () => {
-    it('returns store without selector', () => {
-      const { Player, usePlayer } = createPlayer({ features: [mockSlice] });
-
-      const wrapper = ({ children }: { children: ReactNode }) => <Player>{children}</Player>;
-
-      const { result } = renderHook(() => usePlayer(), { wrapper });
-
-      expect(result.current).toBeDefined();
-      expect(typeof result.current.subscribe).toBe('function');
-      expect(typeof result.current.attach).toBe('function');
-    });
-
     it('returns selected state with selector', () => {
       const { Player, usePlayer } = createPlayer({ features: [mockSlice] });
 
@@ -510,47 +684,51 @@ describe('createPlayer', () => {
     });
   });
 
-  describe('Container', () => {
-    it('is imported independently of createPlayer', () => {
-      expect(Container).toBeDefined();
-    });
-  });
-
   describe('full integration', () => {
     it('Player → Container → media attach flow', () => {
       const { Player, usePlayer } = createPlayer({ features: [mockSlice] });
-
       let store!: PlayerStore;
+      let setMedia!: (media: HTMLMediaElement | null) => void;
 
-      function TestComponent() {
+      function Consumer() {
         store = usePlayer();
-        return (
-          <Container data-testid="container">
-            <video data-testid="video">
-              <track kind="captions" />
-            </video>
-          </Container>
-        );
+        setMedia = usePlayerContext().setMedia;
+        return null;
       }
 
-      const { container } = render(
+      const { rerender, unmount } = render(
         <Player>
-          <TestComponent />
+          <Consumer />
         </Player>
       );
+      const first = document.createElement('video');
 
-      // Store should exist
-      expect(store).toBeDefined();
+      act(() => setMedia(first));
+      expect(store.target).toEqual({ media: first, container: null });
 
-      // Container should render
-      const containerEl = container.querySelector('[data-testid="container"]');
+      rerender(
+        <Player>
+          <Container data-testid="container" />
+          <Consumer />
+        </Player>
+      );
+      const container = screen.getByTestId('container');
 
-      expect(containerEl).toBeTruthy();
+      expect(store.target).toEqual({ media: first, container });
 
-      // Video should render inside container
-      const videoEl = container.querySelector('[data-testid="video"]');
+      const second = document.createElement('video');
 
-      expect(videoEl).toBeTruthy();
+      act(() => setMedia(second));
+      expect(store.target).toEqual({ media: second, container });
+
+      act(() => setMedia(null));
+      expect(store.target).toBeNull();
+
+      act(() => setMedia(first));
+      expect(store.target).toEqual({ media: first, container });
+      unmount();
+      expect(store.target).toBeNull();
+      expect(store.destroyed).toBe(false);
     });
   });
 });

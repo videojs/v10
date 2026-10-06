@@ -1,102 +1,151 @@
 ---
 title: 'Build with AI'
-description: 'How to give AI tools the context they need to build Video.js players alongside you'
+description: 'Install the Video.js skill and give AI coding agents version-matched docs for building and migrating players'
 ---
 
+import CopyMarkdownButton from '@/components/CopyMarkdownButton.tsx';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
-import CopyMarkdownButton from '@/components/CopyMarkdownButton.tsx';
+import HumanCase from '@/components/docs/HumanCase.astro';
+import ContentWidth from '@/components/frames/ContentWidth.astro';
+import InstallationAgentStart from '@/components/installation/InstallationAgentStart.astro';
+import SkillInstallSteps from '@/components/installation/SkillInstallSteps.astro';
 
-Video.js publishes all of its documentation in AI-friendly formats. This page covers how to feed that documentation to your tools.
+The [Video.js skill](https://github.com/videojs/skills) gives coding agents the context they need to build, customize, debug, and migrate Video.js players. It teaches the agent how Video.js 10 is composed, then points it to documentation that matches the version installed in your project.
 
-## Give your AI context
+## AI Quickstart
 
-AI tools might not know the Video.js API out of the box. You need to give them documentation.
+<InstallationAgentStart />
 
-### Markdown documentation
+## Video.js Skill
 
-Every doc page is available as markdown, so you can provide your model with focused content instead of HTML. Three ways to get it:
+The skill contains guidance and Markdown references. It does not install Video.js, run background services, or connect to an account.
+
+### Install the skill
+
+Follow the steps for your coding agent. To print the same steps in a terminal, run:
+
+```sh title="Terminal"
+npx @videojs/cli agents skills
+```
+
+Add `--agent claude-code,cursor` to print only those agents. `--scope project` or `--scope local` changes the Claude Code installation scope from its `user` default, and `--global` adds `-g` to the `skills` installer command. Like `agents init`, the command only prints instructions.
+
+#### Codex
+
+<SkillInstallSteps agent="codex" />
+
+#### Claude Code
+
+<SkillInstallSteps agent="claude-code" />
+
+#### VS Code
+
+<SkillInstallSteps agent="vscode" />
+
+#### Cursor
+
+<SkillInstallSteps agent="cursor" />
+
+#### Other coding agents
+
+<SkillInstallSteps agent="other" />
+
+### Use the skill
+
+Ask for the player you want to build or the problem you want to solve. For example:
+
+> Add an HLS player with captions and a quality menu to the product page using Video.js.
+
+> Play this Mux playback ID in our Next.js app with Video.js, with Mux Data turned on.
+
+> Migrate this Video.js 8 embed to Video.js 10 in React.
+
+The skill checks your framework and installation method before choosing player, skin, and media code. It also checks imports and playback setup against current documentation before handing the work back.
+
+### How skills find docs
+
+The skill uses documentation in this order:
+
+1. **Version-matched installation instructions.** `npx @videojs/cli agents init` lists valid choices for every framework. Adding flags prints one complete installation plan. When the project already has a different `@videojs/react` or `@videojs/html` version, the plan names the pinned command for that release. The command only returns instructions; it does not prompt, install packages, or write files.
+2. **Installed package docs.** `node_modules/@videojs/react/docs/llms.txt` and `node_modules/@videojs/html/docs/llms.txt` index the docs shipped with each package version. These files work offline and match the code in your project.
+3. **Live docs.** If commands cannot run, the skill reads the relevant [React](https://videojs.org/docs/framework/react/llms.txt) or [HTML](https://videojs.org/docs/framework/html/llms.txt) documentation index, then follows it to the matching installation guide.
+4. **Installed types.** If the docs are unavailable, the skill checks package exports and TypeScript declarations instead of guessing version-specific APIs.
+
+This order matters because most model training data describes Video.js 8. Video.js 10 has a different component model, package structure, and installation flow.
+
+The old `npx @videojs/cli docs` workflow was removed. `@videojs/cli` now contains only `agents init` and `agents skills`, in a single file with no dependencies, so running it does not download the player packages.
+
+### Troubleshoot
+
+If your agent does not use the skill, start a new session or reload plugins, then ask it to use the Video.js skill explicitly. If it writes `videojs()`, `data-setup`, `registerPlugin`, or other Video.js 8 APIs, ask it to read the installed `llms.txt` before changing code.
+
+Report problems with the skill in the [videojs/skills repository](https://github.com/videojs/skills/issues). Report package and documentation problems in [videojs/v10](https://github.com/videojs/v10/issues).
+
+## Use the docs
+
+You can still provide documentation directly when a tool cannot install skills.
+
+### Copy one page
+
+Each docs page has a **Copy page** menu. Copy the Markdown, open the `.md` version, or send the page to ChatGPT or Claude.
+
+<HumanCase>
+<ContentWidth>
+  <CopyMarkdownButton client:idle />
+</ContentWidth>
+</HumanCase>
+
+### Open a Markdown URL
+
+Add `.md` to any docs URL. For this page, use:
 
 <FrameworkCase frameworks={["react"]}>
-1. **Copy page button**: each page has a "Copy page" button at the top of the page. Grab the pages relevant to your task and paste them in. Its menu can also open the page as Markdown, or hand it straight to ChatGPT or Claude. The button looks something like this...
-
-   <CopyMarkdownButton client:idle />
-
-2. **`Accept: text/markdown` header**: AI tools that send this header when fetching a Video.js doc URL will receive markdown instead of HTML. The same page is about 250 KB as HTML and about 4 KB as Markdown.
-
-   ```bash title="Terminal"
-   curl -H "Accept: text/markdown" \
-     https://videojs.org/docs/framework/react/reference/components/play-button
-   ```
-
-   ````markdown title="Response"
-   # PlayButton
-
-   Accessible play/pause button with keyboard support and customizable rendering
-
-   ## Import
-
-   ```tsx
-   import { PlayButton } from '@videojs/react';
-   ```
-   ````
-3. **Add `.md` to any URL**: append `.md` to any doc URL to get its markdown directly. For example, the PlayButton reference is available at [`videojs.org/docs/framework/react/reference/components/play-button.md`](https://videojs.org/docs/framework/react/reference/components/play-button.md). Every doc page also advertises this twin in its HTML head with `<link rel="alternate" type="text/markdown">`, so tools that look for it will find it.
+```text
+https://videojs.org/docs/framework/react/guides/build-with-ai.md
+```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-1. **Copy page button**: each page has a "Copy page" button at the top of the page. Grab the pages relevant to your task and paste them in. Its menu can also open the page as Markdown, or hand it straight to ChatGPT or Claude. The button looks something like this...
-
-   <CopyMarkdownButton client:idle />
-
-2. **`Accept: text/markdown` header**: AI tools that send this header when fetching a Video.js doc URL will receive markdown instead of HTML. The same page is about 250 KB as HTML and about 4 KB as Markdown.
-
-   ```bash title="Terminal"
-   curl -H "Accept: text/markdown" \
-     https://videojs.org/docs/framework/html/reference/components/play-button
-   ```
-
-   ````markdown title="Response"
-   # media-play-button
-
-   Accessible play/pause button with keyboard support and customizable rendering
-
-   ## Import
-
-   ```ts
-   import '@videojs/html/ui/play-button';
-   ```
-   ````
-3. **Add `.md` to any URL**: append `.md` to any doc URL to get its markdown directly. For example, the PlayButton reference is available at [`videojs.org/docs/framework/html/reference/components/play-button.md`](https://videojs.org/docs/framework/html/reference/components/play-button.md). Every doc page also advertises this twin in its HTML head with `<link rel="alternate" type="text/markdown">`, so tools that look for it will find it.
+```text
+https://videojs.org/docs/framework/html/guides/build-with-ai.md
+```
 </FrameworkCase>
 
-### llms.txt
+Each docs page also advertises its Markdown URL as an alternate format so compatible tools can discover it.
+
+### Request Markdown
+
+Request the normal docs URL with an `Accept: text/markdown` header:
 
 <FrameworkCase frameworks={["react"]}>
-[`videojs.org/docs/framework/react/llms.txt`](https://videojs.org/docs/framework/react/llms.txt) is an index of the full documentation: every page with a title and description. Add it to your project's context so your AI knows what's available.
-
-If your tool ingests a corpus rather than following links, [`videojs.org/docs/framework/react/llms-full.txt`](https://videojs.org/docs/framework/react/llms-full.txt) has every React doc page in one file.
+```sh title="Terminal"
+curl -H "Accept: text/markdown" \
+  https://videojs.org/docs/framework/react/guides/build-with-ai
+```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-[`videojs.org/docs/framework/html/llms.txt`](https://videojs.org/docs/framework/html/llms.txt) is an index of the full documentation: every page with a title and description. Add it to your project's context so your AI knows what's available.
-
-If your tool ingests a corpus rather than following links, [`videojs.org/docs/framework/html/llms-full.txt`](https://videojs.org/docs/framework/html/llms-full.txt) has every HTML doc page in one file.
+```sh title="Terminal"
+curl -H "Accept: text/markdown" \
+  https://videojs.org/docs/framework/html/guides/build-with-ai
+```
 </FrameworkCase>
 
-## Set up your tools
+### Start from llms.txt
 
-How you use these resources depends on your tool:
+<FrameworkCase frameworks={["react"]}>
+[`videojs.org/docs/framework/react/llms.txt`](https://videojs.org/docs/framework/react/llms.txt) lists every React guide and reference page with a short description. Give the index to your tool, then load only the pages the task needs.
+</FrameworkCase>
 
-- **Any AI chat**: copy markdown from a doc page and paste it into the conversation.
-- **Claude Code**: reference doc URLs in your project's [`CLAUDE.md`](https://docs.anthropic.com/en/docs/claude-code/overview) so the agent knows where to find Video.js docs when it needs them.
-- **Cursor**: reference the `llms.txt` URL in a project [rule](https://cursor.com/docs/rules) so Cursor knows where to find Video.js docs.
-- **Other coding agents**: reference doc URLs or `llms.txt` in your project's [`AGENTS.md`](https://agents.md) or equivalent context file.
+<FrameworkCase frameworks={["html"]}>
+[`videojs.org/docs/framework/html/llms.txt`](https://videojs.org/docs/framework/html/llms.txt) lists every HTML guide and reference page with a short description. Give the index to your tool, then load only the pages the task needs.
+</FrameworkCase>
 
-## What's next for AI and Video.js
-
-We're exploring additional ways to integrate with AI tools, including MCP servers and agent skills. If you have ideas or want to share how you're using AI with Video.js, we'd love to hear from you in [GitHub Discussions](https://github.com/videojs/v10/discussions).
+The `llms-full.txt` files contain the complete documentation corpus. Use them only when your tool requires one file because they are larger than most useful task contexts.
 
 ## Related guides
 
 - <DocsLink slug="guides/installation">Installation</DocsLink>
+- <DocsLink slug="guides/architecture">Architecture</DocsLink>
 - <DocsLink slug="guides/build-your-own-component">Build your own UI component</DocsLink>

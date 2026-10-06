@@ -1,4 +1,6 @@
+import { getInstallationPreset, USE_CASES, type UseCase } from '@videojs/installation';
 import type { ReactNode } from 'react';
+import { useEffect } from 'react';
 
 import Film from '@/assets/icons/film.svg?react';
 import Image from '@/assets/icons/image.svg?react';
@@ -7,9 +9,9 @@ import MusicNote from '@/assets/icons/music-note.svg?react';
 import Radio from '@/assets/icons/radio.svg?react';
 import CardRadioGroup from '@/components/CardRadioGroup';
 import { useCase } from '@/stores/installation';
-import { getInstallationPreset, USE_CASES, type UseCase } from '@/utils/installation/types';
 
 import { useSelection } from './useSelection';
+import { withSelectionMarker } from './withSelectionMarker';
 
 const USE_CASE_MEDIA: Record<UseCase, ReactNode> = {
   'default-video': <Film className="size-6" />,
@@ -19,22 +21,31 @@ const USE_CASE_MEDIA: Record<UseCase, ReactNode> = {
   'background-video': <Image className="size-6" />,
 };
 
-const USE_CASE_DESCRIPTIONS: Record<UseCase, string> = {
+export const USE_CASE_DESCRIPTIONS = {
   'default-video': 'On-demand video with full controls',
   'default-audio': 'Podcasts, music, and audio-only playback',
   'live-video': 'Streams with a Live button, no duration',
   'live-audio': 'Live radio and audio streams',
   'background-video': 'Muted, looping video behind your content',
-};
+} satisfies Record<UseCase, string>;
 
-export default function UseCasePicker() {
+interface Props {
+  includeBackground?: boolean;
+}
+
+function UseCasePicker({ includeBackground = true }: Props) {
   const $useCase = useSelection('useCase');
+  const options = includeBackground ? USE_CASES : USE_CASES.filter((value) => value !== 'background-video');
+
+  useEffect(() => {
+    if (!includeBackground && $useCase === 'background-video') useCase.set('default-video');
+  }, [$useCase, includeBackground]);
 
   return (
     <CardRadioGroup
       value={$useCase}
       onChange={(value) => useCase.set(value)}
-      options={USE_CASES.map((value) => ({
+      options={options.map((value) => ({
         value,
         label: getInstallationPreset(value).label,
         description: USE_CASE_DESCRIPTIONS[value],
@@ -45,3 +56,5 @@ export default function UseCasePicker() {
     />
   );
 }
+
+export default withSelectionMarker(UseCasePicker);

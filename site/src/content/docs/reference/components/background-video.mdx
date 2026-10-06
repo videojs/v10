@@ -32,7 +32,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/background-video/html/css/
 Decorative background video for a source the browser can play natively. By default it's muted, looped, and autoplaying.
 
 <FrameworkCase frameworks={["react"]}>
-`BackgroundVideo` renders a native `<video>`. Override the defaults with native React props such as `muted={false}`, `loop={false}`, or `autoPlay={false}`, and size the video with `className` or `style`.
+`BackgroundVideo` renders a native `<video>`. Override the defaults with native React props such as `muted={false}`, `loop={false}`, or `autoPlay={false}`, and size the video with `className` or `style`. Its `ref` and `mediaRef` both resolve to that `HTMLVideoElement`.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -129,12 +129,12 @@ An HLS URL only works where the browser has native HLS playback. See <DocsLink s
   </Thead>
   <Tbody>
     <Tr>
-      <Td><MarkdownCode>--media-object-fit</MarkdownCode></Td>
+      <Td><MarkdownCode>{"--media-object-fit"}</MarkdownCode></Td>
       <Td><MarkdownCode>inherit</MarkdownCode></Td>
       <Td>Controls how the video fits its container.</Td>
     </Tr>
     <Tr>
-      <Td><MarkdownCode>--media-object-position</MarkdownCode></Td>
+      <Td><MarkdownCode>{"--media-object-position"}</MarkdownCode></Td>
       <Td><MarkdownCode>50% 50%</MarkdownCode></Td>
       <Td>Controls the position of the video within its container.</Td>
     </Tr>

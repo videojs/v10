@@ -1,6 +1,6 @@
 {
   "name": "@videojs/google-cast",
-  "version": "10.0.0-rc.2",
+  "version": "10.0.1",
   "description": "Google Cast extension for Video.js",
   "keywords": [
     "cast",
@@ -41,6 +41,7 @@
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {
+    "@videojs/core": "workspace:*",
     "@videojs/media": "workspace:*",
     "@videojs/utils": "workspace:*"
   },
@@ -48,7 +49,6 @@
     "@types/chrome": "^0.1.40",
     "@types/chromecast-caf-sender": "^1.0.11",
     "jsdom": "^26.1.0",
-    "vite-plus": "catalog:",
-    "vitest": "catalog:"
+    "vite-plus": "catalog:"
   }
 }

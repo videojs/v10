@@ -29,12 +29,18 @@ interface RenderStylesheetsOptions {
   files: readonly StyleOutputFile[];
 }
 
+/**
+ * Declared first in every semantic rule so Tailwind keeps variant output nested under the rule. Without a declaration
+ * of its own, Tailwind hoists nested rules out as flat selectors and leaves no semantic root to recover.
+ */
+const ROOT_SENTINEL = '--vjsc-root';
+
 export async function renderStylesheets(options: RenderStylesheetsOptions): Promise<Map<string, string>> {
   const analyzedFiles = new Map<StyleOutputFile, AnalyzedFile>();
 
   for (const file of options.files) {
     const source = file.rules
-      .map((rule) => `.${rule.className} {\n  @apply ${rule.candidates.join(' ')};\n}`)
+      .map((rule) => `.${rule.className} {\n  ${ROOT_SENTINEL}: 0;\n  @apply ${rule.candidates.join(' ')};\n}`)
       .join('\n');
 
     analyzedFiles.set(file, analyzeCompiledFile(await options.design.compileCss(source), file));
@@ -334,7 +340,7 @@ function analyzeCompiledFile(css: string, file: StyleOutputFile): AnalyzedFile {
 
           if (semanticRules.has(className)) throw new Error(`Tailwind emitted '.${className}' more than once.`);
 
-          semanticRules.set(className, cloneCssAst(rule));
+          semanticRules.set(className, withoutRootSentinel(cloneCssAst(rule)));
         }
 
         analyzed = {
@@ -351,6 +357,20 @@ function analyzeCompiledFile(css: string, file: StyleOutputFile): AnalyzedFile {
   if (!analyzed) throw new Error('Lightning CSS did not return a stylesheet during style emission.');
 
   return analyzed;
+}
+
+function withoutRootSentinel(rule: Rule): Rule {
+  if (rule.type !== 'style') return rule;
+
+  const block = rule.value.declarations;
+
+  if (block?.declarations) {
+    block.declarations = block.declarations.filter(
+      (declaration) => declaration.property !== 'custom' || declaration.value.name !== ROOT_SENTINEL
+    );
+  }
+
+  return rule;
 }
 
 function semanticRootClass(rule: Rule, semanticClassNames: ReadonlySet<string>): string | undefined {

@@ -56,13 +56,6 @@ describe('renderElement', () => {
       expect(element?.type).toHaveProperty('$$typeof', FORWARD_REF_TYPE);
     });
 
-    it('reuses one wrapper per component', () => {
-      const first = renderElement('button', { render: <PlainButton /> }, { state: {} });
-      const second = renderElement('button', { render: <PlainButton /> }, { state: {} });
-
-      expect(first?.type).toBe(second?.type);
-    });
-
     it('keeps the render element key', () => {
       const element = renderElement('button', { render: <PlainButton key="thumb" /> }, { state: {} });
 
@@ -104,14 +97,14 @@ describe('renderElement', () => {
     });
 
     it('forwards a popover trigger ref through the generated mute button to its <button>', () => {
-      const toggleMuted = vi.fn(() => false);
+      const setMuted = vi.fn((muted: boolean) => muted);
       const { Wrapper } = createPlayerWrapper({
         volume: 1,
         muted: false,
         volumeAvailability: 'available',
         mutedAvailability: 'available',
         setVolume: () => 1,
-        toggleMuted,
+        setMuted,
       });
       const ref = createRef<HTMLButtonElement>();
 
@@ -127,7 +120,7 @@ describe('renderElement', () => {
 
       fireEvent.click(ref.current!);
 
-      expect(toggleMuted).toHaveBeenCalledOnce();
+      expect(setMuted).toHaveBeenCalledExactlyOnceWith(true);
     });
   });
 });

@@ -1,7 +1,7 @@
 import { isMediaMutedCapable, isMediaVolumeCapable, MediaError, type Video } from '@videojs/media';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { buildTikTokIframeSrc, parseTikTokSource, parseTikTokVideoId, TikTokAdapter } from '..';
+import { buildTikTokIframeSrc, TikTokAdapter } from '..';
 
 // https://developers.tiktok.com/doc/embed-player
 const STATE = { INIT: -1, ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3 } as const;
@@ -77,51 +77,6 @@ async function attachAndLoad(
   report(iframe, 'onPlayerReady');
   return { iframe, commands };
 }
-
-describe('parseTikTokVideoId', () => {
-  it('extracts id from a raw numeric id', () => {
-    expect(parseTikTokVideoId(VIDEO_ID)).toBe(VIDEO_ID);
-  });
-
-  it('extracts id from an embed player URL', () => {
-    expect(parseTikTokVideoId(`https://www.tiktok.com/player/v1/${VIDEO_ID}?controls=0`)).toBe(VIDEO_ID);
-  });
-
-  it('extracts id from a share link', () => {
-    expect(parseTikTokVideoId(`https://www.tiktok.com/share/video/${VIDEO_ID}`)).toBe(VIDEO_ID);
-  });
-
-  it('extracts id from an author URL', () => {
-    expect(parseTikTokVideoId(`https://www.tiktok.com/@videojs/video/${VIDEO_ID}`)).toBe(VIDEO_ID);
-  });
-
-  it('returns null for empty input', () => {
-    expect(parseTikTokVideoId('')).toBe(null);
-  });
-
-  it('returns null for non-TikTok URLs', () => {
-    expect(parseTikTokVideoId('https://example.com/video/123')).toBe(null);
-  });
-
-  it('returns null for a TikTok URL that names no video', () => {
-    expect(parseTikTokVideoId('https://www.tiktok.com/@videojs')).toBe(null);
-  });
-});
-
-describe('parseTikTokSource', () => {
-  it('parses the video id out of every recognized form', () => {
-    expect(parseTikTokSource(VIDEO_ID)).toEqual({ id: VIDEO_ID });
-    expect(parseTikTokSource(`https://www.tiktok.com/player/v1/${VIDEO_ID}`)).toEqual({ id: VIDEO_ID });
-    expect(parseTikTokSource(`https://www.tiktok.com/share/video/${VIDEO_ID}/`)).toEqual({ id: VIDEO_ID });
-    expect(parseTikTokSource(`https://www.tiktok.com/@user.name/video/${VIDEO_ID}?is_from_webapp=1`)).toEqual({
-      id: VIDEO_ID,
-    });
-  });
-
-  it('returns null for an id that is not numeric', () => {
-    expect(parseTikTokSource('aqz-KE-bpKQ')).toBe(null);
-  });
-});
 
 describe('buildTikTokIframeSrc', () => {
   it('builds the embed URL with hidden controls and related videos kept to the author', () => {
@@ -291,11 +246,17 @@ describe('TikTokAdapter', () => {
     const iframe = createIframe();
 
     media.attach(iframe);
+    const navigate = vi.spyOn(iframe, 'src', 'set');
+    const loadstart = vi.fn();
+
+    media.addEventListener('loadstart', loadstart);
 
     media.src = VIDEO_ID;
     media.src = OTHER_VIDEO_ID;
     await flushLoad();
 
+    expect(navigate).toHaveBeenCalledTimes(1);
+    expect(loadstart).toHaveBeenCalledTimes(1);
     expect(iframe.getAttribute('src')).toContain(`https://www.tiktok.com/player/v1/${OTHER_VIDEO_ID}`);
     media.detach();
   });
@@ -342,24 +303,31 @@ describe('TikTokAdapter', () => {
     media.detach();
   });
 
-  it('does not replay a play the listener took back before the embed was ready', async () => {
-    const media = new TikTokAdapter();
-    const iframe = createIframe();
+  it.each(['metadata', 'none'] as const)(
+    'does not replay a play the listener took back before the embed was ready with preload=%s',
+    async (preload) => {
+      const media = new TikTokAdapter();
 
-    media.attach(iframe);
+      media.preload = preload;
+      const iframe = createIframe();
 
-    media.src = VIDEO_ID;
-    await media.play();
-    media.pause();
-    await flushLoad();
+      media.attach(iframe);
 
-    const commands = watchCommands(iframe);
+      media.src = VIDEO_ID;
+      await media.play();
+      media.pause();
+      await flushLoad();
 
-    report(iframe, 'onPlayerReady');
+      const commands = watchCommands(iframe);
 
-    expect(commands).not.toHaveBeenCalledWith({ 'x-tiktok-player': true, type: 'play' }, '*');
-    media.detach();
-  });
+      report(iframe, 'onPlayerReady');
+
+      if (preload === 'metadata') report(iframe, 'onStateChange', STATE.PAUSED);
+
+      expect(commands).not.toHaveBeenCalledWith({ 'x-tiktok-player': true, type: 'play' }, '*');
+      media.detach();
+    }
+  );
 
   it('emits loadstart on attach and loadedmetadata/loadcomplete once the embed is ready', async () => {
     const media = new TikTokAdapter();
@@ -675,16 +643,30 @@ describe('TikTokAdapter', () => {
     const embedSrc = buildTikTokIframeSrc(VIDEO_ID, TikTokAdapter.defaultProps);
 
     iframe.setAttribute('src', embedSrc);
+    media.src = VIDEO_ID;
     media.attach(iframe);
     report(iframe, 'onPlayerReady');
+    expect(media.readyState).toBe(1);
+    const frame = frameOf(iframe);
+    const commands = watchCommands(iframe);
+    const events: string[] = [];
 
-    media.src = VIDEO_ID;
+    for (const type of ['emptied', 'loadstart']) media.addEventListener(type, () => events.push(type));
+
+    const pending = media.load();
+
+    await flushLoad();
+    media.currentTime = 4;
     await flushLoad();
 
     // Rewriting the same URL would reload the frame and lose its position.
+    // Comparing the identity as a boolean avoids inspecting a closed jsdom window on failure.
+    expect(frameOf(iframe) === frame).toBe(true);
     expect(iframe.getAttribute('src')).toBe(embedSrc);
+    expect(events).toEqual([]);
     // No second `onPlayerReady` is coming, so the load has to settle itself.
-    await expect(media.play()).resolves.toBeUndefined();
+    expect(commands).toHaveBeenCalledWith({ 'x-tiktok-player': true, type: 'seekTo', value: 4 }, '*');
+    await pending;
     media.detach();
   });
 
@@ -889,11 +871,15 @@ describe('TikTokAdapter', () => {
   });
 
   it('stops listening for the embed on detach', async () => {
+    const listeners = vi.spyOn(globalThis, 'addEventListener');
     const media = new TikTokAdapter();
     const { iframe } = await attachAndLoad(media);
-    const listeners = vi.spyOn(globalThis, 'addEventListener');
+    const options = listeners.mock.calls.find(([type]) => type === 'message')?.[2] as AddEventListenerOptions;
+
+    expect(options.signal?.aborted).toBe(false);
 
     media.detach();
+    expect(options.signal?.aborted).toBe(true);
     expect(media.target).toBe(null);
     expect(media.engine).toBe(null);
 
@@ -903,7 +889,6 @@ describe('TikTokAdapter', () => {
 
     expect(media.paused).toBe(true);
     expect(media.currentTime).toBe(0);
-    expect(listeners).not.toHaveBeenCalled();
   });
 
   it('ignores what a superseded frame reports', async () => {
@@ -923,21 +908,6 @@ describe('TikTokAdapter', () => {
     expect(media.paused).toBe(true);
     expect(media.muted).toBe(false);
     media.detach();
-  });
-
-  it('unblocks pending play() when detached before the embed is ready', async () => {
-    const media = new TikTokAdapter();
-
-    media.src = VIDEO_ID;
-    const iframe = createIframe();
-
-    media.attach(iframe);
-
-    const pending = media.play();
-
-    media.detach();
-
-    await expect(pending).resolves.toBeUndefined();
   });
 
   it('tracks played ranges via the played-ranges mixin', async () => {

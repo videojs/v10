@@ -1,16 +1,25 @@
-import type { MediaContainer } from '@videojs/core/dom';
+'use client';
+
+import type { MediaContainer, PlayerExtension } from '@videojs/core/dom';
 import type { Media } from '@videojs/media';
 import type { UnknownState, UnknownStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import { createContext, useContext } from 'react';
 
+/** @internal */
 export interface PlayerContextValue {
   store: UnknownStore;
   media: Media | null;
   setMedia: Dispatch<SetStateAction<Media | null>>;
   container: MediaContainer | null;
   setContainer: Dispatch<SetStateAction<HTMLElement | null>>;
+  /**
+   * Register a player extension with this player. Returns a release callback for that exact instance.
+   *
+   * @internal Used by the packaged extension components; not a stable authoring API.
+   */
+  registerExtension?: ((extension: PlayerExtension) => () => void) | undefined;
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
@@ -30,7 +39,11 @@ export function PlayerContextProvider({
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
 }
 
-/** Access the full player context value. Throws if used outside a Player. */
+/**
+ * Access the full player context value. Throws if used outside a Player.
+ *
+ * @internal
+ */
 export function usePlayerContext(): PlayerContextValue {
   const ctx = useContext(PlayerContext);
   if (!ctx) throw new Error('usePlayerContext must be used within a Player');
@@ -85,7 +98,7 @@ export function useOptionalPlayer<R>(selector?: (state: UnknownState) => R) {
   return ctx ? value : undefined;
 }
 
-/** Access the media element from within a Player. */
+/** Access the media component from within a Player. */
 export function useMedia(): Media | null {
   const { media } = usePlayerContext();
 
@@ -106,7 +119,11 @@ export function useOptionalContainer(): MediaContainer | null {
   return ctx?.container ?? null;
 }
 
-/** Access the media attach setter for connecting a media element to the player. */
+/**
+ * Access the media attach setter for connecting a media component to the player.
+ *
+ * @internal
+ */
 export function useMediaAttach(): Dispatch<SetStateAction<Media | null>> | undefined {
   const ctx = useContext(PlayerContext);
 
@@ -118,4 +135,15 @@ export function useContainerAttach(): Dispatch<SetStateAction<HTMLElement | null
   const ctx = useContext(PlayerContext);
 
   return ctx?.setContainer;
+}
+
+/**
+ * Access the extension registrar for adding a player extension to the surrounding player.
+ *
+ * @internal
+ */
+export function useExtensionRegistrar(): PlayerContextValue['registerExtension'] {
+  const ctx = useContext(PlayerContext);
+
+  return ctx?.registerExtension;
 }

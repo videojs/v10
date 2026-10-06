@@ -11,7 +11,9 @@
  * an ordered chain of soft narrowing rules and rankers, with the pick as the first survivor.
  */
 
-import type { CanPlayTrack } from '../../media/types';
+import type { ReadonlySignal } from '../../core/signals/primitives';
+import { NO_KEY_SYSTEM } from '../../media/drm';
+import { type CanPlayTrack, getMediaPlaylistMetadata, type ResolvedTrack } from '../../media/types';
 import { getCodecFamilies, getCodecFamily } from '../../media/utils/tracks';
 
 /**
@@ -127,6 +129,9 @@ export interface CapabilityConstraintConfig {
  * and the pinned `selectVideoTrack` apply it, and reaching it through `behaviors/track-switching.ts` would drag the ABR
  * path into a composition that deliberately omits it.
  *
+ * The probe is handed the whole config alongside each track, so an extended probe reads the props it defines off it
+ * rather than closing over them — `canPlayTrackWithDrm` reads `drm` and `keySystems` that way.
+ *
  * Passes everything through when there's no probe (a composition that didn't wire one, or DOM-free tests). When it
  * prunes _every_ track, the empty result is preserved (per `applyConstraints`) — "nothing playable" — which each
  * consuming behavior answers by clearing its selection; reporting the verdict is separate.
@@ -135,10 +140,37 @@ export function excludeUnplayableTracks<T, State, Context, Config>(
   tracks: readonly T[],
   { config }: SelectionRuleDeps<State, Context, Config>
 ): readonly T[] {
-  const canPlay = (config as CapabilityConstraintConfig | undefined)?.canPlayTrack;
-  if (!canPlay) return tracks;
+  const canPlayTrack = (config as CapabilityConstraintConfig | undefined)?.canPlayTrack;
+  if (!canPlayTrack) return tracks;
 
-  return tracks.filter((track) => canPlay(track as Parameters<CanPlayTrack>[0]));
+  return tracks.filter((track) => canPlayTrack(track as Parameters<CanPlayTrack>[0], config));
+}
+
+/**
+ * Refused-key-system constraint — a _hard_ filter for the {@link applyConstraints} pre-pass. Removes encrypted
+ * renditions once negotiation has come back empty-handed.
+ *
+ * The late half of DRM pruning. `canPlayTrack`'s DRM variant already drops encrypted renditions no _configured_ key
+ * system serves, but it runs before the CDM has been asked, so a rendition naming a configured license server survives
+ * it and only negotiation reveals the CDM is absent. This constraint is that answer arriving: with `NO_KEY_SYSTEM`
+ * published, no encrypted rendition can decode, whatever it declares.
+ *
+ * Reporting is deliberately not here. Pruning to empty is what `track-switching` already reports as
+ * `SVTA_NO_SUPPORTED_{VIDEO,AUDIO}_TRACK`, so the verdict stays its owner's — a type keeping any clear rendition is
+ * unaffected and reports nothing, exactly as before. `setupMediaKeys` still reports the _cause_ (4008).
+ *
+ * `negotiatedKeySystem` is read through a cast for the same reason `screenResolutionCap` reads `screenResolution`: the
+ * slot exists only in DRM compositions, and constraining the rule's `State` generic would make every chain that doesn't
+ * carry it a weak-type mismatch. Read reactively, so publishing the sentinel re-fires the chain.
+ */
+export function excludeRefusedKeySystems<T, State, Context, Config>(
+  tracks: readonly T[],
+  { state }: SelectionRuleDeps<State, Context, Config>
+): readonly T[] {
+  const negotiated = (state as { negotiatedKeySystem?: ReadonlySignal<string | undefined> }).negotiatedKeySystem;
+  if (negotiated?.get() !== NO_KEY_SYSTEM) return tracks;
+
+  return tracks.filter((track) => !getMediaPlaylistMetadata(track as ResolvedTrack)?.encrypted);
 }
 
 /**

@@ -1,8 +1,10 @@
-import type { VolumePopoverCore } from '@videojs/core';
+'use client';
+
+import type { VolumePopoverState } from '@videojs/core';
 import { createContext, useContext } from 'react';
 
 export interface VolumePopoverContextValue {
-  state: VolumePopoverCore.State;
+  state: VolumePopoverState;
 }
 
 const VolumePopoverContext = createContext<VolumePopoverContextValue | null>(null);

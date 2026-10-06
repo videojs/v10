@@ -1,10 +1,10 @@
 /**
  * Start the docs site dev server.
  *
- * Astro is ready in a few seconds, while the Vite+ graph behind `site#dev:prepare` (API reference JSON, the CDN
- * manifest, and every workspace package build) costs several seconds even when fully cached, because each hit restores
- * its outputs. This launcher runs that graph only when generated content or the workspace builds Astro imports are
- * missing, or when asked to with `--prepare`, and otherwise starts `astro dev` directly.
+ * Astro is ready in a few seconds, while the Vite+ graph behind `site#dev:prepare` (API reference JSON and every
+ * workspace package build) costs several seconds even when fully cached, because each hit restores its outputs. This
+ * launcher runs that graph only when generated content or the workspace builds Astro imports are missing, or when asked
+ * to with `--prepare`, and otherwise starts `astro dev` directly.
  *
  * Any other arguments are forwarded to `astro dev`, for example `pnpm dev:site --port 4399`.
  */
@@ -23,11 +23,8 @@ const GENERATED_REFERENCE_DIRS = ['component', 'util', 'feature', 'media', 'pres
   (kind) => `src/content/generated-${kind}-reference`
 );
 
-/** Written by the `cdn-manifest` task. */
-const CDN_MANIFEST = 'src/content/cdn-media.json';
-
 /** Workspace packages Astro imports through their built `dist` exports. */
-const WORKSPACE_PACKAGES = ['@videojs/html', '@videojs/react'];
+const WORKSPACE_PACKAGES = ['@videojs/html', '@videojs/installation', '@videojs/react'];
 
 const PREFIX = '\x1b[36m[dev:site]\x1b[0m';
 
@@ -42,8 +39,6 @@ export function missingPrerequisites(siteRoot = SITE_ROOT): string[] {
   for (const directory of GENERATED_REFERENCE_DIRS) {
     if (!hasJsonFiles(join(siteRoot, directory))) missing.push(directory);
   }
-
-  if (!existsSync(join(siteRoot, CDN_MANIFEST))) missing.push(CDN_MANIFEST);
 
   for (const name of WORKSPACE_PACKAGES) {
     if (!existsSync(join(siteRoot, 'node_modules', name, 'dist'))) missing.push(`${name} build`);

@@ -9,13 +9,13 @@ Treat implementation, types, tests, and content schemas as factual sources. Read
 
 ## Choose the artifact
 
-Before drafting, write down the shape (how-to or concept), the reader's question, and the compass quadrant it serves (action or cognition, study or work). Both shapes live in `site/src/content/docs/guides/`; reference pages are builder-backed under `reference/`, and `pnpm -F site test diataxis` guards that line.
+Before drafting, write down the shape (how-to or concept), the reader's question, and the compass quadrant it serves (action or cognition, study or work). Both shapes live in `site/src/content/docs/guides/`; exact API and error-code descriptions live under `reference/`, and `pnpm -F site test diataxis` guards that line.
 
 - Achieve a specific outcome with the player (autoplay, captions, self-hosting): how-to guide. Keep only the explanation needed to complete or adapt that task.
 - Reusable mental model or rationale that helps with several tasks: concept page. Do not create a concept page for background that belongs to one how-to.
 - Package install and entry points: package README
 - Non-obvious public contract at the symbol: JSDoc
-- Exact component, feature, hook, utility, option, or state surface: reference page. Update the builder-owned source rather than duplicating exhaustive API detail in a guide.
+- Exact component, feature, hook, utility, option, state surface, or error code: reference page. Update its owning TypeScript or registry source rather than duplicating exhaustive detail in a guide.
 
 ## Workflow
 

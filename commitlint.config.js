@@ -26,6 +26,7 @@ export default {
         'element',
         'docs',
         'html',
+        'installation',
         'i18n',
         'icons',
         'jsx',

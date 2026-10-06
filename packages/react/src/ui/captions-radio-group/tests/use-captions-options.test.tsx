@@ -1,5 +1,4 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { CAPTIONS_OFF_VALUE } from '@videojs/core';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
@@ -17,16 +16,16 @@ afterEach(() => {
 
 function renderCaptionsMenu({
   textTrackList = [
-    { kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' },
-    { kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'showing' },
+    { id: 'subtitles-en', kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' },
+    { id: 'subtitles-es', kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'showing' },
   ] as const,
   subtitlesShowing = true,
   selectSubtitlesTrack = vi.fn(),
   locale,
 }: {
-  textTrackList?: readonly { kind: string; label: string; language: string; mode: string }[];
+  textTrackList?: readonly { id: string; kind: string; label: string; language: string; mode: string }[];
   subtitlesShowing?: boolean;
-  selectSubtitlesTrack?: (value: string) => void;
+  selectSubtitlesTrack?: (id: string | null) => void;
   locale?: string | undefined;
 } = {}) {
   const { Wrapper } = createPlayerWrapper({
@@ -34,14 +33,12 @@ function renderCaptionsMenu({
     subtitlesShowing,
     selectSubtitlesTrack,
     chaptersCues: [],
-    thumbnailCues: [],
-    thumbnailTrackSrc: null,
-    thumbnailTrackCrossOrigin: null,
+    thumbnailsTrack: null,
     toggleSubtitles: vi.fn(),
   });
   const content = (
     <Menu.Root defaultOpen align="center">
-      <Menu.Popup data-testid="popup">
+      <Menu.Popup>
         <Menu.Content data-testid="content">
           <CaptionsRadioGroup />
         </Menu.Content>
@@ -126,22 +123,6 @@ describe('useCaptionsOptions', () => {
     expect(screen.getByTestId('selected-label').textContent).toBe('Spanish');
   });
 
-  it('center aligns the popup by default', () => {
-    renderCaptionsMenu();
-
-    expect(screen.getByTestId('popup').getAttribute('data-align')).toBe('center');
-  });
-
-  it('selects a captions track', () => {
-    const selectSubtitlesTrack = vi.fn();
-
-    renderCaptionsMenu({ selectSubtitlesTrack });
-
-    fireEvent.click(screen.getByRole('menuitemradio', { name: 'English' }));
-
-    expect(selectSubtitlesTrack).toHaveBeenCalledWith('0');
-  });
-
   it('translates default track labels', () => {
     registerI18n('xx', {
       'menu.captions': 'Captions translated',
@@ -149,8 +130,8 @@ describe('useCaptionsOptions', () => {
 
     renderCaptionsMenu({
       textTrackList: [
-        { kind: 'captions', label: '', language: '', mode: 'disabled' },
-        { kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'showing' },
+        { id: 'captions', kind: 'captions', label: '', language: '', mode: 'disabled' },
+        { id: 'subtitles-es', kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'showing' },
       ],
       locale: 'xx',
     });
@@ -165,15 +146,13 @@ describe('useCaptionsOptions', () => {
 
     fireEvent.click(screen.getByRole('menuitemradio', { name: 'Off' }));
 
-    expect(selectSubtitlesTrack).toHaveBeenCalledWith(CAPTIONS_OFF_VALUE);
+    expect(selectSubtitlesTrack).toHaveBeenCalledWith(null);
   });
 
   it('updates when caption tracks become available', () => {
     const { Wrapper, updateState } = createReactiveTextTrackWrapper({
       chaptersCues: [],
-      thumbnailCues: [],
-      thumbnailTrackSrc: null,
-      thumbnailTrackCrossOrigin: null,
+      thumbnailsTrack: null,
       textTrackList: [],
       subtitlesShowing: false,
       selectSubtitlesTrack: vi.fn(),
@@ -187,12 +166,10 @@ describe('useCaptionsOptions', () => {
     act(() => {
       updateState({
         chaptersCues: [],
-        thumbnailCues: [],
-        thumbnailTrackSrc: null,
-        thumbnailTrackCrossOrigin: null,
+        thumbnailsTrack: null,
         textTrackList: [
-          { kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' },
-          { kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'showing' },
+          { id: 'subtitles-en', kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' },
+          { id: 'subtitles-es', kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'showing' },
         ],
         subtitlesShowing: true,
         selectSubtitlesTrack: vi.fn(),

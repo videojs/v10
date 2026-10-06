@@ -2,8 +2,6 @@
 
 [![package-badge]][package]
 
-> **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
-
 ## Overview
 
 `@videojs/spf` is a lightweight, bundle-size-optimized streaming engine for Video.js 10. It provides
@@ -24,7 +22,7 @@ members:
 
 ## License
 
-[Apache-2.0](./LICENSE)
+[Apache-2.0](../../LICENSE)
 
 [package]: https://www.npmjs.com/package/@videojs/spf
 [package-badge]: https://img.shields.io/npm/v/@videojs/spf?label=@videojs/spf

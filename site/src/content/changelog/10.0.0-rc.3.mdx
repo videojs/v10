@@ -1,0 +1,43 @@
+---
+description: "Redesigned docs and installation, editable Shadcn skins, DRM and chapters, and player polish."
+date: 2026-09-25
+version: "10.0.0-rc.3"
+prerelease: true
+breaking: true
+compareUrl: "https://github.com/videojs/v10/compare/@videojs/core@10.0.0-rc.2...@videojs/core@10.0.0-rc.3"
+---
+
+This release gives you a clearer path from choosing a player to installing and customizing it, whether you work directly or with a coding agent. It also brings protected HLS playback and chapters in SPF, plus a round of polish across the player.
+
+## Breaking changes
+
+The packaged player API remains compatible. The changes below affect installation and authoring workflows: where Shadcn puts editable skin source and which CLI commands provide setup instructions.
+
+- **Shadcn registry URLs, installed paths, and skin exports changed** ([#2736](https://github.com/videojs/v10/pull/2736)). If you installed skin source from an earlier catalog, choose the new Default or Minimal catalog in the [Shadcn installation guide](/docs/guides/installation/shadcn), update the `@videojs` URL in `components.json`, and review your local changes before adding the skin again. The new source lives under `<components alias>/videojs/<preset>` and uses theme-neutral exports such as `VideoSkin` instead of `DefaultVideoSkin` or `MinimalVideoSkin`.
+- **The CLI's `docs` and `config` commands were removed** ([#2948](https://github.com/videojs/v10/pull/2948)). Use `npx @videojs/cli agents init` for a version-matched installation plan and `npx @videojs/cli agents skills` for skill installation instructions. Both commands print instructions; they do not change your project.
+
+## Better docs for humans and agents
+
+The docs have a new layout and clearer routes through guides, components, and API references. Framework-aware links keep you in the HTML or React version you chose, while installation pages help you select a player, skin, media source, and installation method before showing the relevant steps ([#2645](https://github.com/videojs/v10/pull/2645), [#2756](https://github.com/videojs/v10/pull/2756), [#2848](https://github.com/videojs/v10/pull/2848), [#2877](https://github.com/videojs/v10/pull/2877)). The site also has refined typography and dark mode, steadier navigation, clearer demo controls, and better organized error and playback references ([#2821](https://github.com/videojs/v10/pull/2821), [#2839](https://github.com/videojs/v10/pull/2839), [#2845](https://github.com/videojs/v10/pull/2845), [#2879](https://github.com/videojs/v10/pull/2879), [#2950](https://github.com/videojs/v10/pull/2950)).
+
+The same installation choices now feed the site and `@videojs/cli`, so `agents init` can print a complete plan matched to the CLI version and your project ([#2948](https://github.com/videojs/v10/pull/2948)). The [Build with AI guide](/docs/guides/build-with-ai/) explains how to install the Video.js skill and use that plan. For agents reading the site directly, Markdown versions of pages preserve tables, code labels, callouts, and API details; section-sized `llms.txt` indexes make the right material easier to find ([#2883](https://github.com/videojs/v10/pull/2883), [#2888](https://github.com/videojs/v10/pull/2888)).
+
+## Editable skins with Shadcn
+
+Default and Minimal now have separate Shadcn catalogs. You can add the skin source to a React or HTML project, choose Tailwind or generated CSS, and edit the controls and layout in your own code. Theme selection lives in the catalog URL while item names such as `video` and `audio` stay consistent ([#2736](https://github.com/videojs/v10/pull/2736)). See [Customize skins](/docs/guides/customize-skins/) for when to use packaged skins or take ownership of the source.
+
+## DRM and chapters in SPF
+
+The SPF HLS engine now supports DRM-protected streams through browser EME, including Widevine, FairPlay, and PlayReady license handling ([#2291](https://github.com/videojs/v10/pull/2291)). It also reads Apple JSON chapters referenced by `EXT-X-SESSION-DATA` and exposes them as chapter tracks, so the existing time slider can show chapter boundaries and titles for streams that provide them ([#2737](https://github.com/videojs/v10/pull/2737)).
+
+## More control over the packaged skins
+
+Default and Minimal video skins now display the resolved content title alongside their controls. Mux Video can fill that title from asset metadata, and status indicators stay above it ([#2748](https://github.com/videojs/v10/pull/2748), [#2726](https://github.com/videojs/v10/pull/2726), [#2875](https://github.com/videojs/v10/pull/2875)).
+
+For on-demand video, you can supply the timeline preview image yourself: use `<img slot="thumbnail">` in HTML or `renderThumbnail` in React. The skin still supplies the storyboard frame, while your image keeps attributes such as `loading` and `fetchpriority` ([#2700](https://github.com/videojs/v10/pull/2700)). The [thumbnail guide](/docs/guides/thumbnails/) shows both approaches. Skin fixes also restore intrinsic height, sharpen and smooth slider rendering, and improve settings, RTL, and Minimal audio styling ([#2707](https://github.com/videojs/v10/pull/2707), [#2705](https://github.com/videojs/v10/pull/2705), [#2721](https://github.com/videojs/v10/pull/2721), [#2723](https://github.com/videojs/v10/pull/2723), [#2816](https://github.com/videojs/v10/pull/2816)).
+
+## Fixes across languages and browsers
+
+This release corrects control labels, captions and casting terms, announcements, and error messages across dozens of translations, including French, Japanese, and Arabic ([#2791](https://github.com/videojs/v10/pull/2791), [#2771](https://github.com/videojs/v10/pull/2771), [#2803](https://github.com/videojs/v10/pull/2803)).
+
+Controls also behave more reliably in older browsers: seeking keeps controls visible in Safari 16, menus work without the Popover API, and the player handles missing `Intl.ListFormat`, `AbortSignal.any`, and constructable stylesheet support ([#2962](https://github.com/videojs/v10/pull/2962), [#2963](https://github.com/videojs/v10/pull/2963), [#2964](https://github.com/videojs/v10/pull/2964), [#2967](https://github.com/videojs/v10/pull/2967)). React embeds now deliver media event props, while HLS source changes clear stale caption tracks and YouTube playback keeps the clock updating ([#2712](https://github.com/videojs/v10/pull/2712), [#2747](https://github.com/videojs/v10/pull/2747), [#2744](https://github.com/videojs/v10/pull/2744)).

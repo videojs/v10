@@ -12,8 +12,7 @@
   "scripts": {
     "prepare": "vp config --no-agent",
     "postinstall": "node build/scripts/link-aliases.mjs",
-    "build:packages": "vp run --fail-if-no-match --filter='./packages/**' --filter='!@videojs/cdn' --filter='!@videojs/cli' build",
-    "build:cli": "vp run @videojs/cli#build",
+    "build:packages": "vp run --fail-if-no-match --filter='./packages/**' --filter='!@videojs/cdn' build",
     "build:sandbox": "vp run @videojs/sandbox#build",
     "build:cdn": "vp run @videojs/cdn#build:cdn",
     "build:shadcn": "vp run @videojs/skins#build:shadcn",
@@ -24,18 +23,19 @@
     "dev:site": "node --import tsx site/scripts/dev.ts",
     "dev": "pnpm dev:prepare && VP_PACK_WATCH=true vp run --fail-if-no-match --filter='./packages/**' --filter='./apps/*' --filter='./site' --parallel --ignore-depends-on --no-cache dev",
     "dev:prepare": "vp run -w prepare:dev",
-    "dev:packages": "vp run --fail-if-no-match --filter='./packages/**' --filter='!@videojs/cli' build && VP_PACK_WATCH=true vp run --fail-if-no-match --filter='./packages/**' --parallel --ignore-depends-on --no-cache dev",
+    "dev:packages": "vp run --fail-if-no-match --filter='./packages/**' build && VP_PACK_WATCH=true vp run --fail-if-no-match --filter='./packages/**' --parallel --ignore-depends-on --no-cache dev",
     "dev:sandbox": "vp run @videojs/sandbox#dev",
+    "dev:sandbox:https": "vp run @videojs/sandbox#dev:https",
     "lint": "vp check --no-lint && vp lint --quiet",
     "lint:anti-slop": "vp lint",
     "lint:fix": "vp check --fix",
     "lint:fix:file": "vp check --fix --no-error-on-unmatched-pattern",
     "link:aliases": "node build/scripts/link-aliases.mjs",
     "size": "node .github/scripts/bundle-size.js | node .github/scripts/bundle-size-report.js",
-    "test": "vp run --fail-if-no-match --filter='./packages/**' --filter='!@videojs/cli' test:ci",
-    "test:cli": "vp run @videojs/cli#test:ci",
+    "test": "vp run --fail-if-no-match --filter='./packages/**' test:ci",
     "test:e2e": "pnpm --dir apps/e2e test:all",
     "test:e2e:vite": "pnpm --dir apps/e2e test:vite",
+    "test:e2e:drm": "vp run '@videojs/e2e#test:drm'",
     "test:e2e:sandbox": "vp run '@videojs/e2e#test:sandbox'",
     "test:e2e:skins": "vp run '@videojs/e2e#test:skin-parity'",
     "test:e2e:registry": "vp run '@videojs/e2e#test:registry'",
@@ -51,12 +51,9 @@
     "check:workspace": "node build/scripts/check-workspace.mjs"
   },
   "devDependencies": {
-    "@actions/core": "^3.0.0",
-    "@actions/github": "^9.0.0",
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
     "@commitlint/format": "^20.0.0",
-    "@oxlint/plugins": "1.79.0",
     "@types/node": "^22.18.6",
     "@typescript/native-preview": "beta",
     "@vitejs/plugin-react": "^6.1.1",
@@ -66,24 +63,25 @@
     "lightningcss": "^1.32.0",
     "magic-string": "^1.2.2",
     "oxc-transform-react": "0.145.0",
-    "oxlint": "1.79.0",
     "pkg-pr-new": "^0.0.88",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
     "rimraf": "^6.1.3",
     "tsx": "^4.23.1",
     "vite-plus": "catalog:"
   },
   "browserslist": [
-    "last 2 Chrome versions",
-    "last 2 Edge versions",
-    "last 2 Firefox versions",
-    "last 2 Safari versions",
-    "last 2 iOS versions"
+    "chrome >= 111",
+    "edge >= 111",
+    "firefox >= 121",
+    "safari >= 16.4",
+    "ios_saf >= 16.4",
+    "and_chr >= 111",
+    "and_ff >= 121",
+    "samsung >= 22",
+    "opera >= 98"
   ],
   "engines": {
     "node": ">=22.19.0",
     "npm": ">=10.9.3"
   },
-  "packageManager": "pnpm@12.4.1"
+  "packageManager": "pnpm@12.6.0"
 }

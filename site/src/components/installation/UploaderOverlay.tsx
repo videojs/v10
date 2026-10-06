@@ -2,6 +2,7 @@ import clsx from 'clsx';
 
 import CheckCircle from '@/assets/icons/check-circle.svg?react';
 import { MUX_URL } from '@/consts';
+import { withMuxAttribution } from '@/utils/mux/attribution';
 
 export type UploaderState = 'idle' | 'needs_login' | 'uploading' | 'preparing' | 'ready' | 'polling_error';
 
@@ -47,7 +48,13 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
       <OverlayWrapper>
         <p className="text-p3 font-semibold">
           To upload this video to{' '}
-          <a href={MUX_URL} target="_blank" rel="noopener" className="intent:decoration-gold underline">
+          <a
+            href={withMuxAttribution(MUX_URL, 'mux-uploader')}
+            data-ph-capture-attribute-destination="mux"
+            target="_blank"
+            rel="noopener"
+            className="intent:decoration-gold underline"
+          >
             Mux
           </a>
           &hellip;
@@ -55,6 +62,7 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
         <button
           type="button"
           onClick={onLogin}
+          data-ph-capture-attribute-cta="mux-login"
           className="bg-faded-black text-manila-light dark:bg-manila-light dark:text-faded-black text-p3 intent:bg-accent intent:text-faded-black corner-squircle inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg px-5 font-semibold shadow-sm transition select-none"
         >
           Sign up or log in
@@ -82,7 +90,9 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
         <p className="text-p3 text-center">
           See code below, or{' '}
           <a
-            href="https://dashboard.mux.com/my/video/assets"
+            href={withMuxAttribution('https://dashboard.mux.com/my/video/assets', 'mux-uploader')}
+            data-ph-capture-attribute-cta="mux-dashboard"
+            data-ph-capture-attribute-destination="mux"
             target="_blank"
             className="intent:decoration-gold underline"
             rel="noopener"
@@ -102,7 +112,12 @@ export default function UploaderOverlay({ state, error, playbackId, onLogin, onR
           Error preparing video:
           {error}
         </p>
-        <button type="button" onClick={onRetry} className="text-p3 intent:decoration-gold underline">
+        <button
+          type="button"
+          onClick={onRetry}
+          data-ph-capture-attribute-cta="mux-retry"
+          className="text-p3 intent:decoration-gold underline"
+        >
           Try again
         </button>
       </OverlayWrapper>

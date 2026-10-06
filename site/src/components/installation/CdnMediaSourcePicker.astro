@@ -1,0 +1,8 @@
+---
+import MediaSourcePicker from '@/components/installation/MediaSourcePicker';
+import { CDN_MEDIA_SUBPATHS, rendererSupportsCdn, RENDERERS } from '@videojs/installation';
+
+const supportedRenderers = RENDERERS.filter((renderer) => rendererSupportsCdn(renderer, CDN_MEDIA_SUBPATHS));
+---
+
+<MediaSourcePicker client:idle supportedRenderers={supportedRenderers} />

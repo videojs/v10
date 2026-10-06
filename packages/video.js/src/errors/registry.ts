@@ -3,9 +3,9 @@ import { getLegacyErrorSlug, getLegacyErrorUrl, LEGACY_ERROR_CODES, type LegacyE
 /**
  * What each `VJS8_LEGACY_*` code means and what to do instead.
  *
- * The registry is the single source for the message the stubs throw in dev builds and for the generated
- * `videojs.org/errors/*` pages, so the two never drift. It lives only in the `video.js` package: the `@videojs/*`
- * packages stay free of legacy detection, and production builds of this package import only `./codes`.
+ * The registry is the single source for the message the stubs throw in dev builds and for the generated API reference
+ * pages, so the two never drift. It lives only in the `video.js` package: the `@videojs/*` packages stay free of legacy
+ * detection, and production builds of this package import only `./codes`.
  */
 export interface LegacyErrorEntry {
   /** One sentence naming the v8 API and why it no longer exists. */
@@ -32,7 +32,7 @@ export interface LegacyErrorRecord extends LegacyErrorEntry {
   stayOnV8: string;
 }
 
-export const LEGACY_V8_DOCS_URL = 'https://v8.videojs.org';
+export const LEGACY_V8_DOCS_URL = 'https://legacy.videojs.org';
 
 export const LEGACY_V8_INSTALL = 'npm install video.js@8';
 
@@ -70,7 +70,7 @@ export const LEGACY_ERRORS = {
     summary:
       '`videojs.options` held Video.js 8 global defaults. Video.js 10 has no global; configuration lives on the components you render.',
     legacy: 'videojs.options.autoplay = true;',
-    html: 'Set attributes on `<video-player>`, `<video-skin>`, and the media element.',
+    html: 'Set attributes on `<video-player>`, `<video-skin>`, and the media component.',
     react: 'Pass props to `<VideoPlayer>`, `<VideoSkin>`, and the media component.',
   },
 } satisfies Record<LegacyErrorCode, LegacyErrorEntry>;

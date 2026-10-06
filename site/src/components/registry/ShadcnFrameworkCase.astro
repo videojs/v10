@@ -1,0 +1,23 @@
+---
+import type { RegistryFramework } from '@videojs/installation';
+
+interface Props {
+  framework: RegistryFramework;
+  /** Label this branch with its framework in generated Markdown. */
+  llmsHeading?: boolean;
+}
+
+const { framework, llmsHeading = true } = Astro.props;
+const label = framework === 'react' ? 'React' : 'HTML';
+---
+
+<div class="contents" data-shadcn-framework={framework}>
+  {
+    llmsHeading && (
+      <div hidden data-llms-only>
+        <h3>{label}</h3>
+      </div>
+    )
+  }
+  <slot />
+</div>

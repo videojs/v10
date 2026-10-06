@@ -1,6 +1,7 @@
 import { type DrmSystemsConfig, type MediaStreamType, MediaStreamTypes } from '@videojs/media';
 import { HTMLVideoAdapter } from '@videojs/media/dom';
 
+import { NativeHlsChaptersMixin } from './chapters';
 import { NativeHlsDrmMixin } from './drm';
 import { NativeHlsErrorsMixin } from './errors';
 import { NativeHlsLiveMixin } from './live';
@@ -9,6 +10,7 @@ import { NativeHlsStreamTypeMixin } from './stream-type';
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
 export type StreamType = MediaStreamType;
 
+/** @internal */
 export const StreamTypes = MediaStreamTypes;
 
 export interface NativeHlsAdapterProps {
@@ -77,8 +79,7 @@ class NativeHlsAdapterCore extends HTMLVideoAdapter implements Omit<NativeHlsAda
    * Media source URL. Assigning it replaces the identity half of `source` and leaves `engine` intact, so changing the
    * URL never disturbs key exchange.
    *
-   * Like the element's own `src`, assigning it always loads — including the URL already playing. This is the imperative
-   * half of the API, and what `HlsJsAdapter` loads its native delegate through.
+   * Like the element's own `src`, assigning it always loads — including the URL already playing.
    */
   get src() {
     return this.#src;
@@ -103,11 +104,11 @@ class NativeHlsAdapterCore extends HTMLVideoAdapter implements Omit<NativeHlsAda
   /**
    * Structured source: what to play (`src`) plus how to play it (`engine.nativeHls`). Assigning it derives `src`.
    *
-   * Only a new URL reaches the element, so reassigning an equivalent source — an inline React prop, for instance —
-   * neither reloads nor disturbs key exchange. Use `src` or `load()` to reload what is already playing.
+   * Only a new URL reaches the element, so reassigning an equivalent source neither reloads nor disturbs key exchange.
+   * Use `src` or `load()` to reload what is already playing.
    *
-   * Unlike `HlsJsAdapter`, this does not announce a `sourcechange`. It is also the delegate `HlsJsAdapter` plays native
-   * sources through, and every event it dispatches is re-dispatched there — which already announces its own.
+   * Changing this source does not emit `sourcechange`. When the hls.js media component uses native HLS playback, it
+   * emits its own `sourcechange` and forwards the native playback events.
    */
   get source(): NativeHlsSource | null {
     return this.#source;
@@ -152,6 +153,6 @@ class NativeHlsAdapterCore extends HTMLVideoAdapter implements Omit<NativeHlsAda
   }
 }
 
-export class NativeHlsAdapter extends NativeHlsLiveMixin(
-  NativeHlsStreamTypeMixin(NativeHlsDrmMixin(NativeHlsErrorsMixin(NativeHlsAdapterCore)))
+export class NativeHlsAdapter extends NativeHlsChaptersMixin(
+  NativeHlsLiveMixin(NativeHlsStreamTypeMixin(NativeHlsDrmMixin(NativeHlsErrorsMixin(NativeHlsAdapterCore))))
 ) {}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 
-import { findTrackElement, isCaptionOrSubtitleTrack } from '../text-track';
+import { findTrackElement, getCaptionOrSubtitleTracks, isCaptionOrSubtitleTrack } from '../text-track';
 
 /**
  * Jsdom does not create unique TextTrack objects per <track> element, so we mock the `.track` property to simulate real
@@ -26,17 +26,32 @@ describe('isCaptionOrSubtitleTrack', () => {
   });
 });
 
-describe('findTrackElement', () => {
-  it('returns the track element that owns the given TextTrack', () => {
-    const video = document.createElement('video');
-    const el = document.createElement('track');
-    const track = mockTrackProperty(el);
+describe('getCaptionOrSubtitleTracks', () => {
+  it('keeps only captions and subtitles tracks', () => {
+    const tracks = [{ kind: 'chapters' }, { kind: 'subtitles' }, { kind: 'metadata' }, { kind: 'captions' }];
 
-    video.appendChild(el);
-
-    expect(findTrackElement(video, track)).toBe(el);
+    expect(getCaptionOrSubtitleTracks(tracks).map(({ kind }) => kind)).toEqual(['captions', 'subtitles']);
   });
 
+  it('groups by kind and keeps source order within a kind', () => {
+    const tracks = [
+      { kind: 'subtitles', id: 's1' },
+      { kind: 'captions', id: 'c1' },
+      { kind: 'subtitles', id: 's2' },
+      { kind: 'captions', id: 'c2' },
+    ];
+
+    expect(getCaptionOrSubtitleTracks(tracks).map(({ id }) => id)).toEqual(['c1', 'c2', 's1', 's2']);
+  });
+
+  it('accepts any iterable', () => {
+    const tracks = new Set([{ kind: 'subtitles' }]);
+
+    expect(getCaptionOrSubtitleTracks(tracks)).toEqual([{ kind: 'subtitles' }]);
+  });
+});
+
+describe('findTrackElement', () => {
   it('returns null when no track element matches', () => {
     const video = document.createElement('video');
     const el = document.createElement('track');

@@ -123,8 +123,30 @@ export function buildCSSVars(cssVarsData: CSSVarsExtraction): Record<string, CSS
   return cssCustomProperties;
 }
 
-function buildHtmlPlatform(htmlData: HtmlExtraction): NonNullable<PartReference['platforms']['html']> {
+/**
+ * A core prop reaches an HTML element only as one of its reactive properties or public instance members. One the
+ * element's class hierarchy never declares, such as React's `menuTrigger`, has no attribute or property there, so only
+ * React documents it.
+ */
+function scopePropsToElement(props: Record<string, PropDef>, htmlData: HtmlExtraction | null): Record<string, PropDef> {
+  if (!htmlData) return props;
+
+  for (const [name, prop] of Object.entries(props)) {
+    if (prop.frameworks || htmlData.properties.includes(name) || htmlData.members.includes(name)) continue;
+
+    prop.frameworks = ['react'];
+  }
+
+  return props;
+}
+
+function buildHtmlPlatform(
+  htmlData: HtmlExtraction,
+  description?: string
+): NonNullable<PartReference['platforms']['html']> {
   const platform: NonNullable<PartReference['platforms']['html']> = { tagName: htmlData.tagName };
+
+  if (description) platform.description = description;
 
   if (htmlData.events.length > 0) platform.events = htmlData.events;
 
@@ -516,7 +538,7 @@ function buildSingleComponentReference(source: ComponentSource, program: OxcProj
   const result: ComponentReference = {
     name: source.name,
     description: coreData.description,
-    props: buildProps(coreData),
+    props: scopePropsToElement(buildProps(coreData), htmlData),
     state: buildState(coreData),
     dataAttributes: dataAttrsData ? buildDataAttrs(dataAttrsData) : {},
     cssCustomProperties: cssVarsData ? buildCSSVars(cssVarsData) : {},
@@ -552,11 +574,12 @@ function buildMultiPartReference(
 
       const elementName = `${source.name}Element`;
       const htmlData = part.htmlPath ? extractHtml(part.htmlPath, program, source.name, elementName) : null;
+      const htmlDescription = part.htmlPath ? extractPartDescription(part.htmlPath, program, elementName) : undefined;
 
       const partRef: PartReference = {
         name: part.name,
         description,
-        props: coreData ? sortProps(buildProps(coreData)) : {},
+        props: coreData ? sortProps(scopePropsToElement(buildProps(coreData), htmlData)) : {},
         state: coreData ? buildState(coreData) : {},
         dataAttributes: dataAttrsData ? buildDataAttrs(dataAttrsData) : {},
         cssCustomProperties: cssVarsData ? buildCSSVars(cssVarsData) : {},
@@ -566,7 +589,7 @@ function buildMultiPartReference(
       if (!partRef.description) delete partRef.description;
 
       if (htmlData) {
-        partRef.platforms.html = buildHtmlPlatform(htmlData);
+        partRef.platforms.html = buildHtmlPlatform(htmlData, htmlDescription);
       }
 
       partsRecord[part.kebab] = partRef;
@@ -575,6 +598,10 @@ function buildMultiPartReference(
         part.htmlPath && part.htmlElementName
           ? extractHtml(part.htmlPath, program, source.name, part.htmlElementName)
           : null;
+      const htmlDescription =
+        part.htmlPath && part.htmlElementName
+          ? extractPartDescription(part.htmlPath, program, part.htmlElementName)
+          : undefined;
 
       const dataAttrsData =
         part.dataAttrsPath && part.dataAttrsComponentName
@@ -602,7 +629,7 @@ function buildMultiPartReference(
       if (!partRef.description) delete partRef.description;
 
       if (htmlData) {
-        partRef.platforms.html = buildHtmlPlatform(htmlData);
+        partRef.platforms.html = buildHtmlPlatform(htmlData, htmlDescription);
       }
 
       partsRecord[part.kebab] = partRef;

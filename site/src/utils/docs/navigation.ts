@@ -1,9 +1,11 @@
 import type { TransitionBeforePreparationEvent, TransitionBeforeSwapEvent } from 'astro:transitions/client';
 
 import { currentFramework } from '@/stores/preferences';
+import type { SupportedFramework } from '@/types/docs';
+import { isShadcnInstallationUrl } from '@/utils/installation/routes';
 
-import { setFrameworkPreferenceClient } from './preferences';
-import { getFrameworkFromDocsPath } from './routing';
+import { getFrameworkPreferenceClient, setFrameworkPreferenceClient } from './preferences';
+import { getFrameworkFromDocsUrl } from './routing';
 
 const DOCS_SIDEBAR_ID = 'docs-sidebar';
 const SIDEBAR_STORAGE_KEY = 'vjs-sidebar-state';
@@ -28,6 +30,8 @@ type SidebarState = {
 };
 
 type SavedPageScroll = {
+  anchorSelector?: string;
+  anchorTop?: number;
   url?: string;
   scrollY?: number;
 };
@@ -79,21 +83,38 @@ function savePageScrollToHistory(): void {
   }
 }
 
-/** Publish the route framework before client islands render, then persist that authoritative value for future visits. */
-export function syncFrameworkPreferenceFromUrl(url: URL): void {
-  const framework = getFrameworkFromDocsPath(url.pathname);
-  if (!framework) return;
-
+function publishFramework(framework: SupportedFramework): void {
   currentFramework.set(framework);
   setFrameworkPreferenceClient(framework);
 }
 
+/** Publish the route framework before client islands render, then persist that authoritative value for future visits. */
+export async function syncFrameworkPreferenceFromUrl(url: URL): Promise<void> {
+  if (isShadcnInstallationUrl(url)) {
+    // The Shadcn guide reads its framework from the query with rules that only installation pages need to load.
+    const { resolveShadcnFramework } = await import('@/utils/installation/framework-navigation');
+    const framework = resolveShadcnFramework(url, getFrameworkPreferenceClient() ?? 'react');
+
+    if (framework) publishFramework(framework);
+
+    return;
+  }
+
+  const framework = getFrameworkFromDocsUrl(url);
+
+  if (framework) publishFramework(framework);
+}
+
 /** Preserve the reading position for a framework switch that replaces the current guide with its equivalent. */
-export function savePageScrollForNavigation(url: string): void {
+export function savePageScrollForNavigation(url: string, anchorSelector?: string): void {
   try {
+    const anchor = anchorSelector ? document.querySelector(anchorSelector) : null;
+    const anchorTop = anchor?.getBoundingClientRect().top;
+
     window.sessionStorage.setItem(
       PAGE_SCROLL_STORAGE_KEY,
       JSON.stringify({
+        ...(anchorSelector && Number.isFinite(anchorTop) ? { anchorSelector, anchorTop } : {}),
         url: new URL(url, window.location.origin).pathname,
         scrollY: getDocumentScrollPosition().scrollY,
       })
@@ -108,7 +129,7 @@ function restoreSavedPageScroll(removeAfterRestore = true): boolean {
     const stored = window.sessionStorage.getItem(PAGE_SCROLL_STORAGE_KEY);
     if (!stored) return false;
 
-    const { url, scrollY }: SavedPageScroll = JSON.parse(stored);
+    const { anchorSelector, anchorTop, url, scrollY }: SavedPageScroll = JSON.parse(stored);
     const matchesCurrentPath = url?.replace(/\/$/, '') === window.location.pathname.replace(/\/$/, '');
 
     if (!matchesCurrentPath || !Number.isFinite(scrollY ?? Number.NaN)) {
@@ -117,7 +138,14 @@ function restoreSavedPageScroll(removeAfterRestore = true): boolean {
       return false;
     }
 
-    window.scrollTo({ left: 0, top: scrollY });
+    const anchor = anchorSelector ? document.querySelector(anchorSelector) : null;
+    const destinationAnchorTop = anchor?.getBoundingClientRect().top;
+    const top =
+      Number.isFinite(anchorTop ?? Number.NaN) && Number.isFinite(destinationAnchorTop ?? Number.NaN)
+        ? getDocumentScrollPosition().scrollY + (destinationAnchorTop! - anchorTop!)
+        : scrollY!;
+
+    window.scrollTo({ left: 0, top });
     savePageScrollToHistory();
 
     if (removeAfterRestore) {
@@ -153,6 +181,13 @@ function saveSidebarState(): void {
   }
 }
 
+/** Find the active link in the sidebar tree that is currently rendered. */
+export function findVisibleActiveSidebarLink(aside: HTMLElement): HTMLElement | undefined {
+  return Array.from(aside.querySelectorAll<HTMLElement>('a[aria-current="page"]')).find(
+    (link) => link.getClientRects().length > 0
+  );
+}
+
 function restoreSidebarState(): void {
   const state = readSidebarState();
   const aside = document.getElementById(DOCS_SIDEBAR_ID);
@@ -165,8 +200,9 @@ function restoreSidebarState(): void {
   }
 
   // Keep the active link in view when arriving from a different section. Scroll the sidebar alone because
-  // scrollIntoView would also move the document.
-  const activeLink = aside.querySelector<HTMLElement>('a[aria-current="page"]');
+  // scrollIntoView would also move the document. Multi-framework pages render one hidden sidebar per inactive
+  // framework, so select the active link that participates in layout rather than the first match in DOM order.
+  const activeLink = findVisibleActiveSidebarLink(aside);
   if (!activeLink) return;
 
   const asideRect = aside.getBoundingClientRect();
@@ -189,7 +225,7 @@ export function initializeDocsNavigation(): void {
 
   window.__videojsDocsNavigationController = controller;
 
-  syncFrameworkPreferenceFromUrl(new URL(window.location.href));
+  void syncFrameworkPreferenceFromUrl(new URL(window.location.href));
 
   const prepareNavigation = (navigationEvent: TransitionBeforePreparationEvent) => {
     // A client navigation supersedes the post-layout retry captured for the initial document reload.
@@ -204,7 +240,7 @@ export function initializeDocsNavigation(): void {
       savePageScrollToHistory();
     }
 
-    syncFrameworkPreferenceFromUrl(navigationEvent.to);
+    void syncFrameworkPreferenceFromUrl(navigationEvent.to);
     saveSidebarState();
     setFrameworkTransitionSuppressed(navigationEvent.newDocument, isFrameworkNavigation(navigationEvent.info));
   };

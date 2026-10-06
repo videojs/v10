@@ -1,6 +1,7 @@
 import { createStore, flush } from '@videojs/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { PlayerExtensionCoordinator } from '../../../extensions/coordinator';
 import { getGestureCoordinator } from '../../../gesture/coordinator';
 import type { PlayerTarget } from '../../../player';
 import { createMockVideo } from '../../../tests/test-helpers';
@@ -156,6 +157,38 @@ describe('controlsFeature', () => {
       expect(store.state.controlsVisible).toBe(false);
     });
 
+    it('ignores mouseleave inside the container right after pointer capture ends, as Safari 16 sends', () => {
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+
+      vi.spyOn(container!, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 400, 300));
+
+      container!.dispatchEvent(new Event('lostpointercapture'));
+      container!.dispatchEvent(new MouseEvent('mouseleave', { clientX: 200, clientY: 250 }));
+      flush();
+
+      expect(store.state.controlsVisible).toBe(true);
+
+      container!.dispatchEvent(new Event('lostpointercapture'));
+      container!.dispatchEvent(new MouseEvent('mouseleave', { clientX: 200, clientY: 320 }));
+      flush();
+
+      expect(store.state.controlsVisible).toBe(false);
+    });
+
+    it('hides on a mouseleave inside the container without a recent pointer capture release', () => {
+      // A pointer leaving the window can report its last position inside the player, such as in fullscreen.
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+
+      vi.spyOn(container!, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 400, 300));
+
+      container!.dispatchEvent(new MouseEvent('mouseleave', { clientX: 200, clientY: 250 }));
+      flush();
+
+      expect(store.state.controlsVisible).toBe(false);
+    });
+
     it('keeps controlsVisible true on mouseleave when paused', () => {
       const video = createMockVideo({ paused: true });
       const { store, container } = createPlayerStore(video);
@@ -180,6 +213,31 @@ describe('controlsFeature', () => {
       flush();
 
       expect(store.state.userActive).toBe(false);
+      expect(store.state.controlsVisible).toBe(false);
+    });
+
+    it('hides controls on a tap on the media while the store sees it through the player facade', () => {
+      const video = createMockVideo({ paused: false });
+      const container = createContainer();
+      const extensions = new PlayerExtensionCoordinator(() => {});
+
+      container.append(video);
+      extensions.register({ mediaOverride: null });
+
+      const media = extensions.getStoreMedia(video);
+      const store = createStore<PlayerTarget>()(controlsFeature);
+
+      expect(media).not.toBe(video);
+
+      store.attach({ media, container });
+      flush();
+
+      video.dispatchEvent(createPointerEvent('pointerdown', { pointerType: 'touch' }));
+      vi.advanceTimersByTime(100);
+
+      video.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch' }));
+      flush();
+
       expect(store.state.controlsVisible).toBe(false);
     });
 
@@ -493,6 +551,8 @@ describe('controlsFeature', () => {
       container!.dispatchEvent(new Event('pointermove'));
       flush();
 
+      vi.advanceTimersByTime(IDLE_DELAY - 500);
+
       // Resume playback
       Object.defineProperty(video, 'paused', { value: false, configurable: true });
       video.dispatchEvent(new Event('play'));
@@ -500,10 +560,17 @@ describe('controlsFeature', () => {
 
       expect(store.state.controlsVisible).toBe(true);
 
-      // After idle delay, should hide
-      vi.advanceTimersByTime(IDLE_DELAY);
+      // Playback must restart the deadline established by pointer activity.
+      vi.advanceTimersByTime(500);
       flush();
 
+      expect(store.state.userActive).toBe(true);
+      expect(store.state.controlsVisible).toBe(true);
+
+      vi.advanceTimersByTime(IDLE_DELAY - 500);
+      flush();
+
+      expect(store.state.userActive).toBe(false);
       expect(store.state.controlsVisible).toBe(false);
     });
   });
@@ -700,6 +767,39 @@ describe('controlsFeature', () => {
       expect(store.state.controlsVisible).toBe(true);
       expect(result).toBe(true);
     });
+
+    it('hides controls when forced off', () => {
+      const video = createMockVideo({ paused: false });
+      const { store } = createPlayerStore(video);
+
+      expect(store.state.toggleControls(false)).toBe(false);
+      expect(store.state.toggleControls(false)).toBe(false);
+    });
+
+    it('restarts the idle timer when forced on, even if already visible', () => {
+      const video = createMockVideo({ paused: false });
+      const { store } = createPlayerStore(video);
+
+      vi.advanceTimersByTime(IDLE_DELAY - 500);
+
+      expect(store.state.toggleControls(true)).toBe(true);
+
+      vi.advanceTimersByTime(500);
+      flush();
+      expect(store.state.controlsVisible).toBe(true);
+
+      vi.advanceTimersByTime(IDLE_DELAY - 500);
+      flush();
+      expect(store.state.controlsVisible).toBe(false);
+    });
+
+    it('applies force before attach', () => {
+      const store = createStore<PlayerTarget>()(controlsFeature);
+
+      expect(store.state.toggleControls(false)).toBe(false);
+      expect(store.state.toggleControls(false)).toBe(false);
+      expect(store.state.toggleControls(true)).toBe(true);
+    });
   });
 
   describe('cast interaction', () => {
@@ -768,18 +868,6 @@ describe('controlsFeature', () => {
   });
 
   describe('cleanup', () => {
-    it('stops listening when store is destroyed', () => {
-      const video = createMockVideo({ paused: false });
-      const { store } = createPlayerStore(video);
-
-      store.destroy();
-
-      vi.advanceTimersByTime(IDLE_DELAY);
-      flush();
-
-      expect(store.state.userActive).toBe(true);
-    });
-
     it('clears idle timer on detach', () => {
       const video = createMockVideo({ paused: false });
       const store = createStore<PlayerTarget>()(controlsFeature);
@@ -816,9 +904,10 @@ describe('controlsFeature', () => {
       detach();
       flush();
 
-      // Pause after detach — should not affect state
-      Object.defineProperty(video, 'paused', { value: true, configurable: true });
-      video.dispatchEvent(new Event('pause'));
+      // A leaked play listener would schedule a new idle timer after the reset.
+      Object.defineProperty(video, 'paused', { value: false, configurable: true });
+      video.dispatchEvent(new Event('play'));
+      vi.advanceTimersByTime(IDLE_DELAY);
       flush();
 
       // State was reset to initial on detach

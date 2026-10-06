@@ -1,4 +1,6 @@
-import { type CaptionsRadioGroupCore, CaptionsRadioGroupDataAttrs, type MenuOptionState } from '@videojs/core';
+'use client';
+
+import { CaptionsRadioGroupDataAttrs, type MenuOptionState, type CaptionsRadioGroupState } from '@videojs/core';
 import { getStateDataAttrs } from '@videojs/core/dom';
 import { isFunction } from '@videojs/utils/predicate';
 import type { ReactElement, ReactNode } from 'react';
@@ -31,7 +33,7 @@ export interface CaptionsRadioGroupRootProps extends CaptionsOptionsProps {
 }
 
 export interface CaptionsRadioGroupOptionsProps extends Omit<
-  UIComponentProps<'div', CaptionsRadioGroupCore.State>,
+  UIComponentProps<'div', CaptionsRadioGroupState>,
   'children'
 > {
   /** Render one consumer-owned menu radio item for every captions option. */
@@ -39,8 +41,6 @@ export interface CaptionsRadioGroupOptionsProps extends Omit<
 }
 
 export type CaptionsRadioGroupValueProps = UIComponentProps<'span', CaptionsOptionsResult>;
-
-export interface CaptionsRadioGroupLegacyProps extends CaptionsRadioGroupOptionsProps, CaptionsOptionsProps {}
 
 const CaptionsRadioGroupContext = createContext<CaptionsOptionsResult | null | undefined>(undefined);
 
@@ -122,17 +122,6 @@ export const CaptionsRadioGroupOptions = forwardRef<HTMLDivElement, CaptionsRadi
   }
 );
 
-/** @internal Compatibility adapter for the existing preset sources. */
-export const CaptionsRadioGroupLegacy = forwardRef<HTMLDivElement, CaptionsRadioGroupLegacyProps>(
-  function CaptionsRadioGroupLegacy({ label, formatTrack, disabled, ...props }, forwardedRef) {
-    return (
-      <CaptionsRadioGroupRoot label={label} formatTrack={formatTrack} disabled={disabled}>
-        <CaptionsRadioGroupOptions {...props} ref={forwardedRef} />
-      </CaptionsRadioGroupRoot>
-    );
-  }
-);
-
 function useCaptionsRadioGroupContext(): CaptionsOptionsResult | null {
   const captions = useContext(CaptionsRadioGroupContext);
   if (captions === undefined) throw new Error('CaptionsRadioGroup parts must be used within CaptionsRadioGroup.Root');
@@ -160,7 +149,7 @@ export namespace CaptionsRadioGroupValue {
 
 export namespace CaptionsRadioGroupOptions {
   export type Props = CaptionsRadioGroupOptionsProps;
-  export type State = CaptionsRadioGroupCore.State;
+  export type State = CaptionsRadioGroupState;
   export type ItemProps = CaptionsRadioGroupItemProps;
   export type ItemState = CaptionsRadioGroupItemState;
 }

@@ -1,5 +1,57 @@
 # Changelog
 
+## [10.0.1](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0...@videojs/utils@10.0.1) (2026-10-02)
+
+
+### Miscellaneous Chores
+
+* **@videojs/utils:** Synchronize videojs versions
+
+## [10.0.0](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-rc.5...@videojs/utils@10.0.0) (2026-10-01)
+
+
+### Features
+
+* **packages:** release Video.js 10.0.0 as stable ([#3058](https://github.com/videojs/v10/issues/3058)) ([37477fc](https://github.com/videojs/v10/commit/37477fc187f36fc2ab3cbc0db7c1b2d3fc6bcca9))
+
+## [10.0.0-rc.5](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-rc.4...@videojs/utils@10.0.0-rc.5) (2026-10-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* **media:** tidy text track state ([#3057](https://github.com/videojs/v10/issues/3057))
+
+### Code Refactoring
+
+* **media:** tidy text track state ([#3057](https://github.com/videojs/v10/issues/3057)) ([614b77d](https://github.com/videojs/v10/commit/614b77dce7d9a3ed60baa1b0e2af854c8c8d865b))
+
+## [10.0.0-rc.4](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-rc.3...@videojs/utils@10.0.0-rc.4) (2026-09-26)
+
+
+### Miscellaneous Chores
+
+* **@videojs/utils:** Synchronize videojs versions
+
+## [10.0.0-rc.3](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-rc.2...@videojs/utils@10.0.0-rc.3) (2026-09-25)
+
+
+### Features
+
+* **spf:** add EME-based DRM support to the HLS engine ([#2291](https://github.com/videojs/v10/issues/2291)) ([fd6785e](https://github.com/videojs/v10/commit/fd6785e00df4ed705ed4c9479fcfdfbaf221f7e1))
+
+
+### Bug Fixes
+
+* **core:** keep controls visible when seeking in Safari 16 ([#2962](https://github.com/videojs/v10/issues/2962)) ([2f5cf27](https://github.com/videojs/v10/commit/2f5cf2765315199e45623f5760b20d9a52acf4db))
+* **core:** position and hide popups without the Popover API ([#2963](https://github.com/videojs/v10/issues/2963)) ([b0e24df](https://github.com/videojs/v10/commit/b0e24dfcbb2738dfdf0b6250880b42e5f9dd0aeb))
+* **packages:** guard Intl.ListFormat and AbortSignal.any ([#2964](https://github.com/videojs/v10/issues/2964)) ([14aceee](https://github.com/videojs/v10/commit/14aceee2c813b65076bcbcf9613467ae3a8fe5de))
+* **utils:** detect constructable stylesheets before creating one ([#2967](https://github.com/videojs/v10/issues/2967)) ([4c4c5d4](https://github.com/videojs/v10/commit/4c4c5d49a966f940a05c6b4653c5ab2c2f490860))
+
+
+### Performance Improvements
+
+* **site:** faster docs dev server start ([#2698](https://github.com/videojs/v10/issues/2698)) ([33d3887](https://github.com/videojs/v10/commit/33d38873ed5337a5695eaa426a5ebfbea61356d2))
+
 ## [10.0.0-rc.2](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-rc.1...@videojs/utils@10.0.0-rc.2) (2026-09-09)
 
 

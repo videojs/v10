@@ -1,3 +1,4 @@
+import { pascalCase } from '@videojs/utils/string';
 import type { RegistryStylesOptions } from 'vjsc/shadcn';
 
 import { registryDocsUrl } from '../docs.ts';
@@ -16,15 +17,16 @@ export function registryStyles(target: RegistryTarget): RegistryStylesOptions {
   const shared = {
     meta,
   } satisfies Pick<NonNullable<RegistryStylesOptions['theme']>, 'meta'>;
+  const label = pascalCase(target.theme);
 
   const themes = [
     {
       ...shared,
-      name: '_style-minimal',
-      target: 'styles/themes/minimal.css',
-      files: { './styles/themes/minimal.css': 'styles/themes/minimal.css' },
-      title: 'Video.js Minimal theme',
-      description: 'Editable token overrides used only by Minimal skins.',
+      name: `_style-${target.theme}`,
+      target: `styles/themes/${target.theme}.css`,
+      files: { [`./styles/themes/${target.theme}.css`]: `styles/themes/${target.theme}.css` },
+      title: `Video.js ${label} theme`,
+      description: 'Editable token overrides for this skin catalog.',
     },
     {
       ...shared,
@@ -41,12 +43,12 @@ export function registryStyles(target: RegistryTarget): RegistryStylesOptions {
     },
     {
       ...shared,
-      name: '_style-video-minimal',
-      target: 'styles/video/minimal.css',
-      files: { './styles/video/minimal.css': 'styles/video/minimal.css' },
-      title: 'Video.js Minimal video styles',
-      description: 'Minimal video stylesheet entry.',
-      registryDependencies: ['@videojs/_style-minimal', '@videojs/_style-video'],
+      name: `_style-video-${target.theme}`,
+      target: `styles/video/${target.theme}.css`,
+      files: { [`./styles/video/${target.theme}.css`]: `styles/video/${target.theme}.css` },
+      title: `Video.js ${label} video styles`,
+      description: 'Video stylesheet entry for this skin catalog.',
+      registryDependencies: [`@videojs/_style-${target.theme}`, '@videojs/_style-video'],
     },
     {
       ...shared,
@@ -62,12 +64,12 @@ export function registryStyles(target: RegistryTarget): RegistryStylesOptions {
     },
     {
       ...shared,
-      name: '_style-audio-minimal',
-      target: 'styles/audio/minimal.css',
-      files: { './styles/audio/minimal.css': 'styles/audio/minimal.css' },
-      title: 'Video.js Minimal audio styles',
-      description: 'Minimal audio stylesheet entry.',
-      registryDependencies: ['@videojs/_style-audio', '@videojs/_style-minimal'],
+      name: `_style-audio-${target.theme}`,
+      target: `styles/audio/${target.theme}.css`,
+      files: { [`./styles/audio/${target.theme}.css`]: `styles/audio/${target.theme}.css` },
+      title: `Video.js ${label} audio styles`,
+      description: 'Audio stylesheet entry for this skin catalog.',
+      registryDependencies: ['@videojs/_style-audio', `@videojs/_style-${target.theme}`],
     },
   ] satisfies NonNullable<RegistryStylesOptions['themes']>;
 
@@ -86,7 +88,9 @@ export function registryStyles(target: RegistryTarget): RegistryStylesOptions {
       description: 'Editable shared media tokens, resets, preferences, and Tailwind compiler integration.',
       tailwind: target.styling === 'tailwind' ? './styles/tailwind.css' : undefined,
     },
-    themes: themes.filter(({ name }) => target.theme === 'minimal' || !name.endsWith('-minimal')),
+    themes: themes.filter(
+      ({ name }) => target.theme !== 'default' || name === '_style-video' || name === '_style-audio'
+    ),
     files: target.framework === 'react' && target.styling === 'css' ? 'styles' : undefined,
   };
 }

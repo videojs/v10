@@ -33,6 +33,7 @@ export interface MuteButtonState extends Pick<MediaVolumeState, 'muted'>, Button
   hidden: boolean;
 }
 
+/** @internal */
 export class MuteButtonCore {
   static readonly defaultProps: NonNullableObject<MuteButtonProps> = {
     label: '',
@@ -97,10 +98,11 @@ export class MuteButtonCore {
   toggle(media: MediaVolumeState): void {
     if (this.#props.disabled || media.mutedAvailability !== 'available') return;
 
-    media.toggleMuted();
+    media.setMuted(!(media.muted || media.volume === 0));
   }
 }
 
+/** @internal */
 export namespace MuteButtonCore {
   export type Props = MuteButtonProps;
   export type State = MuteButtonState;

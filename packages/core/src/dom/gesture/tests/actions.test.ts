@@ -1,23 +1,41 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
+import { collectUnhandledRejections } from '../../tests/test-helpers';
 import type { GestureActionContext } from '../actions';
 import { resolveGestureAction } from '../actions';
 
 describe('resolveGestureAction', () => {
-  it('returns a resolver for override actions', () => {
-    expect(resolveGestureAction('seekStep')).toBeTypeOf('function');
-    expect(resolveGestureAction('volumeStep')).toBeTypeOf('function');
-    expect(resolveGestureAction('speedUp')).toBeTypeOf('function');
-    expect(resolveGestureAction('speedDown')).toBeTypeOf('function');
+  it.each([
+    ['togglePaused', { paused: true }, 'play', []],
+    ['toggleMuted', { volume: 0.5, muted: false }, 'setMuted', [true]],
+    ['toggleFullscreen', { isFullscreen: false }, 'requestFullscreen', []],
+    ['togglePictureInPicture', { isPictureInPicture: false }, 'requestPictureInPicture', []],
+    ['seekStep', { currentTime: 10, duration: 60, seeking: false }, 'seek', [20]],
+    ['volumeStep', { volume: 0.5, muted: false }, 'setVolume', [0.55]],
+    ['speedUp', { playbackRates: [0.5, 1, 2], playbackRate: 1 }, 'setPlaybackRate', [2]],
+    ['speedDown', { playbackRates: [0.5, 1, 2], playbackRate: 1 }, 'setPlaybackRate', [0.5]],
+  ] as const)('routes %s to %s', (action, state, method, args) => {
+    const activate = vi.fn();
+
+    resolveGestureAction(action)!(ctx({ ...state, [method]: activate }));
+
+    expect(activate).toHaveBeenCalledExactlyOnceWith(...args);
   });
 
-  it('returns a resolver for direct store actions', () => {
-    expect(resolveGestureAction('togglePaused')).toBeTypeOf('function');
-    expect(resolveGestureAction('toggleMuted')).toBeTypeOf('function');
-    expect(resolveGestureAction('toggleFullscreen')).toBeTypeOf('function');
-    expect(resolveGestureAction('toggleSubtitles')).toBeTypeOf('function');
-    expect(resolveGestureAction('togglePictureInPicture')).toBeTypeOf('function');
-    expect(resolveGestureAction('toggleControls')).toBeTypeOf('function');
+  it('handles a rejection from a store action called by name', async () => {
+    let calls = 0;
+    // Not a `vi.fn`; see `collectUnhandledRejections`.
+    const exitFullscreen = () => {
+      calls++;
+      return Promise.reject(new DOMException('Blocked', 'NotAllowedError'));
+    };
+
+    const reasons = await collectUnhandledRejections(() =>
+      resolveGestureAction('exitFullscreen')!(ctx({ exitFullscreen }))
+    );
+
+    expect(calls).toBe(1);
+    expect(reasons).toEqual([]);
   });
 
   it('always returns a resolver (warns for unknown in __DEV__)', () => {
@@ -34,27 +52,6 @@ describe('resolveGestureAction', () => {
 });
 
 describe('direct store actions', () => {
-  it('calls togglePaused on store state', () => {
-    const togglePaused = vi.fn();
-
-    resolveGestureAction('togglePaused')!(ctx({ togglePaused }));
-    expect(togglePaused).toHaveBeenCalledOnce();
-  });
-
-  it('calls toggleMuted on store state', () => {
-    const toggleMuted = vi.fn();
-
-    resolveGestureAction('toggleMuted')!(ctx({ toggleMuted }));
-    expect(toggleMuted).toHaveBeenCalledOnce();
-  });
-
-  it('calls toggleFullscreen on store state', () => {
-    const toggleFullscreen = vi.fn();
-
-    resolveGestureAction('toggleFullscreen')!(ctx({ toggleFullscreen }));
-    expect(toggleFullscreen).toHaveBeenCalledOnce();
-  });
-
   it('calls toggleControls on store state', () => {
     const toggleControls = vi.fn();
 
@@ -67,88 +64,6 @@ describe('direct store actions', () => {
 
     resolveGestureAction('toggleSubtitles')!(ctx({ toggleSubtitles }));
     expect(toggleSubtitles).toHaveBeenCalledOnce();
-  });
-
-  it('calls togglePictureInPicture on store state', () => {
-    const togglePictureInPicture = vi.fn();
-
-    resolveGestureAction('togglePictureInPicture')!(ctx({ togglePictureInPicture }));
-    expect(togglePictureInPicture).toHaveBeenCalledOnce();
-  });
-});
-
-describe('seekStep', () => {
-  it('seeks by value offset', () => {
-    const seek = vi.fn();
-
-    resolveGestureAction('seekStep')!(ctx({ currentTime: 10, duration: 60, seeking: false, seek }, 5));
-    expect(seek).toHaveBeenCalledWith(15);
-  });
-
-  it('uses the default without value', () => {
-    const seek = vi.fn();
-
-    resolveGestureAction('seekStep')!(ctx({ currentTime: 10, duration: 60, seeking: false, seek }));
-    expect(seek).toHaveBeenCalledWith(20);
-  });
-
-  it('seeks before the time range is known', () => {
-    const seek = vi.fn();
-
-    resolveGestureAction('seekStep')!(ctx({ currentTime: 0, duration: 0, seeking: false, seek }, 5));
-    expect(seek).toHaveBeenCalledWith(5);
-  });
-});
-
-describe('volumeStep', () => {
-  it('uses the default without value', () => {
-    const setVolume = vi.fn();
-
-    resolveGestureAction('volumeStep')!(
-      ctx({ volume: 0.5, muted: false, volumeAvailability: 'available', setVolume, toggleMuted: vi.fn() })
-    );
-    expect(setVolume).toHaveBeenCalledWith(0.55);
-  });
-
-  it('adjusts volume by value offset', () => {
-    const setVolume = vi.fn();
-
-    resolveGestureAction('volumeStep')!(
-      ctx({ volume: 0.5, muted: false, volumeAvailability: 'available', setVolume, toggleMuted: vi.fn() }, 0.1)
-    );
-    expect(setVolume).toHaveBeenCalledWith(0.6);
-  });
-});
-
-describe('speedUp', () => {
-  it('cycles to next playback rate', () => {
-    const setPlaybackRate = vi.fn();
-
-    resolveGestureAction('speedUp')!(ctx({ playbackRates: [0.5, 1, 1.5, 2], playbackRate: 1, setPlaybackRate }));
-    expect(setPlaybackRate).toHaveBeenCalledWith(1.5);
-  });
-
-  it('wraps to first rate at end', () => {
-    const setPlaybackRate = vi.fn();
-
-    resolveGestureAction('speedUp')!(ctx({ playbackRates: [0.5, 1, 2], playbackRate: 2, setPlaybackRate }));
-    expect(setPlaybackRate).toHaveBeenCalledWith(0.5);
-  });
-});
-
-describe('speedDown', () => {
-  it('cycles to previous playback rate', () => {
-    const setPlaybackRate = vi.fn();
-
-    resolveGestureAction('speedDown')!(ctx({ playbackRates: [0.5, 1, 1.5, 2], playbackRate: 1.5, setPlaybackRate }));
-    expect(setPlaybackRate).toHaveBeenCalledWith(1);
-  });
-
-  it('wraps to last rate at beginning', () => {
-    const setPlaybackRate = vi.fn();
-
-    resolveGestureAction('speedDown')!(ctx({ playbackRates: [0.5, 1, 2], playbackRate: 0.5, setPlaybackRate }));
-    expect(setPlaybackRate).toHaveBeenCalledWith(2);
   });
 });
 

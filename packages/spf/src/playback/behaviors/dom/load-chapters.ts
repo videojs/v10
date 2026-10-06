@@ -7,11 +7,11 @@
  * `<track>`.
  *
  * Single-positive-state reactor (`'preconditions-unmet'` ↔ `'loading'`), gated on a media element, a resolved
- * presentation, and a chapters entry with a URI. Entry fetches and projects, fire-once; the returned cleanup aborts an
- * in-flight fetch and removes the tracks on state exit (source unload, media element change, destroy). The document
- * leaves the last chapter open; it is written with `OPEN_CHAPTER_END` and never amended — a consumer that wants it to
- * end where the media ends clamps to the media duration on read (video.js's textTrack feature does), so nothing here
- * waits for, or chases, a duration.
+ * presentation, and a chapters entry with a URI. An element-bound effect fetches and projects; the returned cleanup
+ * aborts an in-flight fetch and removes the tracks on element replacement or state exit (source unload, destroy). The
+ * document leaves the last chapter open; it is written with `OPEN_CHAPTER_END` and never amended — a consumer that
+ * wants it to end where the media ends clamps to the media duration on read (video.js's textTrack feature does), so
+ * nothing here waits for, or chases, a duration.
  *
  * Failures are never fatal: a document that won't load or won't parse is warned about and projects nothing. An entry
  * carrying its data inline as `VALUE` is skipped — chapters are a document, not a string. Exactly one document is
@@ -23,22 +23,14 @@
  * the asset title; the request is cacheable, and each side stays ignorant of the other.
  */
 
-import { isAbortError } from '@videojs/utils/predicate';
-
 import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
-import { computed, type ReadonlySignal } from '../../../core/signals/primitives';
-import { addChaptersTracksToMedia, removeAllChaptersTracksFromMedia } from '../../../media/dom/text/chapters-tracks';
-import {
-  APPLE_HLS_CHAPTERS_DATA_ID,
-  type Chapter,
-  type HlsJsonChapters,
-  parseHlsJsonChapters,
-} from '../../../media/hls/parse-json-chapters';
+import { computed, peek, type ReadonlySignal } from '../../../core/signals/primitives';
+import { loadChaptersTracks } from '../../../media/dom/text/load-chapters-tracks';
+import { APPLE_HLS_CHAPTERS_DATA_ID } from '../../../media/hls/parse-json-chapters';
 import type { TextSelectionConfig } from '../../../media/primitives/select-tracks';
 import { getSessionData, isResolvedPresentation, type MaybeResolvedPresentation } from '../../../media/types';
-import { fetchResolvableText } from '../../../network/fetch';
 
 type LoadChaptersFsmState = 'preconditions-unmet' | 'loading';
 
@@ -59,22 +51,6 @@ function findChaptersDocument(presentation: MaybeResolvedPresentation): string |
   return getSessionData(presentation, APPLE_HLS_CHAPTERS_DATA_ID).find((entry) => entry.uri !== undefined)?.uri;
 }
 
-/** Fetch and parse one chapters document; a failure other than our own abort is warned about and yields nothing. */
-async function loadChaptersDocument(uri: string, signal: AbortSignal): Promise<Chapter[]> {
-  try {
-    const text = await fetchResolvableText({ url: uri }, { signal });
-    // The tag's contract is an Apple JSON chapters document; the parser is
-    // written for that shape, and anything else lands in the catch below.
-    const document: HlsJsonChapters = JSON.parse(text);
-
-    return parseHlsJsonChapters(document, uri);
-  } catch (error) {
-    if (!isAbortError(error)) console.warn(`[loadChapters] Failed to load the chapters document at ${uri}`, error);
-
-    return [];
-  }
-}
-
 function loadChaptersSetup({
   state,
   context,
@@ -93,27 +69,24 @@ function loadChaptersSetup({
       'preconditions-unmet': {},
 
       loading: {
-        // Entry is auto-untracked: the presentation object can be rewritten
-        // while loading (tracks resolving, a live reload) without re-entering,
-        // and the monitor only leaves this state when a precondition drops.
-        entry: () => {
-          const mediaElement = context.mediaElement.get()!;
-          const presentation = state.presentation.get()!;
-          const uri = findChaptersDocument(presentation)!;
+        // Track element identity to abort and remove the old projection on
+        // replacement. Presentation updates within this state must not refetch.
+        effects: () => {
+          const mediaElement = context.mediaElement.get();
+          const presentation = peek(state.presentation);
+          const uri = presentation && findChaptersDocument(presentation);
+          // Disposed effects reorder the shared watcher, so this can run before
+          // the monitor leaves the state; recheck the inputs it reads.
+          if (!mediaElement || !uri) return;
+
+          // Aborting on rerun, state exit, or destroy cancels the fetch and removes the tracks.
           const controller = new AbortController();
 
-          void loadChaptersDocument(uri, controller.signal).then((chapters) => {
-            // A document that settled before the abort still must not project
-            // onto a media element the state has since left.
-            if (controller.signal.aborted) return;
-
-            addChaptersTracksToMedia(mediaElement, chapters, { preferredLanguage: config.preferredSubtitleLanguage });
+          loadChaptersTracks(mediaElement, uri, controller.signal, {
+            preferredLanguage: config.preferredSubtitleLanguage,
           });
 
-          return () => {
-            controller.abort();
-            removeAllChaptersTracksFromMedia(mediaElement);
-          };
+          return controller;
         },
       },
     },

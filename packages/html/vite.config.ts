@@ -5,12 +5,18 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite-plus';
 import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
-import { isDevBuildMode, type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
+import {
+  inlineCssConfig,
+  isDevBuildMode,
+  type PackageBuildMode,
+  packageBuildConfig,
+  packageBuildModes,
+} from '../../build/pack.ts';
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
-import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.ts';
 import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.ts';
 import { cachedTaskInputs, packageTestTask, workspaceTaskDependencies } from '../../build/task.ts';
 import { LOCALES, localeAliases } from '../core/src/core/i18n/locales.ts';
+import packageJson from './package.json' with { type: 'json' };
 
 const packageDir = dirname(fileURLToPath(import.meta.url));
 const srcDir = new URL('./src', import.meta.url).pathname;
@@ -54,6 +60,14 @@ const i18nLocaleEntries = Object.fromEntries([
   ...localeTags.map((tag) => [`i18n/locales/${tag}/register`, `src/i18n/locales/${tag}/register.ts`]),
 ]);
 
+const i18nTextEntries = Object.fromEntries(
+  globSync('src/i18n/text/*.ts', { cwd: packageDir }).map((file) => {
+    const key = file.replace('src/', '').replace('.ts', '');
+
+    return [key, file];
+  })
+);
+
 const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   ...packageBuildConfig(mode, 'browser'),
   name: 'package',
@@ -61,6 +75,7 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
     index: 'src/index.ts',
     'i18n/index': 'src/i18n/index.ts',
     ...i18nLocaleEntries,
+    ...i18nTextEntries,
     ...iconEntries,
     ...defineEntries,
     ...presetEntries,
@@ -80,11 +95,14 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
     alwaysBundle: [/^@videojs\/icons/],
   },
   alias: srcAlias,
-  plugins: [
-    copyCssPlugin({ outDir: `dist/${mode}` }),
-    inlineCssPlugin({ minify: !isDevBuildMode(mode) }),
-    inlineTemplatePlugin({ minify: !isDevBuildMode(mode) }),
-  ],
+  // Also minifies the skins' `.css?inline` imports, which tsdown inlines into the JavaScript.
+  css: { ...inlineCssConfig, minify: !isDevBuildMode(mode) },
+  plugins: [copyCssPlugin({ outDir: `dist/${mode}` }), inlineTemplatePlugin({ minify: !isDevBuildMode(mode) })],
+  // `packageBuildConfig` supplies `__DEV__`; a `define` here replaces it, so restate it alongside the version.
+  define: {
+    __DEV__: mode === 'dev' ? 'true' : 'false',
+    __PLAYER_VERSION__: JSON.stringify(packageJson.version),
+  },
 });
 
 export default defineConfig({
@@ -93,14 +111,17 @@ export default defineConfig({
       build: {
         command: 'vp pack',
         dependsOn: [...workspaceTaskDependencies(), '@videojs/skins#generate'],
-        input: cachedTaskInputs,
-        output: ['dist/**'],
+        cache: {
+          input: cachedTaskInputs,
+          output: ['dist/**'],
+        },
       },
       'test:ci': packageTestTask(),
     },
   },
   define: {
     __DEV__: 'true',
+    __PLAYER_VERSION__: JSON.stringify(packageJson.version),
   },
   resolve: {
     // These tests run in a simulated browser, but Vitest transforms through the SSR pipeline, where `browser`
@@ -109,6 +130,11 @@ export default defineConfig({
     conditions: ['browser', 'development', 'module', 'import', 'default'],
   },
   test: {
+    // Vitest v4 compatibility: preserve mock call history.
+    // Remove after tests no longer rely on calls from setup or earlier tests.
+    // https://viteplus.dev/guide/vitest-v5#remove-unneeded-compatibility-settings
+    // https://vitest.dev/guide/migration/#clearmocks-is-enabled-by-default
+    clearMocks: false,
     passWithNoTests: true,
     onConsoleLog: (log) => !log.includes('Lit is in dev mode'),
     environment: 'happy-dom',

@@ -47,7 +47,13 @@ import basicUsageHtmlTs from "@/components/docs/demos/seek-indicator/html/css/Ba
 
 ## Behavior
 
+<FrameworkCase frameworks={["react"]}>
 `SeekIndicator` displays feedback for seek actions emitted by a <DocsLink slug="reference/components/hotkey">`Hotkey`</DocsLink> or <DocsLink slug="reference/components/gesture">`Gesture`</DocsLink> in the same player `Container`. It does not react to current-time changes or seek commands invoked directly through the player store.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<media-seek-indicator>` displays feedback for seek actions emitted by a <DocsLink slug="reference/components/hotkey">`<media-hotkey>`</DocsLink> or <DocsLink slug="reference/components/gesture">`<media-gesture>`</DocsLink> in the same player `<media-container>`. It does not react to current-time changes or seek commands invoked directly through the player store.
+</FrameworkCase>
 
 | Action | Direction | Value |
 | --- | --- | --- |
@@ -56,9 +62,23 @@ import basicUsageHtmlTs from "@/components/docs/demos/seek-indicator/html/css/Ba
 
 Rapid `seekStep` actions in the same direction accumulate while the indicator is open. For example, two 10-second forward actions display `20s`. Changing direction or using `seekToPercent` starts a new display. During a rapid sequence, another full step is not added when it would pass the start or duration boundary.
 
+<FrameworkCase frameworks={["react"]}>
 For `seekToPercent`, pass a percentage from 0 to 100 as `value`. A `Hotkey` with `keys="0-9"` can omit `value`; the pressed digit maps to 0%, 10%, and so on through 90%.
+</FrameworkCase>
 
-The indicator closes after `closeDelay`, which defaults to 800 milliseconds. React stops rendering the Root after its close transition. The HTML custom element remains in the document with `hidden` until the next handled seek action.
+<FrameworkCase frameworks={["html"]}>
+For `seekToPercent`, pass a percentage from 0 to 100 as `value`. A `<media-hotkey>` with `keys="0-9"` can omit `value`; the pressed digit maps to 0%, 10%, and so on through 90%.
+</FrameworkCase>
+
+The indicator closes after `closeDelay`, which defaults to 800 milliseconds.
+
+<FrameworkCase frameworks={["react"]}>
+`SeekIndicator.Root` stops rendering after its close transition.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The element remains in the document with `hidden` until the next handled seek action.
+</FrameworkCase>
 
 ## Styling
 
@@ -69,7 +89,7 @@ The indicator closes after `closeDelay`, which defaults to 800 milliseconds. Rea
 | `data-starting-style` | Present / absent | Present during the open transition |
 | `data-ending-style` | Present / absent | Present during the close transition |
 
-Position the Root from `data-direction` and use the transition attributes for entry and exit styles.
+Position the root from `data-direction` and use the transition attributes for entry and exit styles.
 
 <FrameworkCase frameworks={["html"]}>
 ```css
@@ -109,7 +129,13 @@ React renders standard DOM elements. Add a `className` to the Root:
 
 ## Accessibility
 
+<FrameworkCase frameworks={["react"]}>
 `SeekIndicator` is visual feedback and does not create a live region. Keep the same seek operation available through keyboard-operable controls, and pair it with <DocsLink slug="reference/components/status-announcer">`StatusAnnouncer`</DocsLink> when changes should be announced to screen readers. Do not make `SeekIndicator.Value` a live region because rapid seek input would produce repeated announcements.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<media-seek-indicator>` is visual feedback and does not create a live region. Keep the same seek operation available through keyboard-operable controls, and pair it with <DocsLink slug="reference/components/status-announcer">`<media-status-announcer>`</DocsLink> when changes should be announced to screen readers. Do not make `<media-seek-indicator-value>` a live region because rapid seek input would produce repeated announcements.
+</FrameworkCase>
 
 ## Examples
 

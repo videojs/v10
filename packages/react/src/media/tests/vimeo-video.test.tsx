@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { VimeoAdapter } from '@videojs/vimeo-video';
-import type { ReactElement } from 'react';
+import { createRef, type ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { VimeoVideo } from '../vimeo-video';
@@ -43,6 +43,15 @@ describe('VimeoVideo', () => {
     expect(iframe.getAttribute('src')).toContain('https://player.vimeo.com/video/1181503036');
   });
 
+  it('accepts autoPlay like <video>, for the media and the initial embed', () => {
+    const { container, media } = renderWithMedia(<VimeoVideo src="https://vimeo.com/1181503036" autoPlay />);
+    const iframe = container.querySelector('iframe')!;
+
+    expect(media.autoplay).toBe(true);
+    expect(iframe.getAttribute('src')).toContain('autoplay=1');
+    expect(iframe.hasAttribute('autoplay')).toBe(false);
+  });
+
   it('routes media event props to the media rather than the iframe', () => {
     const onPlay = vi.fn((event: Event) => event.currentTarget);
     const onTimeUpdate = vi.fn();
@@ -57,6 +66,43 @@ describe('VimeoVideo', () => {
     expect(onPlay).toHaveReturnedWith(media);
     expect(onTimeUpdate).toHaveBeenCalledTimes(1);
     expect(container.querySelector('iframe')!.hasAttribute('onplay')).toBe(false);
+  });
+
+  it('hands the attached media to mediaRef and keeps the iframe on ref', () => {
+    const ref = createRef<HTMLIFrameElement>();
+    let targetWhenHandedOut: HTMLIFrameElement | null | undefined;
+    const mediaRef = vi.fn((adapter: VimeoAdapter | null) => {
+      targetWhenHandedOut = adapter?.target;
+    });
+    const { container, media } = renderWithMedia(
+      <VimeoVideo src="https://vimeo.com/1181503036" ref={ref} mediaRef={mediaRef} />
+    );
+    const iframe = container.querySelector('iframe')!;
+
+    expect(ref.current).toBe(iframe);
+    expect(mediaRef).toHaveBeenCalledExactlyOnceWith(media);
+    // Already attached when handed out, so the embed is reachable from the media.
+    expect(targetWhenHandedOut).toBe(iframe);
+    expect(iframe.hasAttribute('mediaref')).toBe(false);
+  });
+
+  it('does not re-attach the media when the parent re-renders with a new inline mediaRef', () => {
+    const attach = vi.spyOn(VimeoAdapter.prototype, 'attach');
+    const detach = vi.spyOn(VimeoAdapter.prototype, 'detach');
+    const received: (VimeoAdapter | null)[] = [];
+    const record = (adapter: VimeoAdapter | null) => {
+      received.push(adapter);
+    };
+
+    const { rerender } = render(<VimeoVideo src="https://vimeo.com/1181503036" mediaRef={(a) => record(a)} />);
+
+    rerender(<VimeoVideo src="https://vimeo.com/1181503036" mediaRef={(a) => record(a)} />);
+
+    expect(detach).not.toHaveBeenCalled();
+    expect(attach).toHaveBeenCalledTimes(1);
+    expect(received.at(-1)).toBe(attach.mock.contexts[0]);
+
+    vi.restoreAllMocks();
   });
 
   it('delivers the loadstart the media dispatches while attaching', () => {

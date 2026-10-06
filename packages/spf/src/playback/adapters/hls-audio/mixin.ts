@@ -1,3 +1,4 @@
+import { onEvent } from '@videojs/utils/dom';
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 
 import type { Composition } from '../../../core/composition/create-composition';
@@ -21,9 +22,17 @@ import {
   hasUnsupportedFeatureCause,
   withAlternativeMediaSuggestion,
 } from '../hls-video/error-surface';
+import type { HlsVideoSource } from '../hls-video/mixin';
+
+/** What `new HlsAudioAdapter(options)` accepts; see `HlsVideoAdapterOptions` for why it is typed here. */
+export interface HlsAudioAdapterOptions {
+  /** Engine config forwarded to `createHlsAudioEngine`. */
+  config?: HlsAudioEngineConfig;
+}
 
 export interface HlsAudioAdapterProps {
   src: string;
+  source: HlsVideoSource | null;
   preload: '' | 'none' | 'metadata' | 'auto';
   disableRemotePlayback: boolean;
 }
@@ -47,6 +56,13 @@ const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([SVTA_NO_SUPPORTED
 /**
  * Mixin that adds SPF audio-only HLS playback to any base class.
  *
+ * Parallel to `HlsVideoMixin` with one substantive difference: the underlying engine is the audio-only variant
+ * (`createHlsAudioEngine`), which omits video and text-track behaviors. The src / preload / disableRemotePlayback /
+ * play() contract per the WHATWG HTML spec is identical to the default adapter.
+ *
+ * Selecting this adapter is the variant decision: instantiating `HlsAudioAdapterCore` opts the consumer into audio-only
+ * delivery even when the source is a mixed-AV HLS manifest.
+ *
  * @example
  *   class HlsAudioAdapter extends HlsAudioMixin(HTMLVideoAdapter) {}
  *
@@ -55,18 +71,12 @@ const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([SVTA_NO_SUPPORTED
  *   media.src = 'https://stream.mux.com/abc123.m3u8';
  *
  * @fires error - Fired when a fatal condition is reported. Read `error` for it.
- *
- *   Parallel to `HlsVideoMixin` with one substantive difference: the underlying engine is the audio-only variant
- *   (`createHlsAudioEngine`), which omits video and text-track behaviors. The src / preload / disableRemotePlayback /
- *   play() contract per the WHATWG HTML spec is identical to the default adapter.
- *
- *   Selecting this adapter is the variant decision: instantiating `HlsAudioAdapterCore` opts the consumer into
- *   audio-only delivery even when the source is a mixed-AV HLS manifest.
  */
 export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class HlsAudioImpl extends BaseClass {
     static readonly defaultProps: HlsAudioAdapterProps = {
       src: '',
+      source: null,
       preload: '',
       disableRemotePlayback: false,
     };
@@ -93,15 +103,16 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
     #reportedCode: number | null = null;
     #stopErrorSync: () => void;
 
-    /** Pending loadstart listener from a deferred play() retry, if any. */
-    #loadstartListener: (() => void) | null = null;
+    /** Aborting a generation cancels all retries, including ones not yet registered. */
+    #playGeneration = new AbortController();
+    #source: HlsVideoSource | null = HlsAudioImpl.defaultProps.source;
 
     constructor(...args: any[]) {
       super(...args);
 
-      const { config } = args?.[0] ?? {};
+      const { config } = (args[0] ?? {}) as HlsAudioAdapterOptions;
 
-      this.#config = config;
+      this.#config = config ?? {};
       this.#engine = this.#createEngine();
 
       // Promote the first fatal condition out of the engine's reported sequence
@@ -168,6 +179,10 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
     // -------------------------------------------------------------------------
 
     attach(mediaElement: HTMLMediaElement): void {
+      if (mediaElement !== this.#signals.context.mediaElement.get()) {
+        this.#cancelPendingPlay();
+      }
+
       super.attach?.(mediaElement);
       this.#signals.context.mediaElement.set(mediaElement);
     }
@@ -238,6 +253,37 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
       // Unchanged URL, no reload — see the video adapter's note.
       if (value === this.src) return;
 
+      this.#source = value ? { src: value } : null;
+      this.#applySrc(value);
+      this.dispatchEvent?.(new Event('sourcechange'));
+    }
+
+    /**
+     * Structured source, the same shape the video flavor takes so one object serves either.
+     *
+     * `drm` is accepted and inert: this engine composes no EME. It is kept in the shape rather than removed so a source
+     * can be handed to both flavors — and because Mux encrypts video renditions and leaves audio clear, so a protected
+     * playback ID plays here regardless.
+     *
+     * @fires sourcechange - Fired when `source` changes. Read `source` for the new value.
+     */
+    get source(): HlsVideoSource | null {
+      return this.#source;
+    }
+
+    set source(value: HlsVideoSource | null) {
+      const source = value ?? null;
+      if (source === this.#source) return;
+
+      this.#source = source;
+      this.#applySrc(source?.src ?? '');
+      this.dispatchEvent?.(new Event('sourcechange'));
+    }
+
+    /** Point the engine at a URL; an unchanged one is not a reload request. */
+    #applySrc(value: string): void {
+      if (value === this.src) return;
+
       this.#cancelPendingPlay();
       this.#signals.state.presentation.set(value ? { url: value } : undefined);
     }
@@ -250,18 +296,18 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
       const mediaElement = this.#signals.context.mediaElement.get();
       if (!mediaElement) return Promise.reject(new Error('HlsAudioAdapterCore: no media element attached'));
 
+      const { signal } = this.#playGeneration;
+
       this.#signals.state.loadActivated.set(true);
 
       return mediaElement.play().catch((err: unknown) => {
-        if (this.src) {
-          return new Promise<void>((resolve, reject) => {
-            const listener = () => {
-              this.#loadstartListener = null;
-              mediaElement.play().then(resolve, reject);
-            };
+        signal.throwIfAborted();
 
-            this.#loadstartListener = listener;
-            mediaElement.addEventListener('loadstart', listener, { once: true });
+        if (this.src) {
+          return onEvent(mediaElement, 'loadstart', { signal }).then(() => {
+            signal.throwIfAborted();
+
+            return mediaElement.play();
           });
         }
 
@@ -288,18 +334,14 @@ export function HlsAudioMixin<Base extends Constructor<any>>(BaseClass: Base) {
     }
 
     #cancelPendingPlay(): void {
-      if (!this.#loadstartListener) return;
-
-      const mediaElement = this.#signals.context.mediaElement.get();
-
-      mediaElement?.removeEventListener('loadstart', this.#loadstartListener);
-      this.#loadstartListener = null;
+      this.#playGeneration.abort();
+      this.#playGeneration = new AbortController();
     }
   }
 
   // `MixinReturn` sources statics from `Base`, so the adapter's own static needs
   // adding back to the type or callers can't read it.
-  return HlsAudioImpl as unknown as MixinReturn<Base, HlsAudioAdapterAPI> & {
+  return HlsAudioImpl as unknown as MixinReturn<Base, HlsAudioAdapterAPI, [options?: HlsAudioAdapterOptions]> & {
     readonly alternativeMediaSuggestion: string | undefined;
     readonly defaultProps: HlsAudioAdapterProps;
   };

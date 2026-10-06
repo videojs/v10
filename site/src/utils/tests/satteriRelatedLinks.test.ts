@@ -45,6 +45,24 @@ describe('satteriRelatedLinks', () => {
     expect(code).not.toContain('DocsLink');
   });
 
+  it('finds the related sections after the rest of the guide', () => {
+    const code = compile(`## Overview\n\nIntro with an é.\n\n## Usage\n\n- Step one\n\n${related}`);
+
+    expect(code.match(/_jsx\(RelatedLinks/g)?.length).toBe(2);
+    expect(code).toContain('Related pages');
+    expect(code).not.toContain('Related components');
+    expect(code).not.toContain('DocsLink');
+  });
+
+  it('records the frameworks an item is limited to', () => {
+    const code = compile(
+      '## Related API\n\n- <DocsLink slug="reference/api/use-player" frameworks="react">usePlayer</DocsLink>\n- <DocsLink slug="reference/api/player-controller" frameworks="html">PlayerController</DocsLink>\n'
+    );
+
+    expect(code).toContain('\\"frameworks\\":[\\"react\\"]');
+    expect(code).toContain('\\"frameworks\\":[\\"html\\"]');
+  });
+
   it('gives a bare Related heading no group label', () => {
     const code = compile('## Related\n\n- <DocsLink slug="guides/features">Features</DocsLink>\n');
 
@@ -64,5 +82,8 @@ describe('satteriRelatedLinks', () => {
 
     expect(code).not.toContain('RelatedLinks');
     expect(code).toContain('Related guides');
+    expect(code).toMatch(/_jsxs\(_components\.li,/);
+    expect(code).toMatch(/_jsx\(DocsLink,\s*\{\s*slug: "guides\/features",\s*children: "Features"\s*\}\)/);
+    expect(code).toContain(' and more');
   });
 });

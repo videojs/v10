@@ -1,0 +1,17 @@
+---
+import { getLegacyErrorRecords } from 'video.js/errors';
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+import { renderInlineMarkdown } from '@/utils/docs/renderInlineMarkdown';
+
+const pages = getLegacyErrorRecords();
+---
+
+<ul class="mx-auto max-w-3xl space-y-6">
+  {pages.map((page) => (
+    <li>
+      <DocsLink slug={`reference/api/${page.slug}`}>{page.code}</DocsLink>
+      <p set:html={renderInlineMarkdown(page.summary)} />
+    </li>
+  ))}
+</ul>

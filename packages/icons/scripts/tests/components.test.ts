@@ -1,14 +1,26 @@
 import { existsSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+import { createElement, createRef, type SVGProps } from 'react';
 import { describe, expect, it } from 'vite-plus/test';
+
+// Use the framework package's React DOM 19, matching the generated icons' React dependency.
+const { createRoot } = createRequire(resolve(import.meta.dirname, '../../../react/package.json'))(
+  'react-dom/client'
+) as {
+  createRoot(container: Element): { render(node: ReturnType<typeof createElement>): void; unmount(): void };
+};
+const { flushSync } = createRequire(resolve(import.meta.dirname, '../../../react/package.json'))('react-dom') as {
+  flushSync(callback: () => void): void;
+};
 
 const distRoot = resolve(import.meta.dirname, '../../dist');
 
 describe('generated icon modules', () => {
-  it.each(['default', 'minimal'])('builds constrained VJSC components for the %s family', async (family) => {
+  it.each(['default', 'neutral'])('builds constrained VJSC components for the %s family', async (family) => {
     const [source, types] = await Promise.all([
       readFile(resolve(distRoot, 'vjsc', family, 'index.js'), 'utf8'),
       readFile(resolve(distRoot, 'vjsc', family, 'index.d.ts'), 'utf8'),
@@ -20,20 +32,45 @@ describe('generated icon modules', () => {
     expect(types).toContain(`export declare const PlayIcon: Component<EmptyProps>;`);
   });
 
-  it.each(['default', 'minimal'])('builds ref-forwarding React components for the %s family', async (family) => {
+  it.each(['default', 'neutral'])('builds ref-forwarding React components for the %s family', async (family) => {
     const [source, types, files] = await Promise.all([
       readFile(resolve(distRoot, 'react', family, 'play.js'), 'utf8'),
       readFile(resolve(distRoot, 'react', family, 'play.d.ts'), 'utf8'),
       readdir(resolve(distRoot, 'react', family)),
     ]);
 
-    expect(source).toContain('forwardRef');
     expect(source).toContain('from "react/jsx-runtime"');
-    expect(source).toContain('const ForwardRef = forwardRef(PlayIcon)');
-    expect(source).toContain('export default ForwardRef');
     expect(source).not.toContain('<svg');
     expect(types).toContain('React.ForwardRefExoticComponent');
     expect(files.some((file) => file.endsWith('.tsx'))).toBe(false);
+
+    const moduleUrl = pathToFileURL(resolve(distRoot, 'react', family, 'play.js')).href;
+    const { default: PlayIcon } = (await import(moduleUrl)) as {
+      default: (props: SVGProps<SVGSVGElement>) => ReturnType<typeof createElement>;
+    };
+
+    // React 19 passes `ref` as a prop to plain components, so rendering alone can't prove React 18 forwarding.
+    expect((PlayIcon as unknown as { $$typeof?: symbol }).$$typeof).toBe(Symbol.for('react.forward_ref'));
+
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    const ref = createRef<SVGSVGElement>();
+
+    document.body.append(container);
+
+    try {
+      flushSync(() => root.render(createElement(PlayIcon, { ref, className: 'play-icon', 'aria-label': 'Play' })));
+
+      const svg = container.querySelector('svg');
+
+      expect(svg).not.toBeNull();
+      expect(svg?.getAttribute('class')).toBe('play-icon');
+      expect(svg?.getAttribute('aria-label')).toBe('Play');
+      expect(ref.current).toBe(svg);
+    } finally {
+      flushSync(() => root.unmount());
+      container.remove();
+    }
   });
 
   it('builds HTML strings without a React type dependency', async () => {
@@ -65,22 +102,24 @@ describe('generated icon modules', () => {
     const [base, root, family, icons] = await Promise.all([
       readFile(resolve(distRoot, 'element/base.js'), 'utf8'),
       readFile(resolve(distRoot, 'element/index.js'), 'utf8'),
-      readFile(resolve(distRoot, 'element/minimal/index.js'), 'utf8'),
-      readFile(resolve(distRoot, 'element/minimal/icons.js'), 'utf8'),
+      readFile(resolve(distRoot, 'element/neutral/index.js'), 'utf8'),
+      readFile(resolve(distRoot, 'element/neutral/icons.js'), 'utf8'),
     ]);
 
     expect(base).toContain('export class MediaIconElement extends HTMLElement');
-    expect(root).toContain(`registerLoader?.("minimal"`);
-    expect(family).toContain(`register?.("minimal", icons)`);
+    expect(root).toContain(`registerLoader?.("neutral"`);
+    expect(family).toContain(`register?.("neutral", icons)`);
     expect(icons).toContain('aria-hidden=\\"true\\"');
     expect(existsSync(resolve(distRoot, 'rolldown'))).toBe(false);
   });
 
   it('writes families and exports deterministically', async () => {
-    const families = await readdir(resolve(distRoot, 'html'));
     const exports = await readFile(resolve(distRoot, 'html/default/index.js'), 'utf8');
 
-    expect(families).toEqual([...families].sort());
-    expect(exports.indexOf('airplay-enter')).toBeLessThan(exports.indexOf('captions-off'));
+    const specifiers = [...exports.matchAll(/from ['"]([^'"]+)['"]/g)].map((match) => match[1]!);
+
+    expect(specifiers).toContain('./airplay-enter.js');
+    expect(specifiers).toContain('./captions-off.js');
+    expect(specifiers).toEqual([...specifiers].sort());
   });
 });

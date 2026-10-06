@@ -1,5 +1,7 @@
 import {
   type AttributeSnapshot,
+  containsComposed,
+  getDeepActiveElement,
   getBlockExtent,
   getElementChildren,
   getElementPadding,
@@ -37,9 +39,14 @@ interface RegisteredContent extends MenuContentRegistration {
   unsubscribe: () => void;
 }
 
-/** Coordinates sibling Contents and sizes their shared Popup. */
+/**
+ * Coordinates sibling Contents and sizes their shared Popup.
+ *
+ * @internal
+ */
 export function createMenuPopup(): MenuPopupApi {
   const contents = new Set<RegisteredContent>();
+  const exitFrames = new Map<RegisteredContent, number>();
   let element: HTMLElement | null = null;
   let frame = 0;
 
@@ -63,11 +70,48 @@ export function createMenuPopup(): MenuPopupApi {
     );
   }
 
+  function getClosingChild(parent: MenuApi): RegisteredContent | null {
+    return (
+      getChildren(parent).find(({ menu }) => {
+        const input = menu.input.current;
+
+        return input.active && input.status === 'ending';
+      }) ?? null
+    );
+  }
+
+  function cancelChildExit(content: RegisteredContent): void {
+    cancelAnimationFrame(exitFrames.get(content) ?? 0);
+    exitFrames.delete(content);
+  }
+
+  function scheduleChildExit(content: RegisteredContent): void {
+    if (exitFrames.has(content)) return;
+
+    // Keep the closing page current for one paint so the parent transitions
+    // from its child-open styles instead of jumping to its resting styles.
+    const exitFrame = requestAnimationFrame(() => {
+      exitFrames.set(
+        content,
+        requestAnimationFrame(() => {
+          exitFrames.delete(content);
+
+          if (!contents.has(content) || getActiveChild(content.menu)) return;
+
+          content.element.removeAttribute(MenuContentDataAttrs.childOpen);
+          sync();
+        })
+      );
+    });
+
+    exitFrames.set(content, exitFrame);
+  }
+
   function getCurrentContent(): RegisteredContent | null {
     let current = [...contents].find((content) => content.parent === null) ?? null;
 
     while (current) {
-      const child = getActiveChild(current.menu);
+      const child = getActiveChild(current.menu) ?? (exitFrames.has(current) ? getClosingChild(current.menu) : null);
       if (!child) return current;
 
       current = child;
@@ -83,6 +127,29 @@ export function createMenuPopup(): MenuPopupApi {
     } else {
       restoreAttributes(content.element, content.accessibility);
     }
+  }
+
+  function restoreFocusBeforeHiding(content: RegisteredContent): void {
+    const hasFocus = (): boolean => {
+      const active = getDeepActiveElement(content.element.ownerDocument);
+
+      return active instanceof Element && containsComposed(content.element, active);
+    };
+    if (!hasFocus()) return;
+
+    // Let the menu decide whether this close reason should restore focus.
+    content.menu.restoreFocus();
+
+    const parentInput = content.parent?.input.current;
+
+    if (hasFocus() && parentInput?.active && parentInput.status !== 'ending') {
+      content.menu.triggerElement?.focus();
+    }
+
+    // Close reasons that do not restore focus still must not leave it in a hidden page.
+    const active = getDeepActiveElement(content.element.ownerDocument);
+
+    if (hasFocus() && active instanceof HTMLElement) active.blur();
   }
 
   function getAvailableWidth(popup: HTMLElement): number | null {
@@ -140,20 +207,38 @@ export function createMenuPopup(): MenuPopupApi {
   function sync(): void {
     if (!element) return;
 
+    const inactiveContents = new Map<RegisteredContent, boolean>();
+
+    // Reactivate parent pages first so a closing submenu can return focus to its trigger.
     for (const content of contents) {
       const activeChild = getActiveChild(content.menu);
 
       if (activeChild) {
+        cancelChildExit(content);
         content.menu.highlight(null);
         content.element.setAttribute(MenuContentDataAttrs.childOpen, '');
+      } else if (getClosingChild(content.menu) && content.element.hasAttribute(MenuContentDataAttrs.childOpen)) {
+        scheduleChildExit(content);
       } else {
+        cancelChildExit(content);
         content.element.removeAttribute(MenuContentDataAttrs.childOpen);
       }
 
       const input = content.menu.input.current;
       const isExitingPage = content.parent !== null && input.active && input.status === 'ending';
 
-      setInactive(content, activeChild !== null || isExitingPage);
+      inactiveContents.set(content, activeChild !== null || isExitingPage);
+      setInactive(content, false);
+    }
+
+    // Move focus out before hiding an exiting page from assistive technology.
+    for (const [content, inactive] of inactiveContents) {
+      const input = content.menu.input.current;
+      const isExitingPage = content.parent !== null && input.active && input.status === 'ending';
+
+      if (isExitingPage) restoreFocusBeforeHiding(content);
+
+      setInactive(content, inactive);
     }
 
     const current = getCurrentContent();
@@ -203,6 +288,7 @@ export function createMenuPopup(): MenuPopupApi {
     scheduleSync();
 
     return () => {
+      cancelChildExit(registered);
       contents.delete(registered);
       registered.unsubscribe();
       registered.stopObserving();
@@ -217,6 +303,10 @@ export function createMenuPopup(): MenuPopupApi {
 
   function destroy(): void {
     cancelAnimationFrame(frame);
+
+    for (const exitFrame of exitFrames.values()) cancelAnimationFrame(exitFrame);
+
+    exitFrames.clear();
 
     for (const content of contents) {
       content.unsubscribe();

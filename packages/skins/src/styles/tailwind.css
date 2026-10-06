@@ -19,7 +19,9 @@
   --color-media-backdrop: var(--media-backdrop);
 
   /* Player layout breakpoints, measured against the `media-root` container. */
+  --container-media-280: 17.5rem;
   --container-media-xs: 20rem;
+  --container-media-360: 22.5rem;
   --container-media-sm: 24rem;
   --container-media-md: 28rem;
   --container-media-lg: 32rem;
@@ -110,8 +112,22 @@
 }
 
 /* Reduced transparency or high contrast. */
-@custom-variant media-opaque {
+@custom-variant media-high-contrast {
   @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    @slot;
+  }
+}
+
+/* Player above 280px. */
+@custom-variant media-280 {
+  @container media-root (width > theme(--container-media-280)) {
+    @slot;
+  }
+}
+
+/* Player at or below 280px. */
+@custom-variant media-max-280 {
+  @container media-root (width <= theme(--container-media-280)) {
     @slot;
   }
 }
@@ -126,6 +142,20 @@
 /* Player below the xs breakpoint. */
 @custom-variant media-max-xs {
   @container media-root (width < theme(--container-media-xs)) {
+    @slot;
+  }
+}
+
+/* Player at or above 360px. */
+@custom-variant media-360 {
+  @container media-root (width >= theme(--container-media-360)) {
+    @slot;
+  }
+}
+
+/* Player below 360px. */
+@custom-variant media-max-360 {
+  @container media-root (width < theme(--container-media-360)) {
     @slot;
   }
 }
@@ -200,17 +230,11 @@
   }
 }
 
-/* Hovered, focused, expanded, or highlighted control or menu item that is not disabled. Hover needs a hover-capable pointer.
-   The disabled check sits in :where() so the variant adds no specificity beyond the state itself, which lets a later
-   media-highlighted rule override an earlier one. */
+/* Focused, expanded, or highlighted control or menu item that is not disabled. Keep the disabled check in :where() so
+   it doesn't increase specificity over the individual states. */
 @custom-variant media-highlighted {
   &:where(:focus-visible, [aria-expanded="true"], [data-highlighted]):where(:not([aria-disabled="true"])) {
     @slot;
-  }
-  @media (hover: hover) {
-    &:hover:where(:not([aria-disabled="true"])) {
-      @slot;
-    }
   }
 }
 
@@ -336,7 +360,7 @@
 @utility clip-media-x-* {
   left: calc(var(--media-slider-chapter-start, 0%) + var(--media-spacing) * var(--media-chapter-inset-start, 0));
   right: max(
-    calc(100% - var(--value([*]))),
+    calc(100% - var(--value([*]), 0%)),
     calc(100% - var(--media-slider-chapter-end, 100%) + var(--media-spacing) * var(--media-chapter-inset-end, 0))
   );
   clip-path: inset(-1px 0);
@@ -346,7 +370,7 @@
 @utility clip-media-y-* {
   bottom: calc(var(--media-slider-chapter-start, 0%) + var(--media-spacing) * var(--media-chapter-inset-start, 0));
   top: max(
-    calc(100% - var(--value([*]))),
+    calc(100% - var(--value([*]), 0%)),
     calc(100% - var(--media-slider-chapter-end, 100%) + var(--media-spacing) * var(--media-chapter-inset-end, 0))
   );
   clip-path: inset(0 -1px);

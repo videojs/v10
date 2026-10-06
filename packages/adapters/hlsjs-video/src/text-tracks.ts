@@ -31,11 +31,11 @@ interface TextTrackSnapshot {
  * Cues are the objects the browser parsed, so putting back the ones hls.js took restores the track without refetching
  * its resource.
  */
-export function withPreservedTextTracks<T>(media: HTMLMediaElement | null, action: () => T): T {
+export function withPreservedTextTracks(media: HTMLMediaElement | null, action: () => void): void {
   const snapshots = media ? snapshotTextTracks(media) : [];
 
   try {
-    return action();
+    action();
   } finally {
     for (const snapshot of snapshots) restoreTextTrack(snapshot);
   }
@@ -116,7 +116,12 @@ export function HlsJsTextTracksMixin<Base extends Constructor<HlsEngineHost>>(Ba
     constructor(...args: any[]) {
       super(...args);
 
-      this.engine?.on(Hls.Events.MANIFEST_LOADING, () => this.#init());
+      // A new manifest invalidates the tracks built from the previous one. Attaching media does not: it rebinds the
+      // handlers to the element hls.js drives now, and the tracks of the load in progress have to survive it.
+      this.engine?.on(Hls.Events.MANIFEST_LOADING, () => {
+        removeHlsTextTracks(this.target);
+        this.#init();
+      });
       this.engine?.on(Hls.Events.MEDIA_ATTACHED, () => this.#init());
       this.engine?.on(Hls.Events.MEDIA_DETACHED, () => this.#destroy());
       this.engine?.on(Hls.Events.DESTROYING, () => this.#destroy());
@@ -125,6 +130,7 @@ export function HlsJsTextTracksMixin<Base extends Constructor<HlsEngineHost>>(Ba
     #destroy(): void {
       this.#disconnect?.abort();
       this.#disconnect = null;
+      removeHlsTextTracks(this.target);
     }
 
     #init(): void {
@@ -227,7 +233,6 @@ export function HlsJsTextTracksMixin<Base extends Constructor<HlsEngineHost>>(Ba
         () => {
           engine.off(Hls.Events.NON_NATIVE_TEXT_TRACKS_FOUND, onTracksFound);
           engine.off(Hls.Events.CUES_PARSED, onCuesParsed);
-          removeHlsTextTracks(this.target);
         },
         { once: true }
       );

@@ -1,0 +1,79 @@
+---
+import P from '@/components/typography/P.astro';
+import { isInstallationRouteSegment } from '@/utils/installation/routes';
+import ShadcnFrameworkCase from '../registry/ShadcnFrameworkCase.astro';
+import InstallationMigrationNotice from './InstallationMigrationNotice.astro';
+
+const route = Astro.params.framework;
+if (!isInstallationRouteSegment(route)) throw new Error(`Unsupported installation route: ${route}`);
+---
+
+<P class="min-h-42 @sm:min-h-34 @lg:min-h-26 @2xl:min-h-20">
+  {
+    route === 'react' && (
+      <>
+        Video.js is a <strong class="font-semibold">React video player component library</strong>: composable
+        primitives, hooks, and TypeScript types for building accessible, customizable players with minimal bundle sizes,
+        advanced features, and consistency across browsers.
+      </>
+    )
+  }
+  {
+    route === 'html' && (
+      <>
+        Video.js is an <strong class="font-semibold">HTML video player built on custom elements</strong>: lightweight,
+        framework-free components for building accessible, customizable players with minimal bundle sizes, advanced
+        features, and consistency across browsers.
+      </>
+    )
+  }
+  {
+    route === 'vue' && (
+      <>
+        Vue apps built with Vite, Astro, or Nuxt use Video.js HTML custom elements directly in their templates. These
+        lightweight, framework-free components build accessible, customizable players with small bundles, advanced
+        features, and consistent behavior across browsers.
+      </>
+    )
+  }
+  {
+    route === 'svelte' && (
+      <>
+        Svelte apps built with Vite, Astro, or SvelteKit use Video.js HTML custom elements directly in their markup.
+        These lightweight, framework-free components build accessible, customizable players with small bundles,
+        advanced features, and consistent behavior across browsers.
+      </>
+    )
+  }
+  {
+    route === 'shadcn' && (
+      <>
+        Use Shadcn to add a Video.js skin's components, layout, styles, and interactions as React or HTML custom-element source.
+        The CLI copies the files into your app so you can review and change them like any other source code.
+      </>
+    )
+  }
+  {
+    route === 'cdn' && (
+      <>
+        Video.js can run directly from browser-ready files on jsDelivr. This HTML-only path does not install Video.js
+        packages: choose a player, load its scripts, and add the generated custom-element markup to your page.
+      </>
+    )
+  }
+</P>
+
+{
+  route === 'shadcn' ? (
+    <>
+      <ShadcnFrameworkCase framework="react" llmsHeading={false}>
+        <InstallationMigrationNotice framework="react" />
+      </ShadcnFrameworkCase>
+      <ShadcnFrameworkCase framework="html" llmsHeading={false}>
+        <InstallationMigrationNotice framework="html" />
+      </ShadcnFrameworkCase>
+    </>
+  ) : (
+    <InstallationMigrationNotice />
+  )
+}

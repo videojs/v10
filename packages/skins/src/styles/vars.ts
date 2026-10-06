@@ -8,6 +8,10 @@ export interface CssVar {
 
 /** Classification for every `--media-*` custom property used by a Skin. */
 export const vars = {
+  '--media-button-highlight': {
+    kind: 'internal',
+    description: 'Compat button and menu item highlight background.',
+  },
   '--media-accent-color': {
     kind: 'public',
     description: 'Accent color used by highlighted controls, menu items, slider fills, and primary actions.',
@@ -38,7 +42,8 @@ export const vars = {
   },
   '--media-scale-unit': {
     kind: 'public',
-    description: 'Base length used to scale fullscreen controls independently of the document root font size.',
+    description:
+      'Base length for skin spacing, icons, and text. Defaults to 16px, independent of the document root font size.',
   },
   '--media-chapter-inset-end': {
     kind: 'internal',
@@ -135,6 +140,10 @@ export const vars = {
   '--media-default-accent-color': {
     kind: 'internal',
     description: 'Skin fallback used when the public accent color is not configured.',
+  },
+  '--media-default-accent-text-color': {
+    kind: 'internal',
+    description: 'Skin text color on the default accent, used where `contrast-color()` is unsupported.',
   },
   '--media-internal-accent-text-fallback': {
     kind: 'internal',
@@ -234,7 +243,7 @@ export const vars = {
   },
   '--media-indicator-gradient': {
     kind: 'internal',
-    description: 'Theme gradient painted behind Minimal status and volume indicators.',
+    description: 'Theme gradient painted behind Neutral status and volume indicators.',
   },
   '--media-backdrop-filter-surface': {
     kind: 'internal',

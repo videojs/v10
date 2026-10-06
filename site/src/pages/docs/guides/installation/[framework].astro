@@ -1,0 +1,42 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
+import DocsPage from '@/components/docs/DocsPage.astro';
+import type { SupportedFramework } from '@/types/docs';
+import { INSTALLATION_ROUTES } from '@/utils/installation/routes';
+
+export async function getStaticPaths() {
+  const docs = await getCollection('docs');
+
+  return Object.entries(INSTALLATION_ROUTES).map(([route, config]) => {
+    const doc = docs.find((entry) => entry.id === config.slug);
+    if (!doc) throw new Error(`Missing installation document: ${config.slug}`);
+
+    return {
+      params: { framework: route },
+      props: { doc, ...config },
+    };
+  });
+}
+
+interface Props {
+  doc: CollectionEntry<'docs'>;
+  description: string;
+  framework: SupportedFramework;
+  frameworks: readonly SupportedFramework[];
+  slug: string;
+}
+
+const { doc, description, framework, frameworks, slug } = Astro.props;
+---
+
+<DocsPage
+  doc={doc}
+  description={description}
+  framework={framework}
+  frameworks={frameworks}
+  slug={slug}
+  stabilizeHeader
+  registryFrameworkSelection={frameworks.length > 1}
+  conciseMetadata
+/>

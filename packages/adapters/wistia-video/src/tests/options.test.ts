@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { wistiaAttributes, wistiaMediaOptions } from '../options';
 
@@ -36,9 +36,20 @@ describe('wistiaMediaOptions', () => {
   });
 
   it('keeps the muted state and the source out of it, which are not the player’s configuration', () => {
-    const options = wistiaMediaOptions({}) as Record<string, unknown>;
+    const props = {
+      controls: true,
+      muted: true,
+      defaultMuted: true,
+      src: 'abcde12345',
+      source: { mediaId: 'abcde12345' },
+    };
+    const options = wistiaMediaOptions(props);
 
+    expect(options).toMatchObject({ bigPlayButton: true, playBarControl: true });
     expect(options).not.toHaveProperty('muted');
+    expect(options).not.toHaveProperty('defaultMuted');
+    expect(options).not.toHaveProperty('src');
+    expect(options).not.toHaveProperty('source');
     expect(options).not.toHaveProperty('mediaId');
   });
 });

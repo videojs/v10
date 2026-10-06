@@ -2,7 +2,7 @@ import { MediaError, type Video } from '@videojs/media';
 import { loadScript } from '@videojs/utils/dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
-import { buildCloudflareIframeSrc, CloudflareAdapter, parseCloudflareSource, parseCloudflareVideoId } from '..';
+import { buildCloudflareIframeSrc, CloudflareAdapter } from '..';
 
 vi.mock(import('@videojs/utils/dom'), async (importOriginal) => {
   const mod = await importOriginal();
@@ -149,72 +149,6 @@ async function attachAndLoad(media: CloudflareAdapter): Promise<{ iframe: HTMLIF
   player.emit('loadedmetadata');
   return { iframe, player };
 }
-
-describe('parseCloudflareVideoId', () => {
-  it('extracts id from a raw video UID', () => {
-    expect(parseCloudflareVideoId(VIDEO_ID)).toBe(VIDEO_ID);
-  });
-
-  it('extracts id from a videodelivery.net URL', () => {
-    expect(parseCloudflareVideoId(`https://videodelivery.net/${VIDEO_ID}`)).toBe(VIDEO_ID);
-  });
-
-  it('extracts id from a customer subdomain URL', () => {
-    expect(parseCloudflareVideoId(`https://customer-abc123.cloudflarestream.com/${VIDEO_ID}/iframe`)).toBe(VIDEO_ID);
-  });
-
-  it('extracts id from a manifest URL', () => {
-    expect(parseCloudflareVideoId(`https://videodelivery.net/${VIDEO_ID}/manifest/video.m3u8`)).toBe(VIDEO_ID);
-  });
-
-  it('extracts a signed token standing in for the id', () => {
-    expect(parseCloudflareVideoId(`https://videodelivery.net/${SIGNED_TOKEN}`)).toBe(SIGNED_TOKEN);
-  });
-
-  it('accepts a bare signed token', () => {
-    expect(parseCloudflareVideoId(SIGNED_TOKEN)).toBe(SIGNED_TOKEN);
-  });
-
-  it('returns null for empty input', () => {
-    expect(parseCloudflareVideoId('')).toBe(null);
-  });
-
-  it('returns null for non-Cloudflare sources', () => {
-    expect(parseCloudflareVideoId('https://example.com/video.mp4')).toBe(null);
-    expect(parseCloudflareVideoId('not-a-cloudflare-id')).toBe(null);
-  });
-});
-
-describe('parseCloudflareSource', () => {
-  it('reports a plain video UID as unsigned', () => {
-    expect(parseCloudflareSource(VIDEO_ID)).toEqual({ id: VIDEO_ID, signed: false, origin: null });
-  });
-
-  it('reports a signed token as signed', () => {
-    expect(parseCloudflareSource(`https://videodelivery.net/${SIGNED_TOKEN}`)).toEqual({
-      id: SIGNED_TOKEN,
-      signed: true,
-      origin: null,
-    });
-  });
-
-  it('keeps the per-customer origin', () => {
-    expect(parseCloudflareSource(`https://customer-abc123.cloudflarestream.com/${VIDEO_ID}/iframe`)).toEqual({
-      id: VIDEO_ID,
-      signed: false,
-      origin: 'https://customer-abc123.cloudflarestream.com',
-    });
-  });
-
-  it('reports the shared hosts as having no customer origin', () => {
-    expect(parseCloudflareSource(`https://watch.videodelivery.net/${VIDEO_ID}`)?.origin).toBe(null);
-    expect(parseCloudflareSource(`https://watch.cloudflarestream.com/${VIDEO_ID}`)?.origin).toBe(null);
-  });
-
-  it('returns null for an unrecognized source', () => {
-    expect(parseCloudflareSource('https://example.com/not-cloudflare')).toBe(null);
-  });
-});
 
 describe('buildCloudflareIframeSrc', () => {
   it('builds embed URL with hidden controls and the default preload', () => {
@@ -456,6 +390,18 @@ describe('CloudflareAdapter', () => {
     const iframe = document.createElement('iframe');
 
     iframe.setAttribute('src', embedSrc);
+    const readLocation = vi.fn(() => 'about:blank');
+
+    Object.defineProperty(iframe, 'contentWindow', {
+      configurable: true,
+      value: {
+        location: {
+          get href() {
+            return readLocation();
+          },
+        },
+      },
+    });
     const assigned = spyOnSrcAssignment(iframe, embedSrc);
 
     const media = new CloudflareAdapter();
@@ -464,6 +410,7 @@ describe('CloudflareAdapter', () => {
     media.attach(iframe);
     await waitForEngine(media);
 
+    expect(readLocation).toHaveBeenCalledOnce();
     expect(assigned).toEqual([]);
     media.detach();
   });
@@ -653,18 +600,21 @@ describe('CloudflareAdapter', () => {
     media.detach();
   });
 
-  it('forwards the ad lifecycle events the embed adds', async () => {
-    const media = new CloudflareAdapter();
-    const { player } = await attachAndLoad(media);
-    const adStart = vi.fn();
+  it.each(['stream-adstart', 'stream-adend', 'stream-adtimeout'])(
+    'forwards the %s ad lifecycle event',
+    async (type) => {
+      const media = new CloudflareAdapter();
+      const { player } = await attachAndLoad(media);
+      const onAd = vi.fn();
 
-    media.addEventListener('stream-adstart', adStart);
+      media.addEventListener(type, onAd);
+      player.emit(type);
 
-    player.emit('stream-adstart');
-
-    expect(adStart).toHaveBeenCalledTimes(1);
-    media.detach();
-  });
+      expect(onAd).toHaveBeenCalledOnce();
+      expect(onAd.mock.calls[0]![0].type).toBe(type);
+      media.detach();
+    }
+  );
 
   it('forwards the encrypted-media events the embed reports', async () => {
     const media = new CloudflareAdapter();

@@ -209,23 +209,6 @@ export function createSourceBuffer(mediaSource: MediaSource, mimeCodec: string):
 }
 
 /**
- * Build a MIME codec string from a track's `mimeType` + `codecs`. Works on partially-resolved tracks — both fields come
- * from the multivariant playlist and are available before media-playlist resolution.
- *
- * @example
- *   buildMimeCodec({ mimeType: 'video/mp4', codecs: ['avc1.42E01E'] });
- *   // => 'video/mp4; codecs="avc1.42E01E"'
- *
- * @param track - Track carrying `mimeType` and `codecs`
- * @returns MIME codec string suitable for `MediaSource.addSourceBuffer`
- */
-export function buildMimeCodec(track: { mimeType: string; codecs?: string[] }): string {
-  const codecString = track.codecs?.join(',') ?? '';
-
-  return `${track.mimeType}; codecs="${codecString}"`;
-}
-
-/**
  * Check if a codec is supported.
  *
  * @example

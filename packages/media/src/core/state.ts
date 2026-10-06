@@ -24,19 +24,17 @@ export interface MediaPlaybackState {
    */
   waiting: boolean;
   /**
-   * Start playback.
+   * Start playback. Updates `paused` immediately when the media starts.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/play
    */
   play(): Promise<void>;
   /**
-   * Pause playback.
+   * Pause playback. Updates `paused` immediately.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/pause
    */
   pause(): void;
-  /** Toggle play/pause. Returns `true` if playback started. */
-  togglePaused(): boolean;
 }
 
 export interface MediaVolumeState {
@@ -73,11 +71,12 @@ export interface MediaVolumeState {
    */
   setVolume(volume: number): number;
   /**
-   * Toggle mute state. Returns the new muted value.
+   * Set the muted state, updating the store immediately. Unmuting at volume 0 restores volume to 0.25. Returns the new
+   * muted value.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/muted
    */
-  toggleMuted(): boolean;
+  setMuted(muted: boolean): boolean;
 }
 
 export interface MediaTimeState {
@@ -109,25 +108,17 @@ export interface MediaTimeState {
 
 export interface MediaSourceState {
   /**
-   * Current media source URL (null if none).
+   * Current media source URL (empty string if none).
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/currentSrc
-   * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/src
    */
-  source: string | null;
+  currentSrc: string;
   /**
    * Whether enough data is loaded to begin playback.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/readyState
    */
   canPlay: boolean;
-  /**
-   * Load a new media source. Returns the new source URL.
-   *
-   * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/src
-   * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/load
-   */
-  loadSource(src: string): string;
 }
 
 export interface MediaStreamTypeState {
@@ -137,7 +128,6 @@ export interface MediaStreamTypeState {
    * Components use this to show live-specific UI (for example, a live indicator or a "jump to live edge" button) or
    * hide the time display.
    *
-   * @see {@link MediaStreamTypes} for the canonical string values.
    * @see https://github.com/video-dev/media-ui-extensions/blob/main/proposals/0010-stream-type.md
    */
   streamType: MediaStreamType;
@@ -148,7 +138,7 @@ export interface MediaMetadataState {
   /** The resolved content title. Set it through the player, not through the store. */
   title: string;
   /**
-   * The resolved poster URL, independent of the media element's own `poster`. Set it through the player, not through
+   * The resolved poster URL, independent of the media component's own `poster`. Set it through the player, not through
    * the store.
    */
   poster: string;
@@ -193,7 +183,7 @@ export interface MediaFullscreenState {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Fullscreen_API
    */
-  fullscreen: boolean;
+  isFullscreen: boolean;
   /**
    * Whether fullscreen can be requested on this platform.
    *
@@ -201,7 +191,7 @@ export interface MediaFullscreenState {
    */
   fullscreenAvailability: MediaFeatureAvailability;
   /**
-   * Enter fullscreen mode. Tries container first, falls back to media element.
+   * Enter fullscreen mode. Tries container first, falls back to media component.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Element/requestFullscreen
    */
@@ -212,8 +202,6 @@ export interface MediaFullscreenState {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Document/exitFullscreen
    */
   exitFullscreen(): Promise<void>;
-  /** Toggle fullscreen mode. */
-  toggleFullscreen(): Promise<void>;
 }
 
 export interface MediaControlsState {
@@ -228,8 +216,8 @@ export interface MediaControlsState {
    * idempotent.
    */
   requestControlsLock(): () => void;
-  /** Toggle controls visibility. Returns the new `controlsVisible` value. */
-  toggleControls(): boolean;
+  /** Toggle controls visibility, or force it with `forceShow`. Returns the new `controlsVisible` value. */
+  toggleControls(forceShow?: boolean): boolean;
 }
 
 export interface MediaPlaybackRateState {
@@ -254,7 +242,8 @@ export interface MediaPlaybackRateState {
 }
 
 export interface MediaVideoRendition {
-  id?: string;
+  /** Rendition id, used by `selectVideoRendition`. */
+  id: string;
   width?: number;
   height?: number;
   bitrate?: number;
@@ -268,12 +257,13 @@ export interface MediaQualityState {
   videoRenditionList: MediaVideoRendition[];
   /** Video rendition currently playing, including when automatic ABR is selected. */
   activeVideoRendition: MediaVideoRendition | null;
-  /** Select a video rendition by menu value, or automatic ABR with `"auto"`. */
-  selectVideoRendition(value: string): void;
+  /** Select a video rendition by `id`, or automatic ABR with `"auto"`. */
+  selectVideoRendition(id: string): void;
 }
 
 export interface MediaAudioTrack {
-  id?: string;
+  /** Track id, used by `selectAudioTrack`. */
+  id: string;
   kind?: string;
   label: string;
   language: string;
@@ -283,8 +273,8 @@ export interface MediaAudioTrack {
 export interface MediaAudioTrackState {
   /** Audio tracks available for manual track selection. */
   audioTrackList: MediaAudioTrack[];
-  /** Select an audio track by menu value. */
-  selectAudioTrack(value: string): void;
+  /** Select an audio track by `id`. */
+  selectAudioTrack(id: string): void;
 }
 
 /**
@@ -311,37 +301,49 @@ export type TextTrackMode = 'showing' | 'disabled' | 'hidden';
  * @see https://developer.mozilla.org/en-US/docs/Web/API/TextTrack
  */
 export interface MediaTextTrack<Kind extends string = TextTrackKind> {
-  id?: string;
+  /** Track id, used by `selectSubtitlesTrack`. */
+  id: string;
   kind: Kind;
   label: string;
   language: string;
   mode: TextTrackMode;
 }
 
-export interface MediaTextTrackState {
-  /** Cues from the first `kind="chapters"` track. */
-  chaptersCues: MediaTextCue[];
-  /** Cues from the first `kind="metadata" label="thumbnails"` track. */
-  thumbnailCues: MediaTextCue[];
+/** The first `kind="metadata" label="thumbnails"` track. */
+export interface MediaThumbnailsTrack {
+  /** The track's cues, whose text points at thumbnail images. */
+  cues: MediaTextCue[];
   /** The `<track>` element's `src` for resolving relative cue text URLs. */
-  thumbnailTrackSrc: string | null;
+  src: string | null;
   /**
-   * The media element's CORS mode, mapped through the CORS-settings-attribute rules, or `null` when it is not in CORS
+   * The media component's CORS mode, mapped through the CORS-settings-attribute rules, or `null` when it is not in CORS
    * mode. Thumbnail UI fetches the sprite sheets the cues point at with this mode, since a cross-origin `<track>` only
-   * loads at all when the media element is CORS-enabled.
+   * loads at all when the media component is CORS-enabled.
    */
-  thumbnailTrackCrossOrigin: 'anonymous' | 'use-credentials' | null;
-  /** All text tracks available on the media element. */
+  crossOrigin: 'anonymous' | 'use-credentials' | null;
+}
+
+/**
+ * Text track state. Member prefixes follow the authored track identity: `subtitles` covers `kind="captions"` and
+ * `kind="subtitles"`, `chapters` is `kind="chapters"`, and `thumbnails` is `label="thumbnails"`.
+ */
+export interface MediaTextTrackState {
+  /** All text tracks available on the media component. */
   textTrackList: MediaTextTrack[];
-  /** Whether captions/subtitles are currently enabled. */
+  /** Whether a captions/subtitles track is showing. */
   subtitlesShowing: boolean;
   /**
-   * Toggle captions/subtitles visibility. Showing restores the track that was last showing, or the first
-   * caption/subtitle track when there is none. Returns the new enabled value.
+   * Toggle captions/subtitles visibility. Showing enables one caption/subtitle track. A track already showing stays
+   * selected. Otherwise, selection prefers the last track shown, then a track matching the browser language, then the
+   * first available track. Returns whether a track is showing.
    */
   toggleSubtitles(forceShow?: boolean): boolean;
-  /** Select a captions/subtitles track by menu value, or disable with `"off"`. */
-  selectSubtitlesTrack(value: string): void;
+  /** Show the captions/subtitles track with `id`, or turn captions/subtitles off with `null`. */
+  selectSubtitlesTrack(id: string | null): void;
+  /** Cues from the first `kind="chapters"` track, with cue ends clamped to a finite media duration. */
+  chaptersCues: MediaTextCue[];
+  /** The first thumbnails track, or `null` when there is none. */
+  thumbnailsTrack: MediaThumbnailsTrack | null;
 }
 
 export interface MediaErrorState {
@@ -370,8 +372,12 @@ export interface MediaRemotePlaybackState {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/RemotePlayback
    */
   remotePlaybackAvailability: MediaFeatureAvailability;
-  /** Toggle the remote playback connection. */
-  toggleRemotePlayback(): Promise<void>;
+  /**
+   * Prompt the user to pick a remote playback device. Exits fullscreen first when connecting.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/RemotePlayback/prompt
+   */
+  promptRemotePlayback(): Promise<void>;
 }
 
 export interface MediaPictureInPictureState {
@@ -380,15 +386,15 @@ export interface MediaPictureInPictureState {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Picture-in-Picture_API
    */
-  pip: boolean;
+  isPictureInPicture: boolean;
   /**
    * Whether picture-in-picture can be requested on this platform.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Document/pictureInPictureEnabled
    */
-  pipAvailability: MediaFeatureAvailability;
+  pictureInPictureAvailability: MediaFeatureAvailability;
   /**
-   * Enter picture-in-picture mode.
+   * Enter picture-in-picture mode, exiting fullscreen first. Rejects before metadata is loaded.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/requestPictureInPicture
    */
@@ -399,6 +405,4 @@ export interface MediaPictureInPictureState {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Document/exitPictureInPicture
    */
   exitPictureInPicture(): Promise<void>;
-  /** Toggle picture-in-picture mode. */
-  togglePictureInPicture(): Promise<void>;
 }

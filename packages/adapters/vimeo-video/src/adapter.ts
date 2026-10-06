@@ -8,11 +8,14 @@ import {
   type TextTrackListLike,
   type Video,
 } from '@videojs/media';
+import { parseVimeoSource } from '@videojs/media';
 import { createTimeRange, MediaPlayedRangesMixin, serializeEmbedParams } from '@videojs/media/dom';
 import { createPublicPromise, type PublicPromise, tryCall } from '@videojs/utils/function';
 import { deepEqual } from '@videojs/utils/object';
 import { isNull, isString, isUndefined } from '@videojs/utils/predicate';
 import VimeoPlayer, { type LoadVideoOptions, type VimeoEmbedParameters, type VimeoUrl } from '@vimeo/player';
+
+export { type ParsedVimeoSource, parseVimeoSource, parseVimeoVideoId } from '@videojs/media';
 
 export type { default as VimeoPlayerApi } from '@vimeo/player';
 
@@ -34,15 +37,6 @@ export interface VimeoSource {
 export interface VimeoSourceEngineConfig {
   /** Vimeo's own embed parameters, passed through untouched. */
   vimeo?: VimeoEngineConfig | undefined;
-}
-
-/** Parsed pieces of a Vimeo source URL. */
-export interface ParsedVimeoSource {
-  id: number;
-  /** `'video'` for regular clips, `'event'` for live events. */
-  kind: 'video' | 'event';
-  /** Unlisted-video / event hash (the `h` parameter). */
-  hash: string | null;
 }
 
 export interface VimeoAdapterProps {
@@ -80,6 +74,7 @@ export class VimeoAdapter extends MediaPlayedRangesMixin(EventTarget) implements
 
   #target: HTMLIFrameElement | null = null;
   #player: VimeoPlayer | null = null;
+  #playerEventCleanups: (() => void)[] = [];
   // Barrier for the load in progress; its identity also tells a late response whether it still owns the load.
   #loadComplete = createPublicPromise<void>();
 
@@ -137,10 +132,34 @@ export class VimeoAdapter extends MediaPlayedRangesMixin(EventTarget) implements
   }
 
   detach(): void {
-    if (!this.#target) return;
+    const target = this.#target;
+    if (!target) return;
 
     this.#teardownTextTracks();
-    this.#player?.destroy().catch(() => {});
+
+    // The SDK keeps event callbacks keyed by iframe even after destroy(), so remove only this adapter's handlers.
+    for (const cleanup of this.#playerEventCleanups) cleanup();
+
+    this.#playerEventCleanups.length = 0;
+
+    if (this.#player) {
+      // Vimeo removes its iframe synchronously in destroy(). Hide the parent for that call so the SDK releases its
+      // player cache and message listener while leaving caller-owned DOM in place.
+      const parentNodeDescriptor = Object.getOwnPropertyDescriptor(target, 'parentNode');
+
+      Object.defineProperty(target, 'parentNode', { value: null, configurable: true });
+
+      try {
+        this.#player.destroy().catch(() => {});
+      } finally {
+        if (parentNodeDescriptor) Object.defineProperty(target, 'parentNode', parentNodeDescriptor);
+        else Reflect.deleteProperty(target, 'parentNode');
+      }
+
+      // Removing the embed URL stops playback in the retained iframe and lets the next attachment rebuild it.
+      target.removeAttribute('src');
+    }
+
     this.#player = null;
     this.#target = null;
     this.#loadComplete.resolve();
@@ -571,76 +590,80 @@ export class VimeoAdapter extends MediaPlayedRangesMixin(EventTarget) implements
 
   #bindPlayerEvents(player: VimeoPlayer) {
     const emit = (type: string) => this.dispatchEvent(new Event(type));
+    const on: VimeoPlayer['on'] = (type, handler) => {
+      player.on(type, handler);
+      this.#playerEventCleanups.push(() => player.off(type, handler));
+    };
 
-    player.on('loaded', () => this.#onLoaded());
-    player.on('bufferstart', () => emit('waiting'));
-    player.on('play', () => {
+    on('loaded', () => this.#onLoaded());
+    on('bufferstart', () => emit('waiting'));
+    on('play', () => {
       this.#paused = false;
       emit('play');
     });
-    player.on('playing', () => {
+    on('playing', () => {
       this.#readyState = READY_STATE_HAVE_FUTURE_DATA;
       this.#paused = false;
       emit('playing');
     });
-    player.on('seeking', () => {
+    on('seeking', () => {
       this.#seeking = true;
       emit('seeking');
     });
-    player.on('seeked', () => {
+    on('seeked', () => {
       this.#seeking = false;
       emit('seeked');
     });
-    player.on('pause', () => {
+    on('pause', () => {
       this.#paused = true;
       emit('pause');
     });
-    player.on('ended', () => {
+    on('ended', () => {
       this.#paused = true;
       this.#ended = true;
       emit('ended');
     });
-    player.on('playbackratechange', ({ playbackRate }) => {
+    on('playbackratechange', ({ playbackRate }) => {
       this.#playbackRate = playbackRate;
       emit('ratechange');
     });
-    player.on('volumechange', ({ volume }) => {
+    on('volumechange', ({ volume }) => {
       this.#volume = volume;
       emit('volumechange');
     });
-    player.on('durationchange', ({ duration }) => {
+    on('durationchange', ({ duration }) => {
       this.#duration = duration;
       emit('durationchange');
     });
-    player.on('timeupdate', ({ seconds, duration }) => {
+    on('timeupdate', ({ seconds, duration }) => {
       this.#currentTime = seconds;
 
       if (Number.isFinite(duration) && duration !== this.#duration) this.#duration = duration;
 
       emit('timeupdate');
     });
-    player.on('progress', ({ seconds }) => {
+    on('progress', ({ seconds }) => {
       this.#progress = seconds;
       emit('progress');
     });
-    player.on('resize', ({ videoWidth, videoHeight }) => {
+    on('resize', ({ videoWidth, videoHeight }) => {
       this.#videoWidth = videoWidth;
       this.#videoHeight = videoHeight;
       emit('resize');
     });
-    player.on('fullscreenchange', ({ fullscreen }) => {
+    on('fullscreenchange', ({ fullscreen }) => {
       this.#isFullscreen = fullscreen;
       emit('fullscreenchange');
     });
-    player.on('enterpictureinpicture', () => {
+    on('enterpictureinpicture', () => {
       this.#isPictureInPicture = true;
       emit('enterpictureinpicture');
     });
-    player.on('leavepictureinpicture', () => {
+    on('leavepictureinpicture', () => {
       this.#isPictureInPicture = false;
       emit('leavepictureinpicture');
     });
-    player.on('error', () => {
+    on('error', () => {
       this.#error = { code: 1, message: 'Vimeo playback error' };
       emit('error');
       // Unblock callers awaiting load so play()/fullscreen/PiP don't hang.
@@ -686,36 +709,11 @@ export class VimeoAdapter extends MediaPlayedRangesMixin(EventTarget) implements
   }
 }
 
-/** Extract a Vimeo video id from a numeric id, vimeo.com URL, or player URL. */
-export function parseVimeoVideoId(src: string) {
-  return parseVimeoSource(src)?.id ?? null;
-}
-
 /**
- * Parse a Vimeo source: a numeric id, `vimeo.com/<id>`, `vimeo.com/video/<id>`, `player.vimeo.com/video/<id>`, or
- * `vimeo.com/event/<id>` (live events), plus unlisted/event hashes from `?h=` or a `/<hash>` segment.
+ * Build the iframe `src` URL for an initial Vimeo embed from the given props.
+ *
+ * @internal
  */
-export function parseVimeoSource(src: string): ParsedVimeoSource | null {
-  if (!src) return null;
-
-  if (/^\d+$/.test(src)) return { id: Number(src), kind: 'video', hash: null };
-
-  const match = MATCH_SRC.exec(src);
-  if (!match) return null;
-
-  const kind = match[1] === 'event/' ? 'event' : 'video';
-  let queryHash: string | null = null;
-
-  try {
-    queryHash = new URL(src).searchParams.get('h');
-  } catch {
-    // Bare ids and paths are not valid URLs.
-  }
-
-  return { id: Number(match[2]), kind, hash: queryHash ?? match[3] ?? null };
-}
-
-/** Build the iframe `src` URL for an initial Vimeo embed from the given props. */
 export function buildVimeoIframeSrc(src: string, props: Partial<VimeoAdapterProps> = {}) {
   const parsed = parseVimeoSource(src);
   if (!parsed) return '';
@@ -746,7 +744,6 @@ export function buildVimeoIframeSrc(src: string, props: Partial<VimeoAdapterProp
 
 const EMBED_VIDEO_BASE = 'https://player.vimeo.com/video';
 const EMBED_EVENT_BASE = 'https://vimeo.com/event';
-const MATCH_SRC = /vimeo\.com\/(video\/|event\/)?(\d+)(?:\/([\w-]+))?/;
 
 const READY_STATE_HAVE_NOTHING = 0;
 const READY_STATE_HAVE_METADATA = 1;

@@ -1,0 +1,50 @@
+import {
+  generateSourceReactCreateCode,
+  installationProjectFiles,
+  installationReactPlayerCode,
+  installationReactUsageCode,
+  resolveRegistryStyling,
+} from '@videojs/installation';
+
+import ClientCode from '@/components/Code/ClientCode';
+import { withSelectionMarker } from '@/components/installation/withSelectionMarker';
+import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
+
+import { useRegistryStyling } from '../installation/useRegistryFramework';
+import { useSelection } from '../installation/useSelection';
+
+function SourceReactPlayer() {
+  const template = useSelection('template');
+  const project = installationProjectFiles('react', template);
+  const code = generateSourceReactCreateCode({
+    useCase: useSelection('useCase'),
+    skin: useSelection('skin'),
+    media: useSelection('media'),
+    extensions: useSelection('extensions'),
+    sourceUrl: useSelection('sourceUrl'),
+    componentsAlias: project.componentsAlias,
+    styling: resolveRegistryStyling('react', useRegistryStyling()),
+  });
+  const usage = installationReactUsageCode(template);
+
+  return (
+    <TabsRoot maxWidth={false}>
+      <TabsList label="React implementation">
+        <Tab value="player" initial>
+          {project.player}
+        </Tab>
+        {project.usage && <Tab value="usage">{project.usage}</Tab>}
+      </TabsList>
+      <TabsPanel value="player" initial>
+        <ClientCode code={installationReactPlayerCode(code['app/page.tsx'], template)} lang="tsx" />
+      </TabsPanel>
+      {project.usage && usage && (
+        <TabsPanel value="usage">
+          <ClientCode code={usage} lang="astro" />
+        </TabsPanel>
+      )}
+    </TabsRoot>
+  );
+}
+
+export default withSelectionMarker(SourceReactPlayer);

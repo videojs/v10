@@ -17,12 +17,15 @@ import { isEventWithinElement } from '../../utils/event';
 import { getPositioningBoundaryRect, type PositioningBoundary, resolvePositioningBoundary } from '../../utils/layout';
 import {
   getAnchorPositionStyle,
+  getFixedContainingBlockOrigin,
   getPopupPositionRect,
+  offsetRect,
   type PositioningCSSVars,
   type PositioningOptions,
   resolveOffsets,
 } from './positioning';
 
+/** @internal */
 export interface PopupPositionerOptions {
   anchorName: string;
   position: PositioningOptions | null;
@@ -60,7 +63,11 @@ const POPUP_STYLE_PROPS = [
   'left',
 ] as const;
 
-/** Positions a popup and tracks layout changes while it is active. */
+/**
+ * Positions a popup and tracks layout changes while it is active.
+ *
+ * @internal
+ */
 export class PopupPositioner {
   #options: PopupPositionerOptions | null = null;
   #boundaryElement: Element | null = null;
@@ -159,12 +166,15 @@ export class PopupPositioner {
     if (!options?.position || !options.trigger || !options.popup) return;
 
     const trigger = options.trigger;
-    const triggerRect = trigger.getBoundingClientRect();
+    const anchorSupported = supportsAnchorPositioning();
+    // Fallback coordinates are relative to the popup's containing block, which is the viewport only in the top layer.
+    const origin = anchorSupported ? { x: 0, y: 0 } : getFixedContainingBlockOrigin(options.popup);
+    const triggerRect = offsetRect(trigger.getBoundingClientRect(), origin);
 
-    const boundaryRect = getPositioningBoundaryRect(this.#boundaryElement);
+    const boundaryRect = offsetRect(getPositioningBoundaryRect(this.#boundaryElement), origin);
     const offsets = resolveOffsets(options.popup, options.cssVars);
     const preferredPosition = options.position;
-    const anchorSupported = supportsAnchorPositioning();
+    const measure = () => offsetRect(getPopupPositionRect(options.popup!, preferredPosition.side), origin);
     const getPosition = (popupRect: DOMRect) => {
       const side = getPositionedSide(triggerRect, popupRect, boundaryRect, preferredPosition, offsets);
       const { positionAnchor: _, ...style } = getAnchorPositionStyle(
@@ -179,7 +189,7 @@ export class PopupPositioner {
 
       return { popupRect, side, style };
     };
-    const position = getPosition(getPopupPositionRect(options.popup, preferredPosition.side));
+    const position = getPosition(measure());
 
     this.#capturePopupStyles(options.popup, options.cssVars ?? PopoverCSSVars);
     applyStyles(options.popup, position.style);
@@ -189,7 +199,7 @@ export class PopupPositioner {
 
     // Menu callbacks can constrain the popup from the available-size variables.
     // Correct fallback coordinates synchronously so alignment is stable before paint.
-    const popupRect = getPopupPositionRect(options.popup, preferredPosition.side);
+    const popupRect = measure();
     if (popupRect.width === position.popupRect.width && popupRect.height === position.popupRect.height) return;
 
     const nextPosition = getPosition(popupRect);

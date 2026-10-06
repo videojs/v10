@@ -2,8 +2,6 @@
 
 [![package-badge]][package]
 
-> **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
-
 A lightweight reactive custom element base class for Video.js. Type-aligned with [Lit's ReactiveElement](https://github.com/lit/lit/tree/main/packages/reactive-element) but stripped down to only what we use.
 
 ```bash
@@ -98,7 +96,7 @@ This provides tree-scoped data sharing without prop drilling, using Lit's [Conte
 
 ## Community
 
-If you need help with anything related to Video.js v10, or if you'd like to casually chat with other
+If you need help with anything related to Video.js 10, or if you'd like to casually chat with other
 members:
 
 - [Join Discord Server][discord]
@@ -106,7 +104,7 @@ members:
 
 ## License
 
-[Apache-2.0](./LICENSE)
+[Apache-2.0](../../LICENSE)
 
 [package]: https://www.npmjs.com/package/@videojs/element
 [package-badge]: https://img.shields.io/npm/v/@videojs/element?label=@videojs/element

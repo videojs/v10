@@ -39,6 +39,7 @@ export {
   getElementPadding,
   getElementSize,
   getInlineExtent,
+  isPointInElement,
   type LogicalBoxEdges,
   type MeasureElementChildrenOptions,
   type MeasureElementOptions,
@@ -94,12 +95,24 @@ export {
   snapshotInlineStyles,
   withInlineStyles,
 } from './style';
-export { supportsAnchorPositioning, supportsAnimationFrame, supportsIdleCallback } from './supports';
+export {
+  supportsAnchorPositioning,
+  supportsAnimationFrame,
+  supportsConstructableStyleSheets,
+  supportsIdleCallback,
+  supportsPopoverAPI,
+} from './supports';
 export { cloneTemplateRoot, createTemplate, getTemplateElement, getTemplateRoot, renderTemplate } from './template';
-export { type CaptionOrSubtitleKind, findTrackElement, getTextTrackList, isCaptionOrSubtitleTrack } from './text-track';
+export {
+  type CaptionOrSubtitleKind,
+  findTrackElement,
+  getCaptionOrSubtitleTracks,
+  getTextTrackList,
+  isCaptionOrSubtitleTrack,
+} from './text-track';
 export { serializeTimeRanges } from './time-ranges';
 export { containsComposed } from './tree';
-export type { CustomElement, CustomElementCallbacks, EventListenerFor, EventType, QueriedElement } from './types';
+export type { CustomElement, CustomElementCallbacks } from './types';
 export { type WalkAncestorsOptions, walkAncestors } from './walk-ancestors';
 export {
   isWebKitAirPlayCapable,

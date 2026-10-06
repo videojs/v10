@@ -13,7 +13,8 @@ export interface ApiReferenceSection {
 export interface PartModel {
   id: string;
   name: string;
-  description: string | undefined;
+  /** The HTML element's own description when it has one; otherwise both frameworks share the React part's. */
+  descriptionByFramework: { react: string | undefined; html: string | undefined };
   componentName: string;
   labelByFramework: { react: string; html: string };
   frameworks: SupportedFramework[];
@@ -162,7 +163,10 @@ export function createComponentReferenceModel(
     const parts: PartModel[] = partEntries.map(([partId, part]) => ({
       id: partId,
       name: part.name,
-      description: part.description,
+      descriptionByFramework: {
+        react: part.description,
+        html: part.platforms?.html?.description ?? part.description,
+      },
       componentName: `${componentName}.${part.name}`,
       labelByFramework: {
         react: part.name,

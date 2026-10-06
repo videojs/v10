@@ -2,10 +2,11 @@
 
 import type { CollectionEntry } from 'astro:content';
 import { getCollection, getEntries, render } from 'astro:content';
+import { TableOfContents } from '@/components/docs/TableOfContents';
 import FormattedDate from '@/components/FormattedDate.astro';
 import JsonLd from '@/components/JsonLd.astro';
 import defaultMarkdownComponents from '@/components/typography/defaultMarkdownComponents';
-import { PRODUCTION_URL } from '@/consts';
+import { FIRST_V10_BLOG_MONTH, PRODUCTION_URL } from '@/consts';
 import Blog from '@/layouts/Blog.astro';
 import MarkdownAlternate from '@/components/MarkdownAlternate.astro';
 import { createBlogPostingSchema } from '@/utils/jsonLd/schemas';
@@ -23,8 +24,11 @@ export async function getStaticPaths() {
 type Props = CollectionEntry<'blog'>;
 
 const post = Astro.props;
-const { Content, remarkPluginFrontmatter } = await render(post);
+const { Content, headings, remarkPluginFrontmatter } = await render(post);
 const authors = await getEntries(post.data.authors);
+const publishedDate = post.data.pubDate.toISOString().slice(0, 10);
+// Posts are read one at a time by agents, so a pre-v10 post says so itself rather than relying on the blog index.
+const isLegacyPost = publishedDate < FIRST_V10_BLOG_MONTH;
 
 // Resolve OG image URL for JSON-LD
 const ogImageUrl = post.data.ogImage
@@ -49,7 +53,7 @@ const jsonLdSchema = createBlogPostingSchema({
 ---
 
 <Blog
-  title={[post.data.title, "Blog"]}
+  title={post.data.title}
   description={post.data.description}
   canonical={post.data.canonical}
   image={post.data.ogImage}
@@ -57,6 +61,7 @@ const jsonLdSchema = createBlogPostingSchema({
 >
   <MarkdownAlternate slot="head" />
   <JsonLd slot="head" schema={jsonLdSchema} />
+  <TableOfContents client:idle headings={headings} railOnly />
   <article
     class="@container text-p2 sm:text-p15"
     data-search-content
@@ -70,6 +75,7 @@ const jsonLdSchema = createBlogPostingSchema({
     >
       <div
         class="mb-4 flex flex-col gap-2 font-display text-h3 font-bold text-accent uppercase sm:flex-row sm:gap-4"
+        data-llms-ignore
       >
         <FormattedDate date={post.data.pubDate} />
         <span class="hidden sm:inline">&bull;</span>
@@ -82,6 +88,12 @@ const jsonLdSchema = createBlogPostingSchema({
       >
         {post.data.title}
       </h1>
+      <div hidden data-llms-only>
+        <p>
+          Published {publishedDate}.{isLegacyPost &&
+            " This post describes an earlier Video.js version (1 through 8); its APIs do not apply to Video.js 10."}
+        </p>
+      </div>
       <div class="">
         By {
           new Intl.ListFormat("en", { style: "long", type: "conjunction" })

@@ -10,5 +10,6 @@ describe('utilReferenceSlug', () => {
   it('keeps i18n abbreviations together', () => {
     expect(utilReferenceSlug('registerI18n')).toBe('register-i18n');
     expect(utilReferenceSlug('I18nProvider')).toBe('i18n-provider');
+    expect(utilReferenceSlug('I18nController')).toBe('i18n-controller');
   });
 });

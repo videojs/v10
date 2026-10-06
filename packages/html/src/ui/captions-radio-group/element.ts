@@ -1,4 +1,9 @@
-import { CaptionsRadioGroupCore, CaptionsRadioGroupDataAttrs, type CaptionsRadioGroupOption } from '@videojs/core';
+import {
+  CaptionsRadioGroupCore,
+  CaptionsRadioGroupDataAttrs,
+  type CaptionsRadioGroupOption,
+  type CaptionsRadioGroupState,
+} from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectTextTrack } from '@videojs/core/dom';
 import { type Text, translateText } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
@@ -10,6 +15,11 @@ import { PlayerController } from '../../player/controller';
 import { MenuRadioGroupElement } from '../menu/radio-group';
 import { RadioOptionsController } from '../radio-options/controller';
 
+/**
+ * Menu radio group that generates an Off `<media-menu-radio-item>` plus one per captions and subtitles track, and
+ * shares the selected label and availability with an enclosing menu. An optional `<template>` holding one
+ * `<media-menu-radio-item>` customizes each generated item.
+ */
 export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
   static override readonly tagName = 'media-captions-radio-group';
 
@@ -47,7 +57,7 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
 
   protected override update(changed: PropertyValues): void {
     const media = this.#mediaState.value;
-    let state: CaptionsRadioGroupCore.State | null = null;
+    let state: CaptionsRadioGroupState | null = null;
 
     if (media) {
       this.#core.setProps({ formatTrack: this.formatTrack, disabled: this.disabled, label: this.label });
@@ -68,5 +78,5 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
 }
 
 export namespace CaptionsRadioGroupElement {
-  export type State = CaptionsRadioGroupCore.State;
+  export type State = CaptionsRadioGroupState;
 }

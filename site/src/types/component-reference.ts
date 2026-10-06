@@ -47,6 +47,8 @@ export const PartReferenceSchema = z.object({
     html: z
       .object({
         tagName: z.string(),
+        /** The element class's own description, when its wording differs from the React part's. */
+        description: z.string().optional(),
         events: z.array(ComponentEventDefSchema).optional(),
       })
       .optional(),

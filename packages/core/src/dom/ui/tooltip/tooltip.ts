@@ -19,6 +19,7 @@ export interface TooltipChangeDetails {
   event?: Event;
 }
 
+/** @internal */
 export interface TooltipOptions {
   transition: TransitionApi;
   onOpenChange: (open: boolean, details: TooltipChangeDetails) => void;
@@ -28,16 +29,20 @@ export interface TooltipOptions {
   disableHoverablePopup?: () => boolean;
   disabled?: () => boolean;
   sticky?: () => boolean;
+  /** @internal Supplied by the framework tooltip provider or group element to coordinate delays. */
   group?: () => TooltipGroupCore | undefined;
   popupGroup?: () => PopupGroup | undefined;
 }
 
+/** @internal */
 export interface TooltipTriggerProps extends Omit<PopoverTriggerProps, 'onClick'> {
   onPointerDown: (event: UIPointerEvent) => void;
 }
 
+/** @internal */
 export interface TooltipPopupProps extends PopoverPopupProps {}
 
+/** @internal */
 export interface TooltipApi extends Omit<PopoverApi, 'triggerProps' | 'popupProps' | 'open' | 'close'> {
   triggerProps: TooltipTriggerProps;
   popupProps: TooltipPopupProps;
@@ -54,6 +59,7 @@ const REASON_MAP: Partial<Record<PopoverOpenChangeReason, TooltipOpenChangeReaso
   'imperative-action': 'imperative-action',
 };
 
+/** @internal */
 export function createTooltip(options: TooltipOptions): TooltipApi {
   const popoverOpts: PopoverOptions = {
     transition: options.transition,

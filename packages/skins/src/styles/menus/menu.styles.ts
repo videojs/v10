@@ -24,6 +24,8 @@ const menuItemHighlight = [
 const menuHighlight = [
   '[anchor-scope:--media-menu-item-highlight-anchor]',
   'media-anchored:before:anchor-media-highlight',
+  'media-transitioning:before:hidden',
+  'media-transitioning:[&_*]:before:hidden',
   'media-anchored:has-data-[highlighted=]:before:duration-0',
 ] as const;
 
@@ -32,6 +34,14 @@ const menuGroup = ['flex [max-height:inherit] flex-col gap-0.5', ...menuHighligh
 const menuIcon = ['shrink-0 drop-shadow-media-icon text-media-muted-foreground'] as const;
 
 const menuChevron = [...menuIcon, 'size-media-icon-sm'] as const;
+
+export const menuContent = [
+  'not-data-submenu:flex not-data-submenu:flex-col not-data-submenu:gap-0.5',
+  'not-data-submenu:data-child-open:blur-media-hidden',
+  'not-data-submenu:data-child-open:before:hidden',
+  'data-submenu:media-transitioning:pointer-events-none data-submenu:media-transitioning:overflow-hidden',
+  'data-submenu:media-transitioning:blur-media-hidden',
+] as const;
 
 export default styles({
   file: 'menus.css',
@@ -51,18 +61,14 @@ export default styles({
     content: {
       utilities: [
         ...menuHighlight,
+        ...menuContent,
         'absolute max-h-[inherit] overflow-auto overscroll-none outline-hidden',
-        'not-data-submenu:flex not-data-submenu:flex-col not-data-submenu:gap-0.5',
         'transition-[translate,filter] duration-media-menu ease-out',
         'not-data-submenu:inset-x-1 not-data-submenu:top-1',
         'not-data-submenu:data-child-open:-translate-x-full',
         'not-data-submenu:data-child-open:rtl:translate-x-full',
-        'not-data-submenu:data-child-open:blur-media-hidden',
-        'not-data-submenu:data-child-open:before:hidden',
         'data-submenu:inset-x-0 data-submenu:top-0 data-submenu:z-10 data-submenu:max-h-[inherit] data-submenu:p-1',
-        'data-submenu:media-transitioning:pointer-events-none data-submenu:media-transitioning:overflow-hidden',
         'data-submenu:media-transitioning:translate-x-full data-submenu:media-transitioning:rtl:-translate-x-full',
-        'data-submenu:media-transitioning:blur-media-hidden',
       ],
     },
     radioGroup: {
@@ -78,17 +84,18 @@ export default styles({
       utilities: ['group/menu-back-item', ...menuItem, 'mb-0.5 w-full'],
     },
     separator: {
-      utilities: 'my-1 block border-b border-media-border media-opaque:border-media-foreground/25',
+      utilities: 'my-1 block border-b border-media-border media-high-contrast:border-media-foreground/25',
       variants: { default: 'shadow-media-separator' },
     },
     hint: {
-      utilities: 'ms-auto inline-flex min-w-0 items-center gap-1 ps-2 text-current/65',
+      utilities: 'ms-auto inline-flex min-w-0 items-center gap-1 ps-2',
     },
     hintLabel: {
-      utilities: 'max-w-24 truncate',
+      // Faded on its own so the chevron beside it keeps its color.
+      utilities: 'max-w-24 truncate opacity-65',
     },
     tier: {
-      utilities: 'ps-0.5 pt-px text-media-xs font-semibold leading-none text-current/70',
+      utilities: 'ps-0.5 pt-px text-media-xs font-semibold leading-none opacity-70',
     },
     badge: {
       utilities: 'rounded-media-control bg-media-accent px-1.5 text-media-xs font-semibold',

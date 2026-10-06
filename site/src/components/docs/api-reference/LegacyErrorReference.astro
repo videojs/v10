@@ -1,0 +1,42 @@
+---
+import {
+  getLegacyErrorRecord,
+  LEGACY_V8_DOCS_URL,
+  LEGACY_V8_INSTALL,
+  type LegacyErrorCode,
+} from 'video.js/errors';
+
+import ServerCode from '@/components/Code/ServerCode.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import A from '@/components/typography/A.astro';
+import CodeFrame from '@/components/typography/CodeFrame.astro';
+import H2 from '@/components/typography/H2.astro';
+import P from '@/components/typography/P.astro';
+import { renderInlineMarkdown } from '@/utils/docs/renderInlineMarkdown';
+
+interface Props {
+  code: LegacyErrorCode;
+}
+
+const { code } = Astro.props;
+const record = getLegacyErrorRecord(code);
+const equivalent = Astro.params.framework === 'react' ? record.react : record.html;
+---
+
+<P set:html={renderInlineMarkdown(record.summary)} />
+
+<H2>Trigger</H2>
+<CodeFrame lang="js">
+  <ServerCode code={record.legacy} lang="javascript" />
+</CodeFrame>
+
+<H2>Video.js 10 equivalent</H2>
+<P set:html={renderInlineMarkdown(equivalent)} />
+<P>
+  See <DocsLink slug="guides/migrate-from-video-js-8">Migrate from Video.js 8</DocsLink> for the full setup.
+</P>
+
+<H2>Video.js 8</H2>
+<P>
+  Video.js 8 continues to receive security patches. Its documentation is at <A href={LEGACY_V8_DOCS_URL}>{new URL(LEGACY_V8_DOCS_URL).host}</A>. Pin the major version with <code>{LEGACY_V8_INSTALL}</code> to keep using it.
+</P>

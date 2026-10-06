@@ -51,15 +51,23 @@ import basicUsageHtmlTs from "@/components/docs/demos/volume-popover/html/css/Ba
 
 ## Behavior
 
+<FrameworkCase frameworks={["react"]}>
 `VolumePopover` combines <DocsLink slug="reference/components/popover">popover behavior</DocsLink> with volume availability. When volume level controls are unavailable, it closes and omits the popup while keeping the mute trigger rendered. This lets media with fixed volume keep mute control without exposing a nonfunctional slider.
+</FrameworkCase>
 
-The HTML trigger can target the popup with `commandfor`. An immediately adjacent trigger is linked automatically when neither element has an authored ID.
+<FrameworkCase frameworks={["html"]}>
+`<media-volume-popover>` combines <DocsLink slug="reference/components/popover">popover behavior</DocsLink> with volume availability. When volume level controls are unavailable, it closes and omits the popup while keeping the mute trigger rendered. This lets media with fixed volume keep mute control without exposing a nonfunctional slider.
+
+The trigger can target the popup with `commandfor`. An immediately adjacent trigger is linked automatically when neither element has an authored ID.
+</FrameworkCase>
 
 ## Styling
 
-The popup reflects `data-availability="available"` while it can render volume controls. HTML also receives native `hidden` and `data-hidden` when it cannot.
+The popup reflects `data-availability="available"` while it can render volume controls.
 
 <FrameworkCase frameworks={["html"]}>
+When it cannot, the element also receives native `hidden` and `data-hidden`.
+
 ```css
 media-volume-popover[data-open] {
   opacity: 1;

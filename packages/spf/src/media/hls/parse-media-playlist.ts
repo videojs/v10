@@ -5,6 +5,7 @@ import {
   getMediaPlaylistMetadata,
   isResolvedTrack,
   MEDIA_PLAYLIST_METADATA_KEY,
+  type MediaPlaylistKey,
   type MediaPlaylistMetadata,
   type PartiallyResolvedAudioTrack,
   type PartiallyResolvedTextTrack,
@@ -16,7 +17,7 @@ import {
   type VideoTrack,
 } from '../types';
 import { matchTag, parseByteRange, parseExtInfDuration } from './parse-attributes';
-import { resolveUrl } from './resolve-url';
+import { type ResolveKeyUri, resolveKeyUri, resolveUrl } from './resolve-url';
 
 /**
  * MPEG-2 Transport Stream (IANA `video/MP2T`, lowercased for `isTypeSupported`). Video + audio TS — there is no
@@ -169,10 +170,21 @@ function placeOnAnchor(segments: Segment[], anchor: number): Segment[] {
  * @param previous - Prior track state (unresolved shell, or previous resolved snapshot)
  * @returns Resolved track with segments (type inferred from input)
  */
+/** Seams a composition can replace when parsing a media playlist. */
+export interface ParseMediaPlaylistConfig {
+  /**
+   * How an `EXT-X-KEY` URI becomes the value on the parsed key. Defaults to {@link resolveKeyUri}, which resolves
+   * relative `identity` key files and leaves opaque DRM identifiers (`data:`, `skd://`) alone.
+   */
+  resolveKeyUri?: ResolveKeyUri;
+}
+
 export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
   text: string,
-  previous: T | ResolveTrack<T>
+  previous: T | ResolveTrack<T>,
+  config: ParseMediaPlaylistConfig = {}
 ): ResolveTrack<T> {
+  const resolveKey = config.resolveKeyUri ?? resolveKeyUri;
   const lines = text.split(/\r?\n/);
 
   // Segments and resources resolve relative to media playlist URL (per HLS spec)
@@ -204,10 +216,12 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
   // parser ignores parts and the loader fetches whole segments, so this records
   // that the publisher configured LL-HLS, not that we honour it.
   let lowLatency = false;
-  // Any EXT-X-KEY with a real METHOD makes the rendition encrypted. Sticky: a
-  // clear lead (METHOD=NONE first, a real key later) still counts, since we can
-  // only report whether decryption is needed at all.
-  let encrypted = false;
+  // Every EXT-X-KEY with a real METHOD, deduped by full attribute identity —
+  // rotation-heavy playlists re-declare the same key before each segment run.
+  // `encrypted` derives from this list, so a clear lead (METHOD=NONE first, a
+  // real key later) still reads as encrypted.
+  const keys: MediaPlaylistKey[] = [];
+  const seenKeys = new Set<string>();
 
   for (const line of lines) {
     const trimmed = line.trim();
@@ -242,7 +256,24 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
     if (key) {
       const method = key.get('METHOD');
 
-      if (method !== undefined && method !== 'NONE') encrypted = true;
+      if (method !== undefined && method !== 'NONE') {
+        const uri = key.get('URI');
+        const keyFormat = key.get('KEYFORMAT');
+        const keyId = key.get('KEYID');
+        const iv = key.get('IV');
+        const identity = [method, uri, keyFormat, keyId, iv].join(' ');
+
+        if (!seenKeys.has(identity)) {
+          seenKeys.add(identity);
+          keys.push({
+            method,
+            ...(uri !== undefined && { uri: resolveKey(uri, baseUrl) }),
+            ...(keyFormat !== undefined && { keyFormat }),
+            ...(keyId !== undefined && { keyId }),
+            ...(iv !== undefined && { iv }),
+          });
+        }
+      }
 
       continue;
     }
@@ -424,7 +455,8 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
         lowLatency,
         endList,
         holdBack,
-        encrypted,
+        encrypted: keys.length > 0,
+        ...(keys.length > 0 && { keys }),
       } satisfies MediaPlaylistMetadata,
     },
   } as unknown as ResolveTrack<T>;

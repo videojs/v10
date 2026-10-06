@@ -1,6 +1,6 @@
 import type { MediaControlsState } from '@videojs/media';
-import { isMediaPauseCapable, isMediaRemotePlaybackCapable } from '@videojs/media';
-import { listen } from '@videojs/utils/dom';
+import { isMediaPauseCapable, isMediaRemotePlaybackCapable, getRegisteredMedia } from '@videojs/media';
+import { isPointInElement, listen } from '@videojs/utils/dom';
 import { isNull } from '@videojs/utils/predicate';
 
 import { definePlayerFeature } from '../../feature';
@@ -10,6 +10,8 @@ import { isRemotePlaybackConnected, isRemotePlaybackConnecting } from '../../pre
 const IDLE_DELAY = 2000;
 const TAP_THRESHOLD = 250;
 const TOUCH_SETTLE_DELAY = 500;
+/** How long after a control releases pointer capture a `mouseleave` inside the container is treated as spurious. */
+const CAPTURE_RELEASE_DELAY = 100;
 
 type RequestControlsLock = MediaControlsState['requestControlsLock'];
 type ToggleControls = MediaControlsState['toggleControls'];
@@ -31,9 +33,9 @@ export const controlsFeature = definePlayerFeature({
       set({ controlsVisible: true });
       return () => {};
     };
-    const fallbackToggleControls = () => {
+    const fallbackToggleControls = (forceShow?: boolean) => {
       // Fallback before attach — no idle timer, just flip state.
-      const next = !get().userActive;
+      const next = forceShow ?? !get().userActive;
 
       set({ userActive: next, controlsVisible: next });
       return next as boolean;
@@ -124,11 +126,11 @@ export const controlsFeature = definePlayerFeature({
       };
     }
 
-    function toggleControls(): boolean {
-      if (get().controlsVisible) {
-        setInactive();
-      } else {
+    function toggleControls(forceShow?: boolean): boolean {
+      if (forceShow ?? !get().controlsVisible) {
         setActive();
+      } else {
+        setInactive();
       }
 
       return get().controlsVisible;
@@ -156,6 +158,10 @@ export const controlsFeature = definePlayerFeature({
 
     const isRecentTouch = () => lastTouchAt > 0 && Date.now() - lastTouchAt < TOUCH_SETTLE_DELAY;
 
+    let lastCaptureReleaseAt = 0;
+    const isRecentCaptureRelease = () =>
+      lastCaptureReleaseAt > 0 && Date.now() - lastCaptureReleaseAt < CAPTURE_RELEASE_DELAY;
+
     function onPointerDown(event: PointerEvent) {
       pointerDownTime = Date.now();
 
@@ -177,8 +183,9 @@ export const controlsFeature = definePlayerFeature({
         const coordinator = findGestureCoordinator(container as HTMLElement);
         if (coordinator?.claimsTap(event, 'toggleControls')) return;
 
-        // Inline touch tap-to-toggle for standalone use (no gestures).
-        const isMediaOrContainer = [media, container].includes(event.target as HTMLElement);
+        // Inline touch tap-to-toggle for standalone use (no gestures). `media` may be the player's facade, which is
+        // never the event target.
+        const isMediaOrContainer = [getRegisteredMedia(media), container].includes(event.target as HTMLElement);
 
         if (get().controlsVisible && isMediaOrContainer) {
           setInactive();
@@ -217,6 +224,14 @@ export const controlsFeature = definePlayerFeature({
     listen(container, 'pointermove', onPointerMove, { signal });
     listen(container, 'pointerdown', onPointerDown, { signal });
     listen(container, 'pointerup', onPointerUp, { signal });
+    listen(
+      container,
+      'lostpointercapture',
+      () => {
+        lastCaptureReleaseAt = Date.now();
+      },
+      { signal }
+    );
     listen(container, 'keydown', setActive, { signal });
     listen(container, 'keyup', setActive, { signal });
     listen(
@@ -235,9 +250,14 @@ export const controlsFeature = definePlayerFeature({
     listen(
       container,
       'mouseleave',
-      () => {
+      (event: Event) => {
         // Ignore synthetic mouseleave that Android Chrome dispatches after touchend.
         if (isRecentTouch()) return;
+
+        // Safari 16 dispatches mouseleave right after a control releases pointer capture, such as after a click on the
+        // time slider, with the pointer still inside. Only that case is ignored: a pointer leaving the window can also
+        // report a last position inside the container.
+        if (isRecentCaptureRelease() && event instanceof MouseEvent && isPointInElement(container, event)) return;
 
         setInactive();
       },
@@ -303,7 +323,7 @@ function createControlsActions(
     };
   };
 
-  const toggleControls = () => toggleControlsDelegate();
+  const toggleControls = (forceShow?: boolean) => toggleControlsDelegate(forceShow);
 
   const actions: ControlsActions = {
     requestControlsLock,

@@ -40,6 +40,13 @@ const ignoredPaths = [
 ];
 
 export default defineConfig({
+  test: {
+    // Vitest v4 compatibility: preserve mock call history.
+    // Remove after tests no longer rely on calls from setup or earlier tests.
+    // https://viteplus.dev/guide/vitest-v5#remove-unneeded-compatibility-settings
+    // https://vitest.dev/guide/migration/#clearmocks-is-enabled-by-default
+    clearMocks: false,
+  },
   fmt: {
     arrowParens: 'always',
     bracketSpacing: true,
@@ -173,7 +180,7 @@ export default defineConfig({
       'prepare:dev': {
         command: 'node -e ""',
         cache: false,
-        dependsOn: ['site#api-docs:generate', 'site#cdn-manifest', '@videojs/sandbox#setup', '@videojs/skins#generate'],
+        dependsOn: ['site#api-docs:generate', '@videojs/sandbox#setup', '@videojs/skins#generate'],
       },
       'typecheck:workspace': {
         command: 'tsgo --build',

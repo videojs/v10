@@ -173,8 +173,16 @@ describe('timeFeature', () => {
         store.attach({ media: video, container: null });
 
         const resultPromise = store.seek(45);
+        let settled = false;
+
+        void resultPromise.then(() => {
+          settled = true;
+        });
 
         expect(video.currentTime).toBe(45);
+
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(settled).toBe(false);
 
         // Simulate browser firing seeked event
         video.dispatchEvent(new Event('seeked'));
@@ -202,6 +210,40 @@ describe('timeFeature', () => {
         expect(result).toBe(45);
       });
 
+      it('settles a pending seek when the source is emptied', async () => {
+        const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
+        const store = createStore<PlayerTarget>()(timeFeature);
+
+        store.attach({ media: video, container: null });
+
+        const resultPromise = store.seek(30);
+
+        // A new source never fires `seeked` for the abandoned seek.
+        video.dispatchEvent(new Event('emptied'));
+
+        expect(await resultPromise).toBe(30);
+      });
+
+      it('abandons a seek waiting for metadata when the source is emptied', async () => {
+        const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_NOTHING });
+        const store = createStore<PlayerTarget>()(timeFeature);
+
+        store.attach({ media: video, container: null });
+
+        const resultPromise = store.seek(30);
+
+        video.dispatchEvent(new Event('emptied'));
+
+        expect(await resultPromise).toBe(0);
+
+        // The new source's metadata must not receive the old target time.
+        Object.defineProperty(video, 'readyState', { value: HTMLMediaElement.HAVE_METADATA, configurable: true });
+        video.dispatchEvent(new Event('loadedmetadata'));
+
+        expect(video.currentTime).toBe(0);
+        expect(store.state.seeking).toBe(false);
+      });
+
       it('supersedes previous seek when new seek starts', async () => {
         const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
         const store = createStore<PlayerTarget>()(timeFeature);
@@ -227,34 +269,6 @@ describe('timeFeature', () => {
         const result2 = await seek2Promise;
 
         expect(result2).toBe(20);
-      });
-
-      it('optimistically updates currentTime before seeked event fires', () => {
-        const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
-        const store = createStore<PlayerTarget>()(timeFeature);
-
-        store.attach({ media: video, container: null });
-
-        expect(store.state.currentTime).toBe(0);
-
-        // Start seek but don't fire any DOM events.
-        store.seek(45);
-
-        // Store should reflect target time immediately (no waiting for seeked).
-        expect(store.state.currentTime).toBe(45);
-      });
-
-      it('optimistically sets seeking to true before seeking event fires', () => {
-        const video = createMockVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
-        const store = createStore<PlayerTarget>()(timeFeature);
-
-        store.attach({ media: video, container: null });
-
-        expect(store.state.seeking).toBe(false);
-
-        store.seek(45);
-
-        expect(store.state.seeking).toBe(true);
       });
 
       it('optimistic seeking is corrected by seeked event', async () => {

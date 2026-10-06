@@ -5,7 +5,12 @@ import { ContextConsumer } from '@videojs/element/context';
 import { UIElement } from '../ui-element';
 import { menuContext } from './context';
 
-/** @fires checked-change - Fired when the checked state changes. */
+/**
+ * Menu item that toggles `checked` when activated and leaves the menu open. The element itself takes
+ * `role="menuitemcheckbox"`.
+ *
+ * @fires checked-change - Fired when the checked state changes.
+ */
 export class MenuCheckboxItemElement extends UIElement {
   static readonly tagName = 'media-menu-checkbox-item';
 

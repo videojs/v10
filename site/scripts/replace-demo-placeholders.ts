@@ -2,6 +2,7 @@ import type { Plugin } from 'vite';
 
 import {
   VJS8_DEMO_VIDEO,
+  VJS10_DEMO_AUDIO,
   VJS10_DEMO_BACKGROUND_VIDEO_MP4,
   VJS10_DEMO_BACKGROUND_VIDEO_POSTER,
   VJS10_DEMO_CLOUDFLARE,
@@ -22,8 +23,9 @@ import {
 
 const DEMOS_DIRECTORY = '/src/components/docs/demos/';
 
-export const DEMO_PLACEHOLDERS = {
+const DEMO_PLACEHOLDERS = {
   VJS8_DEMO_VIDEO_HLS: VJS8_DEMO_VIDEO.hls,
+  VJS10_DEMO_AUDIO_M4A: VJS10_DEMO_AUDIO,
   VJS10_DEMO_BACKGROUND_VIDEO_MP4: VJS10_DEMO_BACKGROUND_VIDEO_MP4,
   VJS10_DEMO_BACKGROUND_VIDEO_POSTER: VJS10_DEMO_BACKGROUND_VIDEO_POSTER,
   VJS10_DEMO_CLOUDFLARE: VJS10_DEMO_CLOUDFLARE,
@@ -46,7 +48,7 @@ export const DEMO_PLACEHOLDERS = {
 const PLACEHOLDER_PATTERN = /{{([A-Z0-9_]+)}}/g;
 
 /** Resolve the shared media source placeholders used in demo snippets. */
-export function replaceDemoPlaceholders(source: string): string {
+function replaceDemoPlaceholders(source: string): string {
   return source.replace(PLACEHOLDER_PATTERN, (placeholder, name: string) => {
     const value = DEMO_PLACEHOLDERS[name as keyof typeof DEMO_PLACEHOLDERS];
     if (!value) throw new Error(`Unknown demo placeholder: ${placeholder}`);
@@ -55,7 +57,7 @@ export function replaceDemoPlaceholders(source: string): string {
   });
 }
 
-export function transformDemoPlaceholders(source: string, id: string): string | null {
+function transformDemoPlaceholders(source: string, id: string): string | null {
   const [filePath, query = ''] = id.split('?', 2);
   const isRawHtml = filePath.endsWith('.html') && new URLSearchParams(query).has('raw');
   const isReactDemo = filePath.endsWith('.tsx');

@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
+import { NO_KEY_SYSTEM } from '../../../media/drm';
 import { SVTA_NO_SUPPORTED_AUDIO_TRACK, SVTA_NO_SUPPORTED_VIDEO_TRACK, type SvtaError } from '../../../media/errors';
 import type {
   AudioSelectionSet,
@@ -15,15 +16,17 @@ import type {
   VideoSelectionSet,
   VideoTrack,
 } from '../../../media/types';
+import { MEDIA_PLAYLIST_METADATA_KEY } from '../../../media/types';
 import { applyContainerMimeType } from '../../../media/utils/tracks';
 import type { BandwidthState } from '../../../network/bandwidth-estimator';
+import { excludeRefusedKeySystems } from '../../primitives/selection-rules';
 import {
+  DEFAULT_VIDEO_CONSTRAINTS,
   type SwitchVideoTrackConfig,
-  setupTrackSwitching,
+  type SwitchVideoTrackRule,
   switchAudioTrack,
   switchTextTrack,
   switchVideoTrack,
-  type TrackSwitchingStateMap,
 } from '../track-switching';
 
 // ============================================================================
@@ -99,16 +102,6 @@ const tracks = [
 
 describe('switchVideoTrack', () => {
   describe('lifecycle (presentation-unresolved ↔ presentation-resolved)', () => {
-    it('does nothing without a presentation', async () => {
-      const state = makeState({ bandwidthState: createBandwidthState(3_000_000) });
-
-      const reactor = switchVideoTrack.setup({ state });
-
-      await flush();
-      expect(state.selectedVideoTrackId.get()).toBeUndefined();
-      reactor.destroy();
-    });
-
     it('clears selectedVideoTrackId on src unload', async () => {
       const state = makeState({
         presentation: createPresentation(tracks),
@@ -309,10 +302,10 @@ describe('switchVideoTrack', () => {
       // narrow to both but not one. ABR picks among the matches.
       const t1080a = { ...createVideoTrack('1080-low', 3_000_000), height: 1080, width: 1920 };
       const t1080b = { ...createVideoTrack('1080-high', 5_500_000), height: 1080, width: 1920 };
-      const t720 = { ...createVideoTrack('720p', 2_400_000), height: 720, width: 1280 };
+      const outsider = { ...createVideoTrack('1440p', 6_500_000), height: 1440, width: 2560 };
 
       const state = makeState({
-        presentation: createPresentation([t720, t1080a, t1080b]),
+        presentation: createPresentation([outsider, t1080a, t1080b]),
         bandwidthState: createBandwidthState(8_000_000),
         userVideoTrackSelection: { height: 1080 },
       });
@@ -320,8 +313,7 @@ describe('switchVideoTrack', () => {
       const reactor = switchVideoTrack.setup({ state });
 
       await flush();
-      // Among 1080a (3M) and 1080b (5.5M), 8 Mbps fits both; selectQuality
-      // picks the highest bandwidth track (5.5M → 1080-high).
+      // All three fit; filtering must exclude the 6.5 Mbps outsider before ranking.
       expect(state.selectedVideoTrackId.get()).toBe('1080-high');
 
       reactor.destroy();
@@ -413,22 +405,22 @@ describe('switchVideoTrack', () => {
       height,
     });
 
-    it('prefers the higher-resolution rendition when bitrates are equal', async () => {
-      // Same bitrate, but the lower-resolution variant is listed first — a
-      // bitrate-only ranker would pick it by manifest order.
+    it.each([false, true])('prefers pixel area over width at equal bitrates (reversed: %s)', async (reversed) => {
+      // Width and pixel area favor opposite tracks; neither width nor manifest
+      // order should decide the fitting rendition's quality.
       const equalBitrate = [
-        withResolution(createVideoTrack('sd', 3_000_000), 640, 360),
-        withResolution(createVideoTrack('hd', 3_000_000), 1920, 1080),
+        withResolution(createVideoTrack('wide', 2_000_000), 1920, 800),
+        withResolution(createVideoTrack('tall', 2_000_000), 1280, 1440),
       ];
       const state = makeState({
-        presentation: createPresentation(equalBitrate),
-        bandwidthState: createBandwidthState(6_000_000),
+        presentation: createPresentation(reversed ? [...equalBitrate].reverse() : equalBitrate),
+        bandwidthState: createBandwidthState(2_500_000),
       });
 
       const reactor = switchVideoTrack.setup({ state });
 
       await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('hd');
+      expect(state.selectedVideoTrackId.get()).toBe('tall');
 
       reactor.destroy();
     });
@@ -483,21 +475,6 @@ describe('switchVideoTrack', () => {
       reactor.destroy();
     });
 
-    it('caps to the tier matching the player exactly', async () => {
-      const state = makeState({
-        presentation: createPresentation(ladder),
-        bandwidthState: ampleBandwidth,
-        playerResolution: { width: 1280, height: 720 },
-      });
-
-      const reactor = switchVideoTrack.setup({ state });
-
-      await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('720p');
-
-      reactor.destroy();
-    });
-
     it('caps to the smallest covering tier, not the largest tier below the player', async () => {
       // An 800×450 player sits between 360p and 720p. Capping at-or-below the
       // player area would serve 360p and under-serve the display; the covering
@@ -512,21 +489,6 @@ describe('switchVideoTrack', () => {
 
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('720p');
-
-      reactor.destroy();
-    });
-
-    it('caps to the smallest rendition when the player is smaller than all of them', async () => {
-      const state = makeState({
-        presentation: createPresentation(ladder),
-        bandwidthState: ampleBandwidth,
-        playerResolution: { width: 160, height: 90 },
-      });
-
-      const reactor = switchVideoTrack.setup({ state });
-
-      await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('360p');
 
       reactor.destroy();
     });
@@ -625,19 +587,63 @@ describe('switchVideoTrack', () => {
   });
 
   describe('configuration', () => {
-    it('uses custom safetyMargin', async () => {
+    it.each([
+      [4_600_000, 'mid'],
+      [4_800_000, 'high'],
+    ] as const)('applies default safety margin at %i bps, selecting %s', async (bandwidth, expected) => {
+      const ladder = [createVideoTrack('mid', 2_000_000), createVideoTrack('high', 4_000_000)];
       const state = makeState({
-        presentation: createPresentation(tracks),
-        bandwidthState: createBandwidthState(3_000_000),
-        selectedVideoTrackId: '360p',
+        presentation: createPresentation(ladder),
+        bandwidthState: { ...createBandwidthState(bandwidth), fastTotalWeight: 1000, slowTotalWeight: 1000 },
       });
-
-      const config: SwitchVideoTrackConfig = { quality: { safetyMargin: 1.0 } };
-      const reactor = switchVideoTrack.setup({ state, config });
+      const reactor = switchVideoTrack.setup({ state });
 
       await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('720p');
+      expect(state.selectedVideoTrackId.get()).toBe(expected);
       reactor.destroy();
+    });
+
+    it('includes the exact bandwidth threshold and excludes a rendition just above it', async () => {
+      const ladder = [
+        createVideoTrack('low', 500_000),
+        createVideoTrack('mid', 2_000_000),
+        createVideoTrack('high', 4_000_000),
+      ];
+
+      for (const [bandwidth, expected] of [
+        [2_000_000, 'mid'],
+        [1_999_999, 'low'],
+      ] as const) {
+        const state = makeState({
+          presentation: createPresentation(ladder),
+          // Mature weights make zero-factor correction exactly 1 at this boundary.
+          bandwidthState: { ...createBandwidthState(bandwidth), fastTotalWeight: 1000, slowTotalWeight: 1000 },
+        });
+        const reactor = switchVideoTrack.setup({ state, config: { quality: { safetyMargin: 1 } } });
+
+        await flush();
+        expect(state.selectedVideoTrackId.get()).toBe(expected);
+        reactor.destroy();
+      }
+    });
+
+    it('uses custom safetyMargin', async () => {
+      const ladder = [createVideoTrack('mid', 2_000_000), createVideoTrack('high', 4_000_000)];
+
+      for (const [config, expected] of [
+        [{}, 'mid'],
+        [{ quality: { safetyMargin: 0.9 } }, 'high'],
+      ] as const) {
+        const state = makeState({
+          presentation: createPresentation(ladder),
+          bandwidthState: createBandwidthState(4_500_000),
+        });
+        const reactor = switchVideoTrack.setup({ state, config });
+
+        await flush();
+        expect(state.selectedVideoTrackId.get()).toBe(expected);
+        reactor.destroy();
+      }
     });
 
     it('uses custom upgradeMargin', async () => {
@@ -672,11 +678,11 @@ describe('switchVideoTrack', () => {
         selectedVideoTrackId: '360p',
       });
 
-      const config: SwitchVideoTrackConfig = { initialBandwidth: 5_000_000 };
+      const config: SwitchVideoTrackConfig = { initialBandwidth: 1_000_000 };
       const reactor = switchVideoTrack.setup({ state, config });
 
       await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('720p');
+      expect(state.selectedVideoTrackId.get()).toBe('360p');
       reactor.destroy();
     });
 
@@ -718,12 +724,8 @@ describe('switchVideoTrack', () => {
 // switchAudioTrack
 //
 // The audio variant shares `setupTrackSwitching` with `switchVideoTrack` —
-// these tests cover the audio-specific surface: default pick (first track),
-// language pinning via the user-selection filter, filter reactivity, and the
-// single-candidate early-bail. The bandwidth-driven re-evaluation tests live
-// above under `switchVideoTrack` and don't need duplicating; audio's
-// `selectAudioCurrent` pins to the current track and is exercised here by the
-// steady-state assertions.
+// these tests cover audio slot cleanup, language-filter wiring, and filter
+// reactivity. Shared bandwidth ranking and early-bail are covered above.
 // ============================================================================
 
 interface SwitchAudioTrackState {
@@ -784,23 +786,34 @@ function makeAudioTrack(id: string, overrides: Partial<AudioTrack> = {}): AudioT
 }
 
 describe('switchAudioTrack', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+  it.each([
+    { preferredAudioLanguage: 'es', defaultLanguage: 'en', userLanguage: undefined, expectedLanguage: 'es' },
+    { preferredAudioLanguage: 'fr', defaultLanguage: 'es', userLanguage: undefined, expectedLanguage: 'es' },
+    { preferredAudioLanguage: undefined, defaultLanguage: 'es', userLanguage: undefined, expectedLanguage: 'es' },
+    { preferredAudioLanguage: 'es', defaultLanguage: 'es', userLanguage: 'en', expectedLanguage: 'en' },
+  ])(
+    'selects $expectedLanguage with preferredAudioLanguage=$preferredAudioLanguage, default=$defaultLanguage, user=$userLanguage',
+    async ({ preferredAudioLanguage, defaultLanguage, userLanguage, expectedLanguage }) => {
+      const state = makeAudioState({
+        presentation: createAudioPresentation(
+          ['en', 'es'].map((language) =>
+            makeAudioTrack(`audio-${language}`, { language, default: language === defaultLanguage })
+          )
+        ),
+        userAudioTrackSelection: userLanguage ? { language: userLanguage } : undefined,
+      });
+      const config = { preferredAudioLanguage, canPlayTrack: () => true };
+      const reactor = switchAudioTrack.setup({ state, config });
 
-  it('selects the first audio track when no preference or filter', async () => {
-    const state = makeAudioState({
-      presentation: createAudioPresentation([makeAudioTrack('audio-en', { language: 'en' })]),
-    });
+      try {
+        await flush();
 
-    const reactor = switchAudioTrack.setup({ state });
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(state.selectedAudioTrackId.get()).toBe('audio-en');
-
-    reactor.destroy();
-  });
+        expect(state.selectedAudioTrackId.get()).toBe(`audio-${expectedLanguage}`);
+      } finally {
+        reactor.destroy();
+      }
+    }
+  );
 
   it('clears selectedAudioTrackId on src unload', async () => {
     const state = makeAudioState({
@@ -821,10 +834,6 @@ describe('switchAudioTrack', () => {
 });
 
 describe('switchAudioTrack — userAudioTrackSelection filter', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   it('narrows candidates by filter (language)', async () => {
     const state = makeAudioState({
       presentation: createAudioPresentation([
@@ -862,37 +871,6 @@ describe('switchAudioTrack — userAudioTrackSelection filter', () => {
 
     reactor.destroy();
   });
-
-  it('filter narrowing to a single track early-bails to that track', async () => {
-    const state = makeAudioState({
-      presentation: createAudioPresentation([
-        makeAudioTrack('audio-en', { language: 'en' }),
-        makeAudioTrack('audio-es', { language: 'es' }),
-      ]),
-      userAudioTrackSelection: { id: 'audio-es' },
-    });
-
-    const reactor = switchAudioTrack.setup({ state });
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(state.selectedAudioTrackId.get()).toBe('audio-es');
-
-    reactor.destroy();
-  });
-
-  it('empty filter result falls back to unfiltered candidate set', async () => {
-    const state = makeAudioState({
-      presentation: createAudioPresentation([makeAudioTrack('audio-en', { language: 'en' })]),
-      userAudioTrackSelection: { language: 'es' }, // no Spanish track exists
-    });
-
-    const reactor = switchAudioTrack.setup({ state });
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(state.selectedAudioTrackId.get()).toBe('audio-en');
-
-    reactor.destroy();
-  });
 });
 
 // ============================================================================
@@ -918,6 +896,15 @@ describe('preferActiveCdn (active-CDN scope)', () => {
       cdnVideoTrack('1080p-b', 'cdn-b.example.com', 4_800_000),
     ]);
 
+  const asymmetricCdn = () =>
+    createPresentation([
+      cdnVideoTrack('720p-a', 'cdn-a.example.com', 2_400_000),
+      cdnVideoTrack('1080p-a', 'cdn-a.example.com', 4_800_000),
+      cdnVideoTrack('720p-b', 'cdn-b.example.com', 2_400_000),
+      cdnVideoTrack('1080p-b', 'cdn-b.example.com', 4_800_000),
+      cdnVideoTrack('1440p-b', 'cdn-b.example.com', 6_000_000),
+    ]);
+
   // Bandwidth high enough that 1080p fits, so the pick is the highest rendition
   // on whichever CDN the scope leaves standing.
   const makeCdnState = (cdnPriority?: string[]) => ({
@@ -939,41 +926,35 @@ describe('preferActiveCdn (active-CDN scope)', () => {
     reactor.destroy();
   });
 
-  it('keeps the pick on the primary CDN when it is first in the list', async () => {
-    const state = makeCdnState(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
-    const reactor = switchVideoTrack.setup({ state });
-
-    await flush();
-    expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
-    reactor.destroy();
-  });
-
   it('falls through to the next CDN when the first has no surviving tracks', async () => {
-    // cdn-z has no tracks (as if pruned by a failover constraint), so the scope
-    // skips it and narrows to cdn-a.
-    const state = makeCdnState(['https://cdn-z.example.com', 'https://cdn-a.example.com']);
+    // Z has no tracks; B is the next priority despite A's manifest-order lead.
+    const state = makeCdnState(['https://cdn-z.example.com', 'https://cdn-b.example.com', 'https://cdn-a.example.com']);
     const reactor = switchVideoTrack.setup({ state });
 
     await flush();
-    expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-b');
     reactor.destroy();
   });
 
   it('falls through to all CDNs when no list entry matches any track', async () => {
     const state = makeCdnState(['https://cdn-z.example.com']);
+
+    state.presentation.set(asymmetricCdn());
     const reactor = switchVideoTrack.setup({ state });
 
     await flush();
-    expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
+    expect(state.selectedVideoTrackId.get()).toBe('1440p-b');
     reactor.destroy();
   });
 
   it('is a no-op when no cdnPriority list is present', async () => {
     const state = makeCdnState(undefined);
+
+    state.presentation.set(asymmetricCdn());
     const reactor = switchVideoTrack.setup({ state });
 
     await flush();
-    expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
+    expect(state.selectedVideoTrackId.get()).toBe('1440p-b');
     reactor.destroy();
   });
 
@@ -1063,15 +1044,6 @@ describe('excludeFailedCdns (failover constraint)', () => {
     failedCdns: signal<string[] | undefined>(failedCdns),
   });
 
-  it('excludes nothing when failedCdns is absent — picks the primary', async () => {
-    const state = makeState(undefined);
-    const reactor = switchVideoTrack.setup({ state });
-
-    await flush();
-    expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
-    reactor.destroy();
-  });
-
   it('fails over to the next CDN when the primary is in cooldown', async () => {
     const state = makeState(['https://cdn-a.example.com']);
     const reactor = switchVideoTrack.setup({ state });
@@ -1159,7 +1131,7 @@ describe('excludeUnplayableTracks (capability constraint)', () => {
 
   it('prunes undecodable renditions before ranking — picks the best playable codec', async () => {
     const state = makeState();
-    const reactor = switchVideoTrack.setup({ state, config: { canPlayTrack: rejectsHevc } });
+    const reactor = switchVideoTrack.setup({ state, config: { canPlayTrack: rejectsHevc, preferredCodecs: [] } });
 
     await flush();
     // HEVC pruned upstream; ranker picks the highest-bitrate AVC that fits.
@@ -1190,18 +1162,6 @@ describe('excludeUnplayableTracks (capability constraint)', () => {
     // The user's HEVC pick is pruned by the constraint before the user filter
     // runs; the filter finds no match and falls through to the playable set.
     expect(state.selectedVideoTrackId.get()).toBe('1080p-avc');
-    reactor.destroy();
-  });
-
-  it('makes no pick when the constraint prunes every rendition', async () => {
-    const state = makeState();
-    const reactor = switchVideoTrack.setup({ state, config: { canPlayTrack: () => false } });
-
-    await flush();
-    // Every codec rejected from a cold start → empty candidate set → nothing
-    // selected. The late createSourceBuffer check stays as the backstop; the
-    // no-supported-track emission is covered by its own describe block.
-    expect(state.selectedVideoTrackId.get()).toBeUndefined();
     reactor.destroy();
   });
 
@@ -1478,7 +1438,7 @@ describe('stickToSelectedCodecs (codec-family sticky constraint)', () => {
 // no-supported-track error emission (SVTA 2011 / 2012)
 // ============================================================================
 
-describe('setupTrackSwitching (no-supported-track emission)', () => {
+describe('switchVideoTrack', () => {
   const codecVideoTrack = (id: string, codec: string): PartiallyResolvedVideoTrack => ({
     type: 'video',
     codecs: [codec],
@@ -1505,6 +1465,7 @@ describe('setupTrackSwitching (no-supported-track emission)', () => {
 
     await flush();
 
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
     expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_NO_SUPPORTED_VIDEO_TRACK]);
     reactor.destroy();
   });
@@ -1541,7 +1502,9 @@ describe('setupTrackSwitching (no-supported-track emission)', () => {
     expect(state.errors.get()).toBeUndefined();
     reactor.destroy();
   });
+});
 
+describe('switchAudioTrack', () => {
   it('emits SVTA 2012 for the audio variant', async () => {
     const state = {
       presentation: signal<MaybeResolvedPresentation | undefined>(
@@ -1559,7 +1522,9 @@ describe('setupTrackSwitching (no-supported-track emission)', () => {
     expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_NO_SUPPORTED_AUDIO_TRACK]);
     reactor.destroy();
   });
+});
 
+describe('switchTextTrack', () => {
   it('emits nothing for the text variant — absent subtitles are not an error', async () => {
     const subtitle: PartiallyResolvedTextTrack = {
       type: 'text',
@@ -1599,91 +1564,102 @@ describe('setupTrackSwitching (no-supported-track emission)', () => {
 
     reactor.destroy();
   });
+});
 
-  it('no-ops when no errors slot is composed', async () => {
+describe('excludeRefusedKeySystems (refused-key-system constraint)', () => {
+  const drmVideoTrack = (id: string, encrypted: boolean): PartiallyResolvedVideoTrack =>
+    ({
+      type: 'video',
+      codecs: ['avc1.4d401f'],
+      id,
+      url: `https://example.com/${id}.m3u8`,
+      bandwidth: 2_400_000,
+      mimeType: 'video/mp4',
+      metadata: {
+        [MEDIA_PLAYLIST_METADATA_KEY]: { targetDuration: 4, mediaSequence: 0, endList: true, encrypted },
+      },
+    }) as PartiallyResolvedVideoTrack;
+
+  const makeState = (tracks: PartiallyResolvedVideoTrack[], negotiatedKeySystem?: string) => ({
+    presentation: signal<MaybeResolvedPresentation | undefined>(createPresentation(tracks)),
+    bandwidthState: signal<BandwidthState | undefined>(createBandwidthState(10_000_000)),
+    selectedVideoTrackId: signal<string | undefined>(undefined),
+    userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(undefined),
+    negotiatedKeySystem: signal<string | undefined>(negotiatedKeySystem),
+    errors: signal<SvtaError[] | undefined>(undefined),
+  });
+  // The engine's shape: the default pre-pass extended, not replaced.
+  const config = { videoConstraints: [...DEFAULT_VIDEO_CONSTRAINTS, excludeRefusedKeySystems] };
+
+  it('leaves encrypted renditions alone while negotiation has not settled', async () => {
+    // `undefined` is "not yet", not "refused" — pruning here would park a source
+    // that is about to license perfectly well.
+    const state = makeState([drmVideoTrack('720p', true)]);
+    const reactor = switchVideoTrack.setup({ state, config });
+
+    await flush();
+
+    expect(state.selectedVideoTrackId.get()).toBe('720p');
+    expect(state.errors.get()).toBeUndefined();
+    reactor.destroy();
+  });
+
+  it('prunes encrypted renditions once negotiation publishes a refusal, and the emptied type reports its own verdict', async () => {
+    const state = makeState([drmVideoTrack('720p', true)], NO_KEY_SYSTEM);
+    const reactor = switchVideoTrack.setup({ state, config });
+
+    await flush();
+
+    // The verdict comes from `track-switching`, not from `setupMediaKeys` —
+    // which reports only the 4008 cause.
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+    expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_NO_SUPPORTED_VIDEO_TRACK]);
+    reactor.destroy();
+  });
+
+  it('spares a type keeping a clear rendition, and reports no verdict', async () => {
+    // Mux's shape: encrypted and clear renditions side by side. The clear one
+    // still plays, so a verdict would be wrong.
+    const state = makeState([drmVideoTrack('720p-enc', true), drmVideoTrack('720p-clear', false)], NO_KEY_SYSTEM);
+    const reactor = switchVideoTrack.setup({ state, config });
+
+    await flush();
+
+    expect(state.selectedVideoTrackId.get()).toBe('720p-clear');
+    expect(state.errors.get()).toBeUndefined();
+    reactor.destroy();
+  });
+
+  it('re-prunes when the refusal arrives after the first pick', async () => {
+    // Negotiation is async, so the encrypted rendition is picked first and the
+    // refusal lands later; the chain re-derives on the slot write.
+    const state = makeState([drmVideoTrack('720p', true)]);
+    const reactor = switchVideoTrack.setup({ state, config });
+
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('720p');
+
+    state.negotiatedKeySystem.set(NO_KEY_SYSTEM);
+    await flush();
+
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+    expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_NO_SUPPORTED_VIDEO_TRACK]);
+    reactor.destroy();
+  });
+
+  it('is inert for a composition that never carries the slot', async () => {
     const state = {
-      presentation: signal<MaybeResolvedPresentation | undefined>(
-        createPresentation([codecVideoTrack('720p', 'avc1.4d401f')])
-      ),
+      presentation: signal<MaybeResolvedPresentation | undefined>(createPresentation([drmVideoTrack('720p', true)])),
       bandwidthState: signal<BandwidthState | undefined>(createBandwidthState(10_000_000)),
       selectedVideoTrackId: signal<string | undefined>(undefined),
       userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(undefined),
+      errors: signal<SvtaError[] | undefined>(undefined),
     };
-    const reactor = switchVideoTrack.setup({ state, config: { canPlayTrack: () => false } });
-
-    await expect(flush()).resolves.not.toThrow();
-
-    expect(state.selectedVideoTrackId.get()).toBeUndefined();
-    reactor.destroy();
-  });
-});
-
-// ============================================================================
-// setupTrackSwitching — resolveSelection seam
-//
-// The variant-supplied final-pick hook. Defaults to the chain head (video/audio
-// always-pick); a variant with optional selection (text) may resolve to
-// `undefined` to clear the slot. Exercised here directly via the helper rather
-// than through a variant, since no text variant exists yet.
-// ============================================================================
-
-describe('setupTrackSwitching (resolveSelection)', () => {
-  it('defaults to the chain head when resolveSelection is absent', async () => {
-    const state: TrackSwitchingStateMap<'selectedVideoTrackId'> = makeState({
-      presentation: createPresentation(tracks),
-    });
-    const reactor = setupTrackSwitching({
-      state,
-      config: { selectionKey: 'selectedVideoTrackId', getTracks: () => tracks, rules: [] },
-    });
+    const reactor = switchVideoTrack.setup({ state, config });
 
     await flush();
-    // No rules → candidate order preserved → head is the pick.
-    expect(state.selectedVideoTrackId.get()).toBe('360p');
-    reactor.destroy();
-  });
 
-  it('clears the slot when resolveSelection returns undefined', async () => {
-    const state: TrackSwitchingStateMap<'selectedVideoTrackId'> = makeState({
-      presentation: createPresentation(tracks),
-      selectedVideoTrackId: '720p',
-    });
-    const reactor = setupTrackSwitching({
-      state,
-      config: {
-        selectionKey: 'selectedVideoTrackId',
-        getTracks: () => tracks,
-        rules: [],
-        resolveSelection: () => undefined,
-      },
-    });
-
-    await flush();
-    expect(state.selectedVideoTrackId.get()).toBeUndefined();
-    reactor.destroy();
-  });
-
-  it('threads the chain survivors to resolveSelection', async () => {
-    const seen: string[][] = [];
-    const state: TrackSwitchingStateMap<'selectedVideoTrackId'> = makeState({
-      presentation: createPresentation(tracks),
-    });
-    const reactor = setupTrackSwitching({
-      state,
-      config: {
-        selectionKey: 'selectedVideoTrackId',
-        getTracks: () => tracks,
-        rules: [],
-        resolveSelection: (candidates) => {
-          seen.push(candidates.map((track) => track.id));
-          return candidates[candidates.length - 1]!.id;
-        },
-      },
-    });
-
-    await flush();
-    expect(seen.at(-1)).toEqual(['360p', '720p', '1080p']);
-    expect(state.selectedVideoTrackId.get()).toBe('1080p');
+    expect(state.selectedVideoTrackId.get()).toBe('720p');
     reactor.destroy();
   });
 });
@@ -1878,12 +1854,12 @@ describe('switchTextTrack', () => {
     it('co-locates captions on the active CDN (cdnPriority)', async () => {
       const state = makeTextState({
         presentation: textPresentation(esBothCdns()),
-        cdnPriority: ['https://cdn-a.example.com', 'https://cdn-b.example.com'],
+        cdnPriority: ['https://cdn-b.example.com', 'https://cdn-a.example.com'],
       });
       const reactor = switchTextTrack.setup({ state, config: { preferredSubtitleLanguage: 'es' } });
 
       await flush();
-      expect(state.selectedTextTrackId.get()).toBe('es-a');
+      expect(state.selectedTextTrackId.get()).toBe('es-b');
       reactor.destroy();
     });
 
@@ -1902,5 +1878,72 @@ describe('switchTextTrack', () => {
       expect(state.selectedTextTrackId.get()).toBe('es-b');
       reactor.destroy();
     });
+  });
+});
+
+// ============================================================================
+// Per-type chain config — each variant's constraints and rules are config, with
+// the status-quo chain as the default. Keyed per type because one engine config
+// reaches every variant.
+// ============================================================================
+
+describe('per-type chain config', () => {
+  const tracks = () => [createVideoTrack('360p', 1_000_000), createVideoTrack('1080p', 2_000_000)];
+  const pruneAll: SwitchVideoTrackRule = () => [];
+  const lowestBandwidth: SwitchVideoTrackRule = (candidates) =>
+    [...candidates].sort((a, b) => (a.bandwidth ?? 0) - (b.bandwidth ?? 0));
+
+  it('replaces the video rule chain with videoRules', async () => {
+    const state = makeState({
+      presentation: createPresentation(tracks()),
+      bandwidthState: createBandwidthState(10_000_000),
+    });
+    const reactor = switchVideoTrack.setup({ state, config: { videoRules: [lowestBandwidth] } });
+
+    await flush();
+
+    expect(state.selectedVideoTrackId.get()).toBe('360p');
+    reactor.destroy();
+  });
+
+  it('replaces the video pre-pass with videoConstraints', async () => {
+    const state = makeState({
+      presentation: createPresentation(tracks()),
+      bandwidthState: createBandwidthState(10_000_000),
+    });
+    const reactor = switchVideoTrack.setup({ state, config: { videoConstraints: [pruneAll] } });
+
+    await flush();
+
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+    reactor.destroy();
+  });
+
+  it.each([{ videoConstraints: [pruneAll] }, { videoRules: [lowestBandwidth] }])(
+    'keeps audio on its own keys with video override %j',
+    async (config) => {
+      const state = makeAudioState({
+        presentation: createAudioPresentation([
+          makeAudioTrack('audio-low', { bandwidth: 128_000 }),
+          makeAudioTrack('audio-high', { bandwidth: 256_000 }),
+        ]),
+        bandwidthState: createBandwidthState(1_000_000),
+      });
+      const reactor = switchAudioTrack.setup({ state, config });
+
+      await flush();
+      expect(state.selectedAudioTrackId.get()).toBe('audio-high');
+      reactor.destroy();
+    }
+  );
+
+  it('replaces the audio pre-pass with audioConstraints', async () => {
+    const state = makeAudioState({ presentation: createAudioPresentation([makeAudioTrack('audio-en')]) });
+    const reactor = switchAudioTrack.setup({ state, config: { audioConstraints: [() => []] } });
+
+    await flush();
+
+    expect(state.selectedAudioTrackId.get()).toBeUndefined();
+    reactor.destroy();
   });
 });

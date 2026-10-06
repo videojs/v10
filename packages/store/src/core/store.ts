@@ -1,4 +1,4 @@
-import { isNull, isObject } from '@videojs/utils/predicate';
+import { isFunction, isNull, isObject, isPromise } from '@videojs/utils/predicate';
 
 import { AbortControllerRegistry } from './abort-controller-registry';
 import type { StoreCallbacks } from './config';
@@ -9,7 +9,7 @@ import type {
   InferSliceDerivedState,
   InferSliceSourceState,
   InferSliceState,
-  Slice,
+  SliceConfig,
   StateContext,
 } from './slice';
 import type { StateChange, State as StateContainer, SubscribeOptions, UnknownState, WritableState } from './state';
@@ -18,16 +18,19 @@ import { createState } from './state';
 const STORE_SYMBOL = Symbol.for('@videojs/store');
 const hasOwnProp = Object.prototype.hasOwnProperty;
 
+/** @internal */
 export interface StoreOptions<Target, State> extends StoreCallbacks<Target, State> {}
 
+/** @internal */
 export interface StoreFactory<Target> {
   <S extends AnySlice<Target>>(
     slice: S,
     options?: StoreOptions<Target, InferSliceState<S>>
   ): Store<Target, InferSliceState<S>>;
-  <State>(slice: Slice<Target, State>, options?: StoreOptions<Target, State>): Store<Target, State>;
+  <State>(slice: SliceConfig<Target, State>, options?: StoreOptions<Target, State>): Store<Target, State>;
 }
 
+/** @internal */
 export function createStore<Target = unknown>(): StoreFactory<Target> {
   return (<S extends AnySlice<Target>>(
     slice: S,
@@ -44,6 +47,11 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
 
     const setupAbort = new AbortController();
     const signals = new AbortControllerRegistry();
+
+    // Stable wrappers keep unchanged public snapshots from notifying subscribers.
+    const actions = new WeakMap<(...args: any[]) => any, (...args: any[]) => any>();
+    // An action error is reported where it is thrown; enclosing actions and lifecycle callbacks rethrow it unreported.
+    const reportedErrors = new WeakSet<object>();
 
     let sourceState: Readonly<SourceState>;
 
@@ -141,7 +149,38 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
         result[key] = source[key as keyof SourceState];
       }
 
-      return Object.assign(result, derived) as PublicState;
+      Object.assign(result, derived);
+
+      for (const key of Object.keys(result)) {
+        const value = result[key];
+
+        if (isFunction(value)) result[key] = wrapAction(value);
+      }
+
+      return result as PublicState;
+    }
+
+    function wrapAction(action: (...args: any[]) => any) {
+      const cached = actions.get(action);
+      if (cached) return cached;
+
+      // Callers receive action failures directly; a configured `onError` also observes them, sync or async.
+      const wrapped = function (this: unknown, ...args: unknown[]) {
+        try {
+          const result = action.apply(this, args);
+
+          if (options.onError && isPromise(result)) result.catch(reportError);
+
+          return result;
+        } catch (error) {
+          if (options.onError) reportError(error);
+
+          throw error;
+        }
+      };
+
+      actions.set(action, wrapped);
+      return wrapped;
     }
 
     function setSource(partial: Partial<SourceState>): void {
@@ -231,6 +270,12 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
     }
 
     function reportError(error: unknown): void {
+      if (isObject(error)) {
+        if (reportedErrors.has(error)) return;
+
+        reportedErrors.add(error);
+      }
+
       if (options.onError) {
         options.onError({ store, error });
       } else {
@@ -261,6 +306,7 @@ function patchSource<State>(current: Readonly<State>, partial: Partial<State>): 
   return changed ? { next: Object.freeze(next) } : null;
 }
 
+/** @internal */
 export function isStore(value: unknown): value is AnyStore {
   return isObject(value) && STORE_SYMBOL in value;
 }
@@ -286,8 +332,10 @@ export type AnyStore<Target = any> = BaseStore<Target, object>;
 
 export type UnknownStore<Target = unknown> = Store<Target, UnknownState>;
 
+/** @internal */
 export type InferStoreTarget<S extends AnyStore> = S extends { readonly target: (infer Target) | null }
   ? Target
   : never;
 
+/** @displayType {S}['state'] */
 export type InferStoreState<S extends AnyStore> = S extends { readonly state: infer State } ? State : never;

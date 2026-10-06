@@ -18,7 +18,7 @@ One- or two-sentence summary. No heading.
 
 <CustomUiNote />
 {/* Only when the guide assumes the reader is building custom UI with the
-    Video.js UI library. Skip it when the outcome works without ejecting. */}
+    Video.js UI library. Skip it when the outcome does not require adding skin files. */}
 
 
 ## Recommended approach

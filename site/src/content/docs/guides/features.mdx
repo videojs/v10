@@ -10,6 +10,8 @@ import Aside from '@/components/Aside.astro';
 
 Not every player needs to support every use case. To address this, Video.js has a concept of **features** — self-contained units of player functionality. Each one adds state properties and actions to the player. For example, "playback" adds `paused` and `play()`, "volume" adds `volume` and `setVolume()`, and so on.
 
+<DocsLinkCard slug="reference/api/player-store">See every feature's state and actions</DocsLinkCard>
+
 ## Feature bundles and presets
 
 You probably don't want to hand-pick every feature your player needs. A **feature bundle** groups the features needed for a specific use case into a single array.
@@ -46,7 +48,7 @@ For example, if you import `<video-player>` from the `/video` path, you will hav
 ```
 </FrameworkCase>
 
-Feature bundles are usually paired with specific skins and media elements in a **preset**. To learn more about this, and the available presets, you'll want to check out the presets guide.
+Feature bundles are usually paired with specific skins and media components in a **preset**. To learn more about this, and the available presets, you'll want to check out the presets guide.
 
 <DocsLinkCard slug="guides/presets">Learn more about presets</DocsLinkCard>
 
@@ -156,12 +158,23 @@ Volume, fullscreen, and picture-in-picture expose availability properties becaus
 | `'unavailable'` | Could work, not ready yet |
 | `'unsupported'` | Platform can never do this |
 
+<FrameworkCase frameworks={["react"]}>
 Components that depend on availability (like <DocsLink slug="reference/components/mute-button">`MuteButton`</DocsLink>, <DocsLink slug="reference/components/pip-button">`PiPButton`</DocsLink>, and <DocsLink slug="reference/components/fullscreen-button">`FullscreenButton`</DocsLink>) handle the three states for you:
 
-- **`unsupported`** — the HTML custom element receives the native `hidden` attribute (and `data-hidden`); React buttons return `null`. No CSS needed.
+- **`unsupported`** — the button returns `null`. No CSS needed.
 - **`unavailable`** — the presentation controls stay hidden while capability detection is unresolved. Cast remains visible but disabled when its API is supported and no device is reachable.
 - **`disabled` prop** — an available button stays visible and focusable with `aria-disabled="true"` plus `data-disabled` for styling.
 - **`available`** — fully interactive.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Components that depend on availability (like <DocsLink slug="reference/components/mute-button">`<media-mute-button>`</DocsLink>, <DocsLink slug="reference/components/pip-button">`<media-pip-button>`</DocsLink>, and <DocsLink slug="reference/components/fullscreen-button">`<media-fullscreen-button>`</DocsLink>) handle the three states for you:
+
+- **`unsupported`** — the element receives the native `hidden` attribute (and `data-hidden`). No CSS needed.
+- **`unavailable`** — the presentation controls stay hidden while capability detection is unresolved. Cast remains visible but disabled when its API is supported and no device is reachable.
+- **`disabled` attribute** — an available button stays visible and focusable with `aria-disabled="true"` plus `data-disabled` for styling.
+- **`available`** — fully interactive.
+</FrameworkCase>
 
 Use `data-disabled` to style the non-interactive state:
 
@@ -187,7 +200,7 @@ You can also check availability in JS:
 <FrameworkCase frameworks={["react"]}>
 ```tsx title="PiPControl.tsx"
 function PiPControl() {
-  const availability = usePlayer((s) => s.pipAvailability);
+  const availability = usePlayer((s) => s.pictureInPictureAvailability);
 
   if (availability !== 'available') return null;
 
@@ -199,7 +212,7 @@ function PiPControl() {
 ```ts
 const media = this.#pip.value;
 
-if (media?.pipAvailability !== 'available') {
+if (media?.pictureInPictureAvailability !== 'available') {
   this.hidden = true;
 }
 ```

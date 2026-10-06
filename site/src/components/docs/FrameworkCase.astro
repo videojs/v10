@@ -13,7 +13,7 @@
  * <FrameworkCase frameworks={['react']}>React-only content</FrameworkCase>
  * <FrameworkCase>Content for every framework</FrameworkCase>
  */
-import { isValidFramework, type SupportedFramework } from '@/types/docs';
+import { resolveDocsFramework, type SupportedFramework } from '@/types/docs';
 import { extractScriptsAndStyles } from '@/utils/extractScriptsAndStyles';
 
 interface Props {
@@ -21,9 +21,9 @@ interface Props {
 }
 
 const { frameworks } = Astro.props;
-const { framework } = Astro.params;
+const framework = resolveDocsFramework(Astro.params.framework);
 
-const shouldRender = !frameworks || (isValidFramework(framework) && frameworks.includes(framework));
+const shouldRender = !frameworks || (framework !== null && frameworks.includes(framework));
 const preservedAssets = shouldRender ? '' : extractScriptsAndStyles((await Astro.slots.render('default')) ?? '');
 ---
 

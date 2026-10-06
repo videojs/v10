@@ -3,7 +3,9 @@ export { bridgeEvents } from './bridge-events';
 export type { DrmSystemConfig, DrmSystemsConfig, KeySystem } from './drm';
 export { KeySystems } from './drm';
 export { MediaError } from './media-error';
+export { REGISTERED_MEDIA, getRegisteredMedia } from './registered-media';
 
 export * from './predicate';
+export * from './source';
 export * from './state';
 export * from './types';

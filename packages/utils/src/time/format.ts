@@ -1,6 +1,7 @@
 import { DEFAULT_LOCALE, isDefaultLocale } from '../i18n';
 import { isNumber } from '../predicate/predicate';
 
+/** @internal */
 export type TimeFormatOptions = {
   /** BCP 47 tag(s) for the `Intl` formatters. */
   locale?: string | string[];
@@ -41,7 +42,11 @@ function createDurationFormatter(
     ['minutes', new Intl.NumberFormat(locale, { style: 'unit', unit: 'minute', unitDisplay: style })],
     ['seconds', new Intl.NumberFormat(locale, { style: 'unit', unit: 'second', unitDisplay: style })],
   ];
-  const list = new Intl.ListFormat(locale, { type: 'unit', style });
+  // Some embedded WebKit builds ship without `Intl.ListFormat`; join the units the way English unit lists do.
+  const list: Pick<Intl.ListFormat, 'format'> =
+    typeof Intl.ListFormat === 'function'
+      ? new Intl.ListFormat(locale, { type: 'unit', style })
+      : { format: (parts) => [...parts].join(style === 'narrow' ? ' ' : ', ') };
 
   return {
     format: (duration) =>
@@ -92,6 +97,7 @@ function isValidTime(value: number): boolean {
  * @param guide - Guide time (typically duration) to determine display format
  * @param options - Digital formatting options
  * @returns Formatted string like "1:30" or "1:05:30"
+ * @internal
  */
 export function formatTime(seconds: number, guide?: number, options?: Pick<TimeFormatOptions, 'locale'>): string {
   if (!isValidTime(seconds)) {
@@ -134,6 +140,7 @@ export function formatTime(seconds: number, guide?: number, options?: Pick<TimeF
  *
  * @param seconds - Time in seconds
  * @returns ISO 8601 duration string like "PT1M30S"
+ * @internal
  */
 export function secondsToIsoDuration(seconds: number): string {
   if (!isValidTime(seconds)) {
@@ -162,6 +169,8 @@ export function secondsToIsoDuration(seconds: number): string {
  *
  * Negative `seconds` denote remaining time: the absolute value is formatted, then wrapped in a localized phrase via
  * {@link TimeFormatOptions.formatRemaining}; otherwise `{duration} remaining`.
+ *
+ * @internal
  */
 export function formatTimeAsPhrase(seconds: number, options?: TimeFormatOptions): string {
   if (!isValidTime(seconds)) {

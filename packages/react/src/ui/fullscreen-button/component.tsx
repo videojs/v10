@@ -1,11 +1,18 @@
-import { FullscreenButtonCore, FullscreenButtonDataAttrs } from '@videojs/core';
+'use client';
+
+import {
+  FullscreenButtonCore,
+  FullscreenButtonDataAttrs,
+  type FullscreenButtonProps as CoreFullscreenButtonProps,
+  type FullscreenButtonState,
+} from '@videojs/core';
 import { selectFullscreen } from '@videojs/core/dom';
 
 import type { UIComponentProps } from '../../utils/types';
 import { createMediaButton } from '../create-media-button';
 
 export interface FullscreenButtonProps
-  extends UIComponentProps<'button', FullscreenButtonCore.State>, FullscreenButtonCore.Props {}
+  extends UIComponentProps<'button', FullscreenButtonState>, CoreFullscreenButtonProps {}
 
 /** A button that toggles fullscreen. */
 export const FullscreenButton = createMediaButton<FullscreenButtonCore, FullscreenButtonProps>({
@@ -21,5 +28,5 @@ export const FullscreenButton = createMediaButton<FullscreenButtonCore, Fullscre
 
 export namespace FullscreenButton {
   export type Props = FullscreenButtonProps;
-  export type State = FullscreenButtonCore.State;
+  export type State = FullscreenButtonState;
 }

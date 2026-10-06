@@ -7,7 +7,6 @@ import {
   FRAMEWORK_COOKIE,
   getFrameworkPreferenceClient,
   getPreferencesServer,
-  STYLE_STORAGE_KEY_PREFIX,
   setFrameworkPreferenceClient,
   setStylePreferenceClient,
 } from '../preferences';
@@ -113,19 +112,18 @@ describe('preferences utilities', () => {
     });
 
     it('should return null when document is undefined (SSR)', () => {
-      const originalDocument = globalThis.document;
+      vi.stubGlobal('document', undefined);
 
-      // @ts-expect-error Testing SSR scenario
-      globalThis.document = undefined;
-
-      expect(getFrameworkPreferenceClient()).toBeNull();
-
-      globalThis.document = originalDocument;
+      try {
+        expect(getFrameworkPreferenceClient()).toBeNull();
+      } finally {
+        vi.unstubAllGlobals();
+      }
     });
   });
 
   describe('setFrameworkPreferenceClient', () => {
-    it('should set framework cookie', () => {
+    it.each(SUPPORTED_FRAMEWORKS)('should set framework cookie for %s', (framework) => {
       // Mock document.cookie
       const cookies: string[] = [];
 
@@ -137,10 +135,10 @@ describe('preferences utilities', () => {
         configurable: true,
       });
 
-      setFrameworkPreferenceClient(firstFramework);
+      setFrameworkPreferenceClient(framework);
 
       expect(cookies).toHaveLength(1);
-      expect(cookies[0]).toContain(`vjs_docs_framework=${firstFramework}`);
+      expect(cookies[0]).toContain(`vjs_docs_framework=${framework}`);
       expect(cookies[0]).toContain('max-age=31536000');
       expect(cookies[0]).toContain('path=/');
       expect(cookies[0]).toContain('samesite=lax');
@@ -153,36 +151,16 @@ describe('preferences utilities', () => {
       }).toThrow('Invalid framework: invalid-framework');
     });
 
-    it('should accept all valid frameworks', () => {
-      for (const framework of SUPPORTED_FRAMEWORKS) {
-        // Mock document.cookie
-        const cookies: string[] = [];
-
-        Object.defineProperty(document, 'cookie', {
-          get: () => cookies.join('; '),
-          set: (value: string) => {
-            cookies.push(value);
-          },
-          configurable: true,
-        });
-
-        expect(() => {
-          setFrameworkPreferenceClient(framework);
-        }).not.toThrow();
-      }
-    });
-
     it('should do nothing when document is undefined (SSR)', () => {
-      const originalDocument = globalThis.document;
+      vi.stubGlobal('document', undefined);
 
-      // @ts-expect-error Testing SSR scenario
-      globalThis.document = undefined;
-
-      expect(() => {
-        setFrameworkPreferenceClient(firstFramework);
-      }).not.toThrow();
-
-      globalThis.document = originalDocument;
+      try {
+        expect(() => {
+          setFrameworkPreferenceClient(firstFramework);
+        }).not.toThrow();
+      } finally {
+        vi.unstubAllGlobals();
+      }
     });
   });
 
@@ -202,7 +180,7 @@ describe('preferences utilities', () => {
 
       setStylePreferenceClient(firstFramework, 'css');
 
-      const expectedKey = STYLE_STORAGE_KEY_PREFIX + firstFramework;
+      const expectedKey = `vjs_docs_style_${firstFramework}`;
 
       expect(mockStorage[expectedKey]).toBe('css');
     });

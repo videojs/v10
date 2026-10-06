@@ -8,6 +8,8 @@ import Copy from '@/assets/icons/copy.svg?react';
 import Markdown from '@/assets/icons/markdown.svg?react';
 import ClaudeLogo from '@/assets/logos/brands/claude.svg?react';
 import OpenAiLogo from '@/assets/logos/brands/openai.svg?react';
+import { ANALYTICS_EVENTS, trackEvent } from '@/utils/analytics-events';
+import { getInstallationRouteSegment } from '@/utils/installation/routes';
 import useIsHydrated from '@/utils/useIsHydrated';
 
 export interface CopyMarkdownButtonProps {
@@ -22,13 +24,44 @@ type CopyState =
   | { status: 'success' }
   | { status: 'error'; message: string };
 
-/** The page's Markdown twin from the llms-markdown integration: written at build time, converted on request in dev. */
-function markdownUrl(): string {
+/**
+ * The page's Markdown twin from the llms-markdown integration: written at build time, converted on request in dev. An
+ * installation guide's twin carries the picks the page shows, including the Shadcn framework before its URL is
+ * normalized.
+ */
+async function markdownUrl(): Promise<string> {
+  const location = window.location;
+  const registryFramework = globalThis.document?.documentElement.dataset.registryFramework;
+
   // Strip trailing slashes so `/guide/` becomes `/guide.md`, not `/guide/.md`. Astro forbids trailing slashes but
   // infrastructure may add them back.
-  const pathname = window.location.pathname.replace(/\/+$/, '');
+  const pathname = location.pathname.replace(/\/+$/, '');
+  const url = new URL(`${location.origin}${pathname}.md${location.search}`);
+  const installationRoute = getInstallationRouteSegment(pathname);
 
-  return `${window.location.origin}${pathname}.md`;
+  if (installationRoute) {
+    const { canonicalInstallationSearch } = await import('@/utils/installation/url-state');
+
+    url.search = canonicalInstallationSearch(
+      installationRoute,
+      url.search,
+      registryFramework === 'react' || registryFramework === 'html' ? registryFramework : undefined
+    );
+  }
+
+  return url.toString();
+}
+
+/** Remove private installation input before embedding a documentation URL in a third-party assistant link. */
+async function publicMarkdownUrl(url: string): Promise<string> {
+  if (url === '#') return url;
+
+  const { PRIVATE_INSTALLATION_QUERY_PARAMETERS } = await import('@videojs/installation');
+  const publicUrl = new URL(url);
+
+  for (const parameter of PRIVATE_INSTALLATION_QUERY_PARAMETERS) publicUrl.searchParams.delete(parameter);
+
+  return publicUrl.toString();
 }
 
 function assistantPrompt(url: string): string {
@@ -52,6 +85,7 @@ const itemClass = clsx(
  */
 export default function CopyMarkdownButton({ className, style }: CopyMarkdownButtonProps) {
   const [state, setState] = useState<CopyState>({ status: 'idle' });
+  const [menuUrls, setMenuUrls] = useState({ markdown: '#', public: '#' });
   const isHydrated = useIsHydrated();
   const disabled = !isHydrated || state.status === 'loading';
 
@@ -59,9 +93,8 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
     try {
       setState({ status: 'loading' });
 
-      const mdUrl = markdownUrl();
-
-      const markdownBlobPromise = fetch(mdUrl)
+      const markdownBlobPromise = markdownUrl()
+        .then((mdUrl) => fetch(mdUrl))
         .then((response) => {
           if (!response.ok) {
             throw new Error(`Failed to fetch markdown: ${response.status} ${response.statusText}`);
@@ -89,6 +122,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
       }
 
       setState({ status: 'success' });
+      trackEvent(ANALYTICS_EVENTS.agentHandoff, { method: 'copy-markdown' });
       setTimeout(() => {
         setState({ status: 'idle' });
       }, 2000);
@@ -104,8 +138,8 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
   };
 
   // Links are built on the client since they embed the page's own URL; the server renders the menu closed.
-  const mdUrl = isHydrated ? markdownUrl() : '#';
-  const prompt = isHydrated ? encodeURIComponent(assistantPrompt(mdUrl)) : '';
+  const mdUrl = isHydrated ? menuUrls.markdown : '#';
+  const prompt = isHydrated ? encodeURIComponent(assistantPrompt(menuUrls.public)) : '';
 
   const ariaLabel = state.status === 'success' ? 'Copied' : 'Copy page as Markdown';
   const label = state.status === 'success' ? 'Copied' : state.status === 'error' ? 'Error' : 'Copy page';
@@ -123,6 +157,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
           disabled ? 'cursor-wait' : 'cursor-pointer'
         )}
         aria-label={ariaLabel}
+        data-ph-capture-attribute-cta="copy-markdown"
       >
         {state.status === 'success' ? (
           <Check className="text-accent size-4" aria-hidden="true" />
@@ -137,10 +172,20 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
           <span className="col-start-1 row-start-1">{label}</span>
         </span>
       </button>
-      <Menu.Root modal={false}>
+      <Menu.Root
+        modal={false}
+        onOpenChange={(open) => {
+          if (!open) return;
+
+          void markdownUrl().then(async (markdown) =>
+            setMenuUrls({ markdown, public: await publicMarkdownUrl(markdown) })
+          );
+        }}
+      >
         <Menu.Trigger
           disabled={!isHydrated}
           aria-label="More ways to use this page"
+          data-ph-capture-attribute-cta="markdown-menu"
           className={clsx(
             segmentClass,
             '-ml-px w-8 justify-center rounded-r-lg corner-squircle data-[popup-open]:text-faded-black dark:data-[popup-open]:text-manila-light',
@@ -158,18 +203,32 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
                 'motion-reduce:transition-none'
               )}
             >
-              <Menu.Item className={itemClass} render={<a href={mdUrl} target="_blank" rel="noopener noreferrer" />}>
+              <Menu.Item
+                className={itemClass}
+                onClick={() => trackEvent(ANALYTICS_EVENTS.agentHandoff, { method: 'view-markdown' })}
+                render={
+                  <a
+                    href={mdUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-ph-capture-attribute-cta="view-markdown"
+                  />
+                }
+              >
                 <Markdown className="size-4 shrink-0" aria-hidden="true" />
                 View as Markdown
               </Menu.Item>
               <Menu.Separator className="bg-line my-1 h-px" />
               <Menu.Item
                 className={itemClass}
+                onClick={() => trackEvent(ANALYTICS_EVENTS.agentHandoff, { method: 'open-in-chatgpt' })}
                 render={
                   <a
                     href={`https://chatgpt.com/?hints=search&prompt=${prompt}`}
                     target="_blank"
                     rel="noopener noreferrer"
+                    data-ph-capture-attribute-cta="open-in-chatgpt"
+                    data-ph-capture-attribute-destination="external"
                   />
                 }
               >
@@ -178,7 +237,16 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
               </Menu.Item>
               <Menu.Item
                 className={itemClass}
-                render={<a href={`https://claude.ai/new?q=${prompt}`} target="_blank" rel="noopener noreferrer" />}
+                onClick={() => trackEvent(ANALYTICS_EVENTS.agentHandoff, { method: 'open-in-claude' })}
+                render={
+                  <a
+                    href={`https://claude.ai/new?q=${prompt}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-ph-capture-attribute-cta="open-in-claude"
+                    data-ph-capture-attribute-destination="external"
+                  />
+                }
               >
                 <ClaudeLogo className="size-4 shrink-0" aria-hidden="true" />
                 Open in Claude

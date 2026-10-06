@@ -1,4 +1,9 @@
-import { QualityRadioGroupCore, QualityRadioGroupDataAttrs, type QualityRadioGroupOption } from '@videojs/core';
+import {
+  QualityRadioGroupCore,
+  QualityRadioGroupDataAttrs,
+  type QualityRadioGroupOption,
+  type QualityRadioGroupState,
+} from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectQuality } from '@videojs/core/dom';
 import { type Text, translateText } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
@@ -11,6 +16,12 @@ import { MenuRadioGroupElement } from '../menu/radio-group';
 import type { MenuRadioItemElement } from '../menu/radio-item';
 import { RadioOptionsController } from '../radio-options/controller';
 
+/**
+ * Menu radio group that generates an Auto `<media-menu-radio-item>` plus one per video rendition, and shares the
+ * selected label and availability with an enclosing menu. An optional `<template>` holding one
+ * `<media-menu-radio-item>` customizes each generated item; its `data-part` `label`, `tier`, and `badge` descendants
+ * receive the rendition's text.
+ */
 export class QualityRadioGroupElement extends MenuRadioGroupElement {
   static override readonly tagName = 'media-quality-radio-group';
 
@@ -50,7 +61,7 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
 
   protected override update(changed: PropertyValues): void {
     const media = this.#mediaState.value;
-    let state: QualityRadioGroupCore.State | null = null;
+    let state: QualityRadioGroupState | null = null;
 
     if (media) {
       this.#core.setProps({ formatRendition: this.formatRendition, disabled: this.disabled, label: this.label });
@@ -95,5 +106,5 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
 }
 
 export namespace QualityRadioGroupElement {
-  export type State = QualityRadioGroupCore.State;
+  export type State = QualityRadioGroupState;
 }

@@ -1,4 +1,6 @@
-import { type MenuOptionState, type PlaybackRateRadioGroupCore, PlaybackRateRadioGroupDataAttrs } from '@videojs/core';
+'use client';
+
+import { type MenuOptionState, PlaybackRateRadioGroupDataAttrs, type PlaybackRateRadioGroupState } from '@videojs/core';
 import { getStateDataAttrs } from '@videojs/core/dom';
 import { isFunction } from '@videojs/utils/predicate';
 import type { ReactElement, ReactNode } from 'react';
@@ -31,7 +33,7 @@ export interface PlaybackRateRadioGroupRootProps extends PlaybackRateOptionsProp
 }
 
 export interface PlaybackRateRadioGroupOptionsProps extends Omit<
-  UIComponentProps<'div', PlaybackRateRadioGroupCore.State>,
+  UIComponentProps<'div', PlaybackRateRadioGroupState>,
   'children'
 > {
   /** Render one consumer-owned menu radio item for every playback rate. */
@@ -39,9 +41,6 @@ export interface PlaybackRateRadioGroupOptionsProps extends Omit<
 }
 
 export type PlaybackRateRadioGroupValueProps = UIComponentProps<'span', PlaybackRateOptionsResult>;
-
-export interface PlaybackRateRadioGroupLegacyProps
-  extends PlaybackRateRadioGroupOptionsProps, PlaybackRateOptionsProps {}
 
 const PlaybackRateRadioGroupContext = createContext<PlaybackRateOptionsResult | null | undefined>(undefined);
 
@@ -125,17 +124,6 @@ export const PlaybackRateRadioGroupOptions = forwardRef<HTMLDivElement, Playback
   }
 );
 
-/** @internal Compatibility adapter for the existing preset sources. */
-export const PlaybackRateRadioGroupLegacy = forwardRef<HTMLDivElement, PlaybackRateRadioGroupLegacyProps>(
-  function PlaybackRateRadioGroupLegacy({ label, formatRate, disabled, ...props }, forwardedRef) {
-    return (
-      <PlaybackRateRadioGroupRoot label={label} formatRate={formatRate} disabled={disabled}>
-        <PlaybackRateRadioGroupOptions {...props} ref={forwardedRef} />
-      </PlaybackRateRadioGroupRoot>
-    );
-  }
-);
-
 function usePlaybackRateRadioGroupContext(): PlaybackRateOptionsResult | null {
   const playbackRate = useContext(PlaybackRateRadioGroupContext);
 
@@ -166,7 +154,7 @@ export namespace PlaybackRateRadioGroupValue {
 
 export namespace PlaybackRateRadioGroupOptions {
   export type Props = PlaybackRateRadioGroupOptionsProps;
-  export type State = PlaybackRateRadioGroupCore.State;
+  export type State = PlaybackRateRadioGroupState;
   export type ItemProps = PlaybackRateRadioGroupItemProps;
   export type ItemState = PlaybackRateRadioGroupItemState;
 }

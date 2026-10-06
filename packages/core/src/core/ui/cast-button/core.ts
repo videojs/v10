@@ -26,6 +26,7 @@ export interface CastButtonState extends ButtonState {
   hidden: boolean;
 }
 
+/** @internal */
 export class CastButtonCore {
   static readonly defaultProps: NonNullableObject<CastButtonProps> = {
     label: '',
@@ -95,10 +96,11 @@ export class CastButtonCore {
 
     if (this.getState().disabled) return;
 
-    return media.toggleRemotePlayback();
+    return media.promptRemotePlayback();
   }
 }
 
+/** @internal */
 export namespace CastButtonCore {
   export type Props = CastButtonProps;
   export type State = CastButtonState;

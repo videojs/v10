@@ -2,7 +2,6 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { kebabCase } from 'es-toolkit/string';
 import GithubSlugger from 'github-slugger';
 import type { MdastPluginInput, MdxJsxFlowElement } from 'satteri';
 import { defineMdastPlugin } from 'satteri';
@@ -13,14 +12,17 @@ import { resolveReferenceSlug } from './api-reference-overrides';
 import { buildComponentReferenceTocHeadings, createComponentReferenceModel } from './componentReferenceModel';
 import { buildFeatureReferenceTocHeadings, createFeatureReferenceModel } from './featureReferenceModel';
 import { buildMediaReferenceTocHeadings, createMediaReferenceModel } from './mediaReferenceModel';
+import { buildPlayerStoreReferenceTocHeadings, createPlayerStoreReferenceModel } from './playerStoreReferenceModel';
 import { getAstroFrontmatter, type MdastVisitorContext } from './satteriAstroData';
 import { buildUtilReferenceTocHeadings, createUtilReferenceModel } from './utilReferenceModel';
+import { utilReferenceSlug } from './utilReferenceSlug';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const COMPONENT_REF_DIR = path.resolve(__dirname, '../content/generated-component-reference');
 const FEATURE_REF_DIR = path.resolve(__dirname, '../content/generated-feature-reference');
 const UTIL_REF_DIR = path.resolve(__dirname, '../content/generated-util-reference');
 const MEDIA_REF_DIR = path.resolve(__dirname, '../content/generated-media-reference');
+const PRESET_REF_DIR = path.resolve(__dirname, '../content/generated-preset-reference');
 
 interface ConditionalHeading {
   depth: number;
@@ -35,8 +37,9 @@ interface ConditionalHeading {
  * Builds the conditional-heading list used for the docs table of contents.
  *
  * - Tracks which `<FrameworkCase>` / `<StyleCase>` a heading lives in (walking ancestors) and attaches that context.
- * - Reads `<ComponentReference>` / `<FeatureReference>` / `<UtilReference>` / `<MediaReference>` props, loads the
- *   generated JSON, and injects heading entries so API-reference sections appear in the TOC.
+ * - Reads `<ComponentReference>` / `<FeatureReference>` / `<UtilReference>` / `<MediaReference>` props (and
+ *   `<PlayerStoreReference>`, which reads every feature and preset), loads the generated JSON, and injects heading
+ *   entries so API-reference sections appear in the TOC.
  *
  * Markdown headings are slugged with a plain GithubSlugger in document order so the slugs match the element ids the
  * markdown-satteri `heading-ids` plugin generates (otherwise TOC anchors would not resolve). API-reference headings
@@ -101,6 +104,22 @@ export function satteriConditionalHeadings(): MdastPluginInput {
             publish(ctx);
             injectMediaReferenceHeadings(node, headings);
             break;
+          case 'PlayerStoreReference':
+            publish(ctx);
+            injectPlayerStoreReferenceHeadings(headings);
+            break;
+          case 'SkinPickerSection':
+            publish(ctx);
+            headings.push({ depth: 2, text: 'Choose your skin', slug: 'choose-your-skin' });
+            break;
+          case 'SourceMediaInstall':
+            publish(ctx);
+            headings.push({
+              depth: 2,
+              text: 'Install the media adapter',
+              slug: 'install-the-media-adapter',
+            });
+            break;
         }
       },
     });
@@ -163,6 +182,18 @@ function readRefJson(dir: string, key: string): unknown {
   }
 }
 
+function readAllRefJson(dir: string): unknown[] {
+  try {
+    return fs
+      .readdirSync(dir)
+      .filter((file) => file.endsWith('.json'))
+      .map((file) => readRefJson(dir, file.slice(0, -'.json'.length)))
+      .filter((json) => json !== null);
+  } catch {
+    return [];
+  }
+}
+
 function injectComponentReferenceHeadings(node: MdxJsxFlowElement, headings: ConditionalHeading[]) {
   const componentName = getStringAttr(node, 'component');
   if (!componentName) return;
@@ -198,12 +229,22 @@ function injectUtilReferenceHeadings(node: MdxJsxFlowElement, headings: Conditio
   if (!utilName) return;
 
   const slug = getStringAttr(node, 'slug');
-  const json = readRefJson(UTIL_REF_DIR, slug ?? kebabCase(utilName));
+  const json = readRefJson(UTIL_REF_DIR, slug ?? utilReferenceSlug(utilName));
   if (!json) return;
 
   const model = createUtilReferenceModel(utilName, json as Parameters<typeof createUtilReferenceModel>[1]);
 
   headings.push(...buildUtilReferenceTocHeadings(model));
+}
+
+function injectPlayerStoreReferenceHeadings(headings: ConditionalHeading[]) {
+  // SAFETY: These JSON files are emitted by the feature- and preset-reference builders with the schemas the site consumes.
+  const model = createPlayerStoreReferenceModel(
+    readAllRefJson(FEATURE_REF_DIR) as Parameters<typeof createPlayerStoreReferenceModel>[0],
+    readAllRefJson(PRESET_REF_DIR) as Parameters<typeof createPlayerStoreReferenceModel>[1]
+  );
+
+  headings.push(...buildPlayerStoreReferenceTocHeadings(model));
 }
 
 function injectMediaReferenceHeadings(node: MdxJsxFlowElement, headings: ConditionalHeading[]) {

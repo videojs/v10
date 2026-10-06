@@ -2,6 +2,266 @@
 
 All notable changes to this project will be documented in this file.
 
+## [@videojs/core@10.0.1] - 2026-10-02
+
+### 🚀 Features
+- *(site)* Move pre-v10 blog posts to the legacy site ([#3127](https://github.com/videojs/v10/pull/3127)) by [@decepulis](https://github.com/decepulis)
+
+### 🐛 Bug Fixes
+- *(react)* Hand the playback adapter to mediaRef on adapter-backed media ([#3141](https://github.com/videojs/v10/pull/3141)) by [@luwes](https://github.com/luwes)
+- *(mux-video)* Parse mux stream urls without the .m3u8 extension ([#3143](https://github.com/videojs/v10/pull/3143)) by [@luwes](https://github.com/luwes)
+- *(react)* Accept autoPlay on embeds and drop callback-ref cleanups that warn on React 18 ([#3136](https://github.com/videojs/v10/pull/3136)) by [@luwes](https://github.com/luwes)
+- *(youtube-video)* Keep the iframe in place when detach destroys the player ([#3154](https://github.com/videojs/v10/pull/3154)) by [@luwes](https://github.com/luwes)
+
+### 📚 Documentation
+- *(site)* Add changelog prose for 10.0.0-rc.5 ([#3129](https://github.com/videojs/v10/pull/3129)) by [@github-actions[bot]](https://github.com/github-actions[bot])
+- *(site)* Add changelog prose for 10.0.0 ([#3133](https://github.com/videojs/v10/pull/3133)) by [@github-actions[bot]](https://github.com/github-actions[bot])
+- *(blog)* Add Video.js 10 release post ([#3061](https://github.com/videojs/v10/pull/3061)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Add live demos to skin reference pages ([#3137](https://github.com/videojs/v10/pull/3137)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Turn the nav version pill into a docs version menu ([#3144](https://github.com/videojs/v10/pull/3144)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Fix shadcn and migration links in 10.0 blog post ([#3148](https://github.com/videojs/v10/pull/3148)) by [@decepulis](https://github.com/decepulis)
+- Say "media component" instead of "media element" ([#3150](https://github.com/videojs/v10/pull/3150)) by [@decepulis](https://github.com/decepulis)
+
+### ⚙️ Miscellaneous Tasks
+- *(release)* Add the 10.0.0 root and site changelog ([#3131](https://github.com/videojs/v10/pull/3131)) by [@decepulis](https://github.com/decepulis)
+- *(root)* Remove release-as after the 10.0.0 release ([#3065](https://github.com/videojs/v10/pull/3065)) by [@decepulis](https://github.com/decepulis)
+- *(packages)* Prune stale and add missing workspace dependencies ([#3125](https://github.com/videojs/v10/pull/3125)) by [@luwes](https://github.com/luwes)
+
+## [@videojs/core@10.0.0] - 2026-10-01
+
+### 🚀 Features
+- *(packages)* Release Video.js 10.0.0 as stable ([#3058](https://github.com/videojs/v10/pull/3058)) by [@decepulis](https://github.com/decepulis)
+
+## [@videojs/core@10.0.0-rc.5] - 2026-10-01
+
+### 🚀 Features
+- *(vjsc)* Flatten @scope in the packaged skins ([#2966](https://github.com/videojs/v10/pull/2966)) by [@sampotts](https://github.com/sampotts)
+- *(packages)* Support chrome 111, firefox 121, and safari 16.4 ([#2951](https://github.com/videojs/v10/pull/2951)) by [@sampotts](https://github.com/sampotts)
+- *(core)* Add deriveCustomStatus to display custom actions ([#3064](https://github.com/videojs/v10/pull/3064)) by [@spuppo-mux](https://github.com/spuppo-mux)
+- *(media)* Add resolveAdapterType and resolveMimeType ([#3024](https://github.com/videojs/v10/pull/3024)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Mask private installation input in PostHog analytics ([#2666](https://github.com/videojs/v10/pull/2666)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Tag clickable markup for PostHog autocapture ([#3084](https://github.com/videojs/v10/pull/3084)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Tag Mux links with their placement for attribution ([#3086](https://github.com/videojs/v10/pull/3086)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Record docs, installation, agent-handoff, and Mux upload events ([#3087](https://github.com/videojs/v10/pull/3087)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Count agent Markdown reads at the edge ([#3081](https://github.com/videojs/v10/pull/3081)) by [@decepulis](https://github.com/decepulis)
+- *(packages)* Export a per-package VERSION from core, html, and react ([#3078](https://github.com/videojs/v10/pull/3078)) by [@decepulis](https://github.com/decepulis)
+- *(react)* Add mediaRef prop to media components ([#3098](https://github.com/videojs/v10/pull/3098)) by [@luwes](https://github.com/luwes)
+- *(skin)* Add compat skin ([#3026](https://github.com/videojs/v10/pull/3026)) by [@sampotts](https://github.com/sampotts)
+- *(site)* Check that undocumented public exports are tagged internal ([#3063](https://github.com/videojs/v10/pull/3063)) by [@decepulis](https://github.com/decepulis)
+
+### 🐛 Bug Fixes
+- *(packages)* Name Video.js 10 in npm descriptions and keywords ([#2995](https://github.com/videojs/v10/pull/2995)) by [@mihar-22](https://github.com/mihar-22)
+- *(test)* Stop e2e web servers hanging at teardown ([#2991](https://github.com/videojs/v10/pull/2991)) by [@mihar-22](https://github.com/mihar-22)
+- *(core)* Preserve submenu exit transitions ([#3025](https://github.com/videojs/v10/pull/3025)) by [@sampotts](https://github.com/sampotts)
+- *(native-hls)* Honour SERVER-CONTROL hold-back when deriving the live edge ([#3027](https://github.com/videojs/v10/pull/3027)) by [@spuppo-mux](https://github.com/spuppo-mux)
+- *(react)* Declare client boundaries per module ([#3079](https://github.com/videojs/v10/pull/3079)) by [@mihar-22](https://github.com/mihar-22)
+- *(media)* Keep hls.js text tracks when MEDIA_ATTACHED follows the manifest ([#3099](https://github.com/videojs/v10/pull/3099)) by [@spuppo-mux](https://github.com/spuppo-mux)
+
+### 🚜 Refactor
+- *(core)* [**breaking**] Align player store API ([#3012](https://github.com/videojs/v10/pull/3012)) by [@luwes](https://github.com/luwes)
+- *(media)* [**breaking**] Tidy text track state ([#3057](https://github.com/videojs/v10/pull/3057)) by [@luwes](https://github.com/luwes)
+- *(skin)* Reduce default saturation filter ([#3091](https://github.com/videojs/v10/pull/3091)) by [@sampotts](https://github.com/sampotts)
+- *(skin)* Rename media-opaque to media-high-contrast ([#3094](https://github.com/videojs/v10/pull/3094)) by [@sampotts](https://github.com/sampotts)
+- *(packages)* [**breaking**] Attach extensions at the player ([#2880](https://github.com/videojs/v10/pull/2880)) by [@luwes](https://github.com/luwes)
+- *(packages)* [**breaking**] Rename the minimal skin to neutral ([#3092](https://github.com/videojs/v10/pull/3092)) by [@mihar-22](https://github.com/mihar-22)
+- *(react)* [**breaking**] Export compound radio groups from the package root ([#3073](https://github.com/videojs/v10/pull/3073)) by [@decepulis](https://github.com/decepulis)
+- *(react,html)* [**breaking**] Make every stable type importable from the framework packages ([#3082](https://github.com/videojs/v10/pull/3082)) by [@decepulis](https://github.com/decepulis)
+
+### 📚 Documentation
+- *(site)* Add changelog prose for 10.0.0-rc.4 ([#2988](https://github.com/videojs/v10/pull/2988)) by [@github-actions[bot]](https://github.com/github-actions[bot])
+- *(site)* Add player store api overview page ([#3034](https://github.com/videojs/v10/pull/3034)) by [@luwes](https://github.com/luwes)
+- *(site)* Improve migration accuracy and agent guidance ([#3074](https://github.com/videojs/v10/pull/3074)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Improve playback guides and examples ([#3075](https://github.com/videojs/v10/pull/3075)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Correct stale playback and package guidance ([#3076](https://github.com/videojs/v10/pull/3076)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Add the vidstack migration guide ([#3021](https://github.com/videojs/v10/pull/3021)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Stop using internal APIs in examples ([#3066](https://github.com/videojs/v10/pull/3066)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Add reference pages for presets, useMedia, UIElement, and icons ([#3067](https://github.com/videojs/v10/pull/3067)) by [@decepulis](https://github.com/decepulis)
+
+### 🧪 Testing
+- *(skins)* Check the skins in the oldest supported engines ([#2952](https://github.com/videojs/v10/pull/2952)) by [@sampotts](https://github.com/sampotts)
+- *(packages)* Audit every test with the maintain-tests skill ([#3080](https://github.com/videojs/v10/pull/3080)) by [@mihar-22](https://github.com/mihar-22)
+
+### ⚙️ Miscellaneous Tasks
+- *(root)* Bump pnpm to 12.6.0 ([#2990](https://github.com/videojs/v10/pull/2990)) by [@mihar-22](https://github.com/mihar-22)
+- *(cd)* Allow resuming a partially published release ([#2989](https://github.com/videojs/v10/pull/2989)) by [@mihar-22](https://github.com/mihar-22)
+- *(root)* Upgrade vite+ to 1.0.0 ([#3010](https://github.com/videojs/v10/pull/3010)) by [@mihar-22](https://github.com/mihar-22)
+- *(test)* Cut the e2e jobs competing for runners ([#3017](https://github.com/videojs/v10/pull/3017)) by [@sampotts](https://github.com/sampotts)
+- *(root)* Silence module-level directive warnings in pack builds ([#3018](https://github.com/videojs/v10/pull/3018)) by [@sampotts](https://github.com/sampotts)
+- *(root)* Keep directive warnings in bundled packs ([#3022](https://github.com/videojs/v10/pull/3022)) by [@mihar-22](https://github.com/mihar-22)
+- *(test)* Add browserstack compatibility checks ([#3071](https://github.com/videojs/v10/pull/3071)) by [@sampotts](https://github.com/sampotts)
+- *(ci)* Remove e2e failure triage ([#3095](https://github.com/videojs/v10/pull/3095)) by [@sampotts](https://github.com/sampotts)
+- Tag undocumented public exports @internal and enforce it in CI ([#3068](https://github.com/videojs/v10/pull/3068)) by [@decepulis](https://github.com/decepulis)
+- *(store)* Check and tag store's public exports ([#3083](https://github.com/videojs/v10/pull/3083)) by [@decepulis](https://github.com/decepulis)
+
+## [@videojs/core@10.0.0-rc.4] - 2026-09-26
+
+### 🐛 Bug Fixes
+- *(hlsjs-video)* Apply auto quality while playback is stalled ([#2979](https://github.com/videojs/v10/pull/2979)) by [@luwes](https://github.com/luwes)
+- *(installation)* Default a plain HTML page to CDN scripts ([#2983](https://github.com/videojs/v10/pull/2983)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Tighten docs header and switch sidebar sections in place ([#2987](https://github.com/videojs/v10/pull/2987)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Upgrade astro to 7.3.5 ([#2986](https://github.com/videojs/v10/pull/2986)) by [@mihar-22](https://github.com/mihar-22)
+
+### 📚 Documentation
+- *(site)* Add changelog prose for 10.0.0-rc.3 ([#2977](https://github.com/videojs/v10/pull/2977)) by [@github-actions[bot]](https://github.com/github-actions[bot])
+- *(packages)* Fix broken doc links and hls-video source docs ([#2985](https://github.com/videojs/v10/pull/2985)) by [@mihar-22](https://github.com/mihar-22)
+
+## [@videojs/core@10.0.0-rc.3] - 2026-09-25
+
+### 🚀 Features
+- *(skin)* Slot the slider thumbnail image ([#2700](https://github.com/videojs/v10/pull/2700)) by [@luwes](https://github.com/luwes)
+- *(sandbox)* Add aspect ratio preview option ([#2709](https://github.com/videojs/v10/pull/2709)) by [@sampotts](https://github.com/sampotts)
+- *(mux-video)* Load the asset title from the mux metadata api ([#2726](https://github.com/videojs/v10/pull/2726)) by [@luwes](https://github.com/luwes)
+- *(skins)* Add theme-scoped shadcn registries ([#2736](https://github.com/videojs/v10/pull/2736)) by [@mihar-22](https://github.com/mihar-22)
+- *(spf)* Support apple json chapters from ext-x-session-data ([#2737](https://github.com/videojs/v10/pull/2737)) by [@cjpillsbury](https://github.com/cjpillsbury)
+- *(cdn)* Open every entry bundle with a Video.js banner ([#2762](https://github.com/videojs/v10/pull/2762)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Framework-agnostic docs links ([#2756](https://github.com/videojs/v10/pull/2756)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Reclaim html5-video-support with a real page ([#2757](https://github.com/videojs/v10/pull/2757)) by [@decepulis](https://github.com/decepulis)
+- About-this-player page and a help link in every player ([#2758](https://github.com/videojs/v10/pull/2758)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Redesign docs site and reorganize doc sections ([#2645](https://github.com/videojs/v10/pull/2645)) by [@mihar-22](https://github.com/mihar-22)
+- *(video.js)* Add the video.js package with coded v8 stubs ([#2735](https://github.com/videojs/v10/pull/2735)) by [@luwes](https://github.com/luwes)
+- *(site)* Generate the videojs.org/errors pages from the video.js registry ([#2752](https://github.com/videojs/v10/pull/2752)) by [@luwes](https://github.com/luwes)
+- *(skin)* Add title display ([#2748](https://github.com/videojs/v10/pull/2748)) by [@sampotts](https://github.com/sampotts)
+- *(cdn)* Publish one ui bundle per @videojs/html ui definition ([#2887](https://github.com/videojs/v10/pull/2887)) by [@luwes](https://github.com/luwes)
+- *(spf)* Add EME-based DRM support to the HLS engine ([#2291](https://github.com/videojs/v10/pull/2291)) by [@cjpillsbury](https://github.com/cjpillsbury)
+- *(html)* Export translateText from html entry points ([#2947](https://github.com/videojs/v10/pull/2947)) by [@sampotts](https://github.com/sampotts)
+- *(site)* Reorganize installation guides ([#2848](https://github.com/videojs/v10/pull/2848)) by [@mihar-22](https://github.com/mihar-22)
+- *(cli)* Route installation docs by method ([#2877](https://github.com/videojs/v10/pull/2877)) by [@mihar-22](https://github.com/mihar-22)
+- *(installation)* Add versioned agent instructions ([#2948](https://github.com/videojs/v10/pull/2948)) by [@mihar-22](https://github.com/mihar-22)
+
+### 🐛 Bug Fixes
+- *(skin)* Restore intrinsic height ([#2707](https://github.com/videojs/v10/pull/2707)) by [@sampotts](https://github.com/sampotts)
+- *(skin)* Resolve blurry slider rendering ([#2705](https://github.com/videojs/v10/pull/2705)) by [@sampotts](https://github.com/sampotts)
+- *(test)* Restore the skin parity suite and speed up ci ([#2717](https://github.com/videojs/v10/pull/2717)) by [@luwes](https://github.com/luwes)
+- *(react)* Route media event props on embed medias ([#2712](https://github.com/videojs/v10/pull/2712)) by [@luwes](https://github.com/luwes)
+- *(skin)* Simplify the slider styles ([#2719](https://github.com/videojs/v10/pull/2719)) by [@sampotts](https://github.com/sampotts)
+- *(core)* Apply popup starting styles before showing ([#2715](https://github.com/videojs/v10/pull/2715)) by [@mihar-22](https://github.com/mihar-22)
+- *(skin)* Animate slider progress continuously across chapters ([#2721](https://github.com/videojs/v10/pull/2721)) by [@sampotts](https://github.com/sampotts)
+- *(skin)* Restore settings rotation and rtl parity ([#2723](https://github.com/videojs/v10/pull/2723)) by [@sampotts](https://github.com/sampotts)
+- *(react)* Keep media attached when the composed ref changes identity ([#2729](https://github.com/videojs/v10/pull/2729)) by [@luwes](https://github.com/luwes)
+- *(skin)* Use shared browser targets for css builds ([#2730](https://github.com/videojs/v10/pull/2730)) by [@sampotts](https://github.com/sampotts)
+- *(react)* Volume popover not working with react compiler ([#2742](https://github.com/videojs/v10/pull/2742)) by [@mihar-22](https://github.com/mihar-22)
+- *(packages)* Disable stale hls text tracks ([#2747](https://github.com/videojs/v10/pull/2747)) by [@mihar-22](https://github.com/mihar-22)
+- *(youtube-video)* Keep current time updating during playback ([#2744](https://github.com/videojs/v10/pull/2744)) by [@mihar-22](https://github.com/mihar-22)
+- *(vjsc)* Simplify zero length calculations ([#2739](https://github.com/videojs/v10/pull/2739)) by [@sampotts](https://github.com/sampotts)
+- *(html)* Register skin properties in the host document ([#2750](https://github.com/videojs/v10/pull/2750)) by [@sampotts](https://github.com/sampotts)
+- *(ci)* Isolate bundle size comparison inputs ([#2766](https://github.com/videojs/v10/pull/2766)) by [@mihar-22](https://github.com/mihar-22)
+- *(skin)* Restore minimal audio borders ([#2816](https://github.com/videojs/v10/pull/2816)) by [@mihar-22](https://github.com/mihar-22)
+- *(i18n)* Retranslate French error strings and fix typography ([#2791](https://github.com/videojs/v10/pull/2791)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Slovak exit labels and retranslate error strings ([#2792](https://github.com/videojs/v10/pull/2792)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Spanish button labels and retranslate error strings ([#2767](https://github.com/videojs/v10/pull/2767)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Latvian caption and cast terms and error strings ([#2793](https://github.com/videojs/v10/pull/2793)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Fix Nynorsk word errors and retranslate error strings ([#2794](https://github.com/videojs/v10/pull/2794)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Bosnian button labels and retranslate error strings ([#2795](https://github.com/videojs/v10/pull/2795)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct galician unmute label and retranslate error strings ([#2768](https://github.com/videojs/v10/pull/2768)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Occitan control labels and retranslate error strings ([#2796](https://github.com/videojs/v10/pull/2796)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Romanian button labels and retranslate error strings ([#2797](https://github.com/videojs/v10/pull/2797)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Catalan imperatives and retranslate error strings ([#2798](https://github.com/videojs/v10/pull/2798)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Welsh mute and seek labels and error strings ([#2799](https://github.com/videojs/v10/pull/2799)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Hungarian seek labels and retranslate error strings ([#2800](https://github.com/videojs/v10/pull/2800)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Dutch button labels and retranslate error strings ([#2770](https://github.com/videojs/v10/pull/2770)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Serbian script mix, cast wording and error strings ([#2801](https://github.com/videojs/v10/pull/2801)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Japanese control labels and retranslate error strings ([#2771](https://github.com/videojs/v10/pull/2771)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Danish button labels and retranslate error strings ([#2802](https://github.com/videojs/v10/pull/2802)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct German control labels and retranslate error strings ([#2772](https://github.com/videojs/v10/pull/2772)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Arabic control labels and retranslate error strings ([#2803](https://github.com/videojs/v10/pull/2803)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Korean control labels and retranslate error strings ([#2773](https://github.com/videojs/v10/pull/2773)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Scottish Gaelic captions and pip terms and errors ([#2804](https://github.com/videojs/v10/pull/2804)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct zh-CN unmute label, punctuation and error strings ([#2774](https://github.com/videojs/v10/pull/2774)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Swedish player labels and retranslate error strings ([#2775](https://github.com/videojs/v10/pull/2775)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Unify Hindi player terms and retranslate error strings ([#2807](https://github.com/videojs/v10/pull/2807)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Thai player terminology and retranslate error strings ([#2808](https://github.com/videojs/v10/pull/2808)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Russian button labels and retranslate error strings ([#2776](https://github.com/videojs/v10/pull/2776)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Retranslate pt-BR error strings and playback-rate label ([#2809](https://github.com/videojs/v10/pull/2809)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Replace mainland terms in zh-TW and fix error strings ([#2777](https://github.com/videojs/v10/pull/2777)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Marathi captions, verbs and error strings ([#2810](https://github.com/videojs/v10/pull/2810)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Hebrew control labels and retranslate error strings ([#2778](https://github.com/videojs/v10/pull/2778)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Vietnamese captions and pip terms and error strings ([#2811](https://github.com/videojs/v10/pull/2811)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Finnish control labels and retranslate error strings ([#2779](https://github.com/videojs/v10/pull/2779)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Indonesian seek label and time suffix word order ([#2812](https://github.com/videojs/v10/pull/2812)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Nepali control labels and error strings ([#2813](https://github.com/videojs/v10/pull/2813)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Ukrainian player terms and retranslate error strings ([#2780](https://github.com/videojs/v10/pull/2780)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Azerbaijani mute labels, captions term and error strings ([#2814](https://github.com/videojs/v10/pull/2814)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct European Portuguese labels and error strings ([#2781](https://github.com/videojs/v10/pull/2781)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Telugu control labels and retranslate error strings ([#2815](https://github.com/videojs/v10/pull/2815)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Bulgarian control labels and retranslate error strings ([#2782](https://github.com/videojs/v10/pull/2782)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Greek mixed-script labels and error strings ([#2783](https://github.com/videojs/v10/pull/2783)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Persian control labels and retranslate error strings ([#2784](https://github.com/videojs/v10/pull/2784)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Polish announcements and retranslate error strings ([#2785](https://github.com/videojs/v10/pull/2785)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Turkish control labels and retranslate error strings ([#2786](https://github.com/videojs/v10/pull/2786)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Czech subtitle announcements and error strings ([#2787](https://github.com/videojs/v10/pull/2787)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Norwegian Bokmål player labels and error strings ([#2788](https://github.com/videojs/v10/pull/2788)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Estonian control labels and retranslate error strings ([#2789](https://github.com/videojs/v10/pull/2789)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Croatian button labels and retranslate error strings ([#2790](https://github.com/videojs/v10/pull/2790)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct italian control labels and retranslate error strings ([#2769](https://github.com/videojs/v10/pull/2769)) by [@decepulis](https://github.com/decepulis)
+- *(i18n)* Correct Slovenian caption announcements and error strings ([#2806](https://github.com/videojs/v10/pull/2806)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Restore the 450 body weight and antialiasing ([#2821](https://github.com/videojs/v10/pull/2821)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Leave non-matching FrameworkCase content out of the html ([#2837](https://github.com/videojs/v10/pull/2837)) by [@decepulis](https://github.com/decepulis)
+- *(skin)* Separate preset token layer ([#2840](https://github.com/videojs/v10/pull/2840)) by [@mihar-22](https://github.com/mihar-22)
+- *(react)* Forward refs to plain function render targets on react 18 ([#2842](https://github.com/videojs/v10/pull/2842)) by [@mihar-22](https://github.com/mihar-22)
+- *(vjsc)* Merge classes using custom theme tokens ([#2738](https://github.com/videojs/v10/pull/2738)) by [@sampotts](https://github.com/sampotts)
+- *(hlsjs-video)* Route legacy hls mime types to hls.js ([#2866](https://github.com/videojs/v10/pull/2866)) by [@luwes](https://github.com/luwes)
+- *(site)* Stabilize docs shell and navigation ([#2839](https://github.com/videojs/v10/pull/2839)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Improve demo button contrast ([#2845](https://github.com/videojs/v10/pull/2845)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Normalize api reference display types ([#2846](https://github.com/videojs/v10/pull/2846)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Compact api reference table details ([#2847](https://github.com/videojs/v10/pull/2847)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Respond to system color scheme change ([#2879](https://github.com/videojs/v10/pull/2879)) by [@sampotts](https://github.com/sampotts)
+- *(skin)* Stack status indicators above the title ([#2875](https://github.com/videojs/v10/pull/2875)) by [@sampotts](https://github.com/sampotts)
+- *(packages)* Keep the time slider interactive without the buffer feature ([#2869](https://github.com/videojs/v10/pull/2869)) by [@spuppo-mux](https://github.com/spuppo-mux)
+- *(packages)* Align title display files ([#2949](https://github.com/videojs/v10/pull/2949)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Improve markdown for agents ([#2883](https://github.com/videojs/v10/pull/2883)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Use audio-only demo source ([#2889](https://github.com/videojs/v10/pull/2889)) by [@mihar-22](https://github.com/mihar-22)
+- *(vjsc)* Pin one tailwind and lightningcss for the workspace ([#2971](https://github.com/videojs/v10/pull/2971)) by [@mihar-22](https://github.com/mihar-22)
+- *(vjsc)* Serialize HTML void elements without closing tags ([#2976](https://github.com/videojs/v10/pull/2976)) by [@mihar-22](https://github.com/mihar-22)
+- *(core)* Keep controls visible when seeking in Safari 16 ([#2962](https://github.com/videojs/v10/pull/2962)) by [@sampotts](https://github.com/sampotts)
+- *(core)* Position and hide popups without the Popover API ([#2963](https://github.com/videojs/v10/pull/2963)) by [@sampotts](https://github.com/sampotts)
+- *(packages)* Guard Intl.ListFormat and AbortSignal.any ([#2964](https://github.com/videojs/v10/pull/2964)) by [@sampotts](https://github.com/sampotts)
+- *(utils)* Detect constructable stylesheets before creating one ([#2967](https://github.com/videojs/v10/pull/2967)) by [@sampotts](https://github.com/sampotts)
+- *(packages)* Prevent menu highlight flicker ([#2969](https://github.com/videojs/v10/pull/2969)) by [@sampotts](https://github.com/sampotts)
+- *(core)* Move focus before hiding menu pages ([#2968](https://github.com/videojs/v10/pull/2968)) by [@sampotts](https://github.com/sampotts)
+
+### 💼 Other
+- *(packages)* Compile published react sources ([#2745](https://github.com/videojs/v10/pull/2745)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Use native react compiler ([#2743](https://github.com/videojs/v10/pull/2743)) by [@mihar-22](https://github.com/mihar-22)
+
+### 🚜 Refactor
+- *(skin)* Harden style reset ([#2704](https://github.com/videojs/v10/pull/2704)) by [@sampotts](https://github.com/sampotts)
+- *(html)* Limit the shadow stylesheet to host integration ([#2853](https://github.com/videojs/v10/pull/2853)) by [@sampotts](https://github.com/sampotts)
+
+### 📚 Documentation
+- Announce the v10 release candidate ([#2658](https://github.com/videojs/v10/pull/2658)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Add changelog prose for 10.0.0-rc.2 ([#2699](https://github.com/videojs/v10/pull/2699)) by [@github-actions[bot]](https://github.com/github-actions[bot])
+- *(site)* Minor changes to v8 migration guide ([#2716](https://github.com/videojs/v10/pull/2716)) by [@spuppo-mux](https://github.com/spuppo-mux)
+- *(site)* Note useMedia returns a Media wrapper, not a CanvasImageSource ([#1877](https://github.com/videojs/v10/pull/1877)) by [@claude[bot]](https://github.com/claude[bot])
+- *(site)* Include Mux Data by default in Mux installation examples ([#2570](https://github.com/videojs/v10/pull/2570)) by [@heff](https://github.com/heff)
+- *(design)* Fix common-media-library upstream links ([#2667](https://github.com/videojs/v10/pull/2667)) by [@littlespex](https://github.com/littlespex)
+- *(site)* Import every html ui part in demos and references ([#2843](https://github.com/videojs/v10/pull/2843)) by [@luwes](https://github.com/luwes)
+- *(i18n)* Add write-locale-translations skill ([#2865](https://github.com/videojs/v10/pull/2865)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Document the css support floor and how to recompile skins for older browsers ([#2856](https://github.com/videojs/v10/pull/2856)) by [@sampotts](https://github.com/sampotts)
+- *(root)* Require visual evidence for visual prs ([#2876](https://github.com/videojs/v10/pull/2876)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Replace eject terminology ([#2851](https://github.com/videojs/v10/pull/2851)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Link skin references to shadcn ([#2852](https://github.com/videojs/v10/pull/2852)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Document the Video.js agent skill ([#2888](https://github.com/videojs/v10/pull/2888)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Set the vite floor at 4.1 and note testing through vite 8 ([#2956](https://github.com/videojs/v10/pull/2956)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Organize error references and playback guidance ([#2950](https://github.com/videojs/v10/pull/2950)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Limit native video to short clips without controls ([#2959](https://github.com/videojs/v10/pull/2959)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Correct and extend the accessibility guide ([#2960](https://github.com/videojs/v10/pull/2960)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Note that the video.js npm package is still v8 ([#2957](https://github.com/videojs/v10/pull/2957)) by [@mihar-22](https://github.com/mihar-22)
+
+### ⚡ Performance
+- *(site)* Faster docs dev server start ([#2698](https://github.com/videojs/v10/pull/2698)) by [@mihar-22](https://github.com/mihar-22)
+
+### 🧪 Testing
+- Fix e2e tests for volume slider ([#2724](https://github.com/videojs/v10/pull/2724)) by [@sampotts](https://github.com/sampotts)
+
+### ⚙️ Miscellaneous Tasks
+- *(site)* Forward-port blog posts to site/v10 ([#2701](https://github.com/videojs/v10/pull/2701)) by [@decepulis](https://github.com/decepulis)
+- *(release-pr)* Cancel superseded changelog runs ([#2702](https://github.com/videojs/v10/pull/2702)) by [@decepulis](https://github.com/decepulis)
+- Point every public package's homepage at videojs.org ([#2761](https://github.com/videojs/v10/pull/2761)) by [@decepulis](https://github.com/decepulis)
+- Enable tailwind intellisense for skin styles ([#2740](https://github.com/videojs/v10/pull/2740)) by [@sampotts](https://github.com/sampotts)
+- *(root)* Add optional mise toolchain config ([#1894](https://github.com/videojs/v10/pull/1894)) by [@mmcc](https://github.com/mmcc)
+- *(root)* Disable zed format-on-save for markdown and mdx ([#2867](https://github.com/videojs/v10/pull/2867)) by [@luwes](https://github.com/luwes)
+- *(build)* Remove the unused inline CSS plugin ([#2965](https://github.com/videojs/v10/pull/2965)) by [@sampotts](https://github.com/sampotts)
+
 ## [@videojs/core@10.0.0-rc.2] - 2026-09-09
 
 ### 🚀 Features
@@ -1990,6 +2250,11 @@ All notable changes to this project will be documented in this file.
 * @decepulis made their first contribution in [#118](https://github.com/videojs/v10/pull/118)
 * @heff made their first contribution
 
+[@videojs/core@10.0.1]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0...@videojs/core@10.0.1
+[@videojs/core@10.0.0]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-rc.5...@videojs/core@10.0.0
+[@videojs/core@10.0.0-rc.5]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-rc.4...@videojs/core@10.0.0-rc.5
+[@videojs/core@10.0.0-rc.4]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-rc.3...@videojs/core@10.0.0-rc.4
+[@videojs/core@10.0.0-rc.3]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-rc.2...@videojs/core@10.0.0-rc.3
 [@videojs/core@10.0.0-rc.2]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-rc.1...@videojs/core@10.0.0-rc.2
 [@videojs/core@10.0.0-rc.1]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.32...@videojs/core@10.0.0-rc.1
 [@videojs/core@10.0.0-beta.32]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.31...@videojs/core@10.0.0-beta.32

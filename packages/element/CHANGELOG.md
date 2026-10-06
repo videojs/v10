@@ -1,5 +1,40 @@
 # Changelog
 
+## [10.0.1](https://github.com/videojs/v10/compare/@videojs/element@10.0.0...@videojs/element@10.0.1) (2026-10-02)
+
+
+### Miscellaneous Chores
+
+* **@videojs/element:** Synchronize videojs versions
+
+## [10.0.0](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-rc.5...@videojs/element@10.0.0) (2026-10-01)
+
+
+### Features
+
+* **packages:** release Video.js 10.0.0 as stable ([#3058](https://github.com/videojs/v10/issues/3058)) ([37477fc](https://github.com/videojs/v10/commit/37477fc187f36fc2ab3cbc0db7c1b2d3fc6bcca9))
+
+## [10.0.0-rc.5](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-rc.4...@videojs/element@10.0.0-rc.5) (2026-10-01)
+
+
+### Features
+
+* **skin:** add compat skin ([#3026](https://github.com/videojs/v10/issues/3026)) ([5d419de](https://github.com/videojs/v10/commit/5d419de6980310364c36ffe6bc131573ac8b785d))
+
+## [10.0.0-rc.4](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-rc.3...@videojs/element@10.0.0-rc.4) (2026-09-26)
+
+
+### Miscellaneous Chores
+
+* **@videojs/element:** Synchronize videojs versions
+
+## [10.0.0-rc.3](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-rc.2...@videojs/element@10.0.0-rc.3) (2026-09-25)
+
+
+### Performance Improvements
+
+* **site:** faster docs dev server start ([#2698](https://github.com/videojs/v10/issues/2698)) ([33d3887](https://github.com/videojs/v10/commit/33d38873ed5337a5695eaa426a5ebfbea61356d2))
+
 ## [10.0.0-rc.2](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-rc.1...@videojs/element@10.0.0-rc.2) (2026-09-09)
 
 

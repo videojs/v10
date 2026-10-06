@@ -10,7 +10,8 @@ import type { Reschedule } from '../../../core/tasks/task';
 import type { QualityConfig } from '../../../media/abr/quality-selection';
 import type { BackBufferConfig } from '../../../media/buffer/back-buffer';
 import type { ForwardBufferConfig } from '../../../media/buffer/forward-buffer';
-import { canPlayTrack } from '../../../media/dom/capabilities';
+import { canPlayTrackWithDrm } from '../../../media/dom/capabilities';
+import { DEFAULT_KEY_SYSTEMS } from '../../../media/dom/key-systems';
 import { attachMediaSourceAsSourceElement } from '../../../media/dom/mse/mediasource-setup';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
 import {
@@ -18,6 +19,7 @@ import {
   getShowingSubtitlesTrackFromMedia,
   removeAllSubtitlesTracksFromMedia,
 } from '../../../media/dom/text/text-track-slots';
+import type { DrmSystemsConfig, DrmSystemsConfigFor, KeySystemId, KeySystemModule } from '../../../media/drm';
 import type { SvtaError } from '../../../media/errors';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import { mediaPlaylistReloadDelay, resolveLiveLatency } from '../../../media/hls/reload-policy';
@@ -46,11 +48,14 @@ import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { setupAirPlay } from '../../behaviors/dom/airplay';
 import { applyStartPosition } from '../../behaviors/dom/apply-start-position';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
+import { exchangeLicenses } from '../../behaviors/dom/exchange-licenses';
 import { loadChapters } from '../../behaviors/dom/load-chapters';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
 import { recoverEndStall } from '../../behaviors/dom/recover-end-stall';
 import { seekToLiveEdge } from '../../behaviors/dom/seek-to-live-edge';
+import { setupAirPlayFairPlay } from '../../behaviors/dom/setup-airplay-fairplay';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
+import { setupMediaKeys } from '../../behaviors/dom/setup-media-keys';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
 import { syncLiveSeekableRange } from '../../behaviors/dom/sync-live-seekable-range';
@@ -73,12 +78,22 @@ import { type ParsePresentation, resolvePresentation } from '../../behaviors/res
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
-import { switchAudioTrack, switchTextTrack, switchVideoTrack } from '../../behaviors/track-switching';
+import {
+  DEFAULT_AUDIO_CONSTRAINTS,
+  DEFAULT_VIDEO_CONSTRAINTS,
+  type SwitchAudioTrackConfig,
+  type SwitchTextTrackConfig,
+  type SwitchVideoTrackConfig,
+  switchAudioTrack,
+  switchTextTrack,
+  switchVideoTrack,
+} from '../../behaviors/track-switching';
 import { relocatingTextPipelines, relocationPipelinesFor } from '../../primitives/relocation-pipelines';
 import {
   type ReportUnsupportedTrackConditions,
-  reportUnsupportedTrackConditions,
+  reportUnsupportedTrackConditionsWithDrm,
 } from '../../primitives/report-track-conditions';
+import { excludeRefusedKeySystems } from '../../primitives/selection-rules';
 import type { TextTrackSegmentResolver } from '../../primitives/text-segment-load-pipeline';
 
 // ============================================================================
@@ -160,6 +175,17 @@ export interface HlsVideoEngineState {
    */
   loadingSuspended?: boolean;
   /**
+   * Segment-load gate, owned by `setupMediaKeys`: `true` while an encrypted source's MediaKeys aren't attached yet; the
+   * `loadXSegments` dispatchers park on it. Never set for clear sources. See
+   * `SegmentLoadingState['segmentLoadingBlocked']`.
+   */
+  segmentLoadingBlocked?: boolean;
+  /**
+   * The key system negotiation settled on for the current source, owned by `setupMediaKeys`. Read by
+   * `exchangeLicenses`. Never set for clear sources. See `MediaKeysState['negotiatedKeySystem']`.
+   */
+  negotiatedKeySystem?: string;
+  /**
    * Author intent for the AirPlay/remote-playback picker, written by the media adapter's `disableRemotePlayback` IDL
    * property. `true` is an explicit opt-out: `setupAirPlay` reads it at attach and sets nothing up, leaving the
    * element's remote playback disabled. Distinct from the underlying `<video>.disableRemotePlayback`, which stays
@@ -176,6 +202,8 @@ export interface HlsVideoEngineState {
 export interface HlsVideoEngineContext {
   mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
+  /** The attached MediaKeys for an encrypted source, owned by `setupMediaKeys`. */
+  mediaKeys?: MediaKeys;
   videoBufferActor?: SourceBufferActor;
   audioBufferActor?: SourceBufferActor;
   videoSegmentLoaderActor?: SegmentLoaderActor;
@@ -198,16 +226,37 @@ export type HlsVideoEngineSignals = {
  *
  * Each option is consumed by the appropriate behavior — the engine itself has no config beyond what its behaviors read.
  */
-export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineState, HlsVideoEngineContext> {
+export interface HlsVideoEngineConfig<
+  KeySystems extends readonly KeySystemModule[] = typeof DEFAULT_KEY_SYSTEMS,
+> extends ShareSignalsConfig<HlsVideoEngineState, HlsVideoEngineContext> {
   /**
    * Bandwidth estimate in bps to use before enough samples have been collected. Default: `DEFAULT_INITIAL_BANDWIDTH` (5
    * Mbps).
    */
   initialBandwidth?: number;
   /**
+   * License servers keyed by EME key-system id — `source.drm`'s shape. Feeds `setupMediaKeys` (negotiation, MediaKeys
+   * attach, license exchange) and the DRM-aware capability probe / condition reporter, so encrypted renditions a
+   * configured system can serve play instead of being pruned. Absent or empty, encrypted renditions are refused exactly
+   * as a DRM-less engine refuses them: pruned before selection, with `SVTA_UNSUPPORTED_DRM_SYSTEM` causes reported.
+   *
+   * Keyed by the ids `keySystems` composes: an entry for a system no composed module claims could never be negotiated
+   * (`keySystemCandidates` intersects the two), so naming one is a type error here instead of a silent refusal. A
+   * `keySystems` list typed as plain `KeySystemModule[]` widens the keys back to `string`.
+   */
+  drm?: DrmSystemsConfigFor<KeySystemId<KeySystems>>;
+  /**
+   * The key systems this engine can negotiate, most-preferred first. Defaults to `DEFAULT_KEY_SYSTEMS` (FairPlay,
+   * Widevine, PlayReady). Narrow it to drop the systems an engine will never see along with their code — a
+   * `[widevineKeySystem]` engine carries no PlayReady request variants, PSSH wrap, or XML envelope unwrap. Inferred as
+   * a tuple, so it also decides which ids `drm` may name.
+   */
+  keySystems?: KeySystems;
+  /**
    * Codec capability probe injected into `track-switching`'s `excludeUnplayableTracks` constraint — drops renditions
-   * the environment can't decode before selection. Defaults to the `MediaSource.isTypeSupported` -backed
-   * `canPlayTrack`; supply your own to override (e.g. force-exclude a codec).
+   * the environment can't decode before selection. Defaults to `canPlayTrackWithDrm`, which reads `drm` and
+   * `keySystems` off this config (with no `drm`, equivalent to the plain `MediaSource.isTypeSupported`-backed
+   * `canPlayTrack`); supply your own to override (e.g. force-exclude a codec).
    */
   canPlayTrack?: CanPlayTrack;
   /**
@@ -220,10 +269,22 @@ export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineS
    */
   preferredCodecs?: string[];
   /**
+   * The per-type hard-constraint pre-pass and rule chain `switch{Video,Audio,Text}Track` run, each replacing its
+   * `DEFAULT_*` chain outright (`@videojs/spf/hls` exports the defaults, so spread one to extend it). The video and
+   * audio constraints default here to the DRM-aware pair: the default pre-pass plus `excludeRefusedKeySystems`.
+   */
+  videoConstraints?: SwitchVideoTrackConfig['videoConstraints'];
+  videoRules?: SwitchVideoTrackConfig['videoRules'];
+  audioConstraints?: SwitchAudioTrackConfig['audioConstraints'];
+  audioRules?: SwitchAudioTrackConfig['audioRules'];
+  textConstraints?: SwitchTextTrackConfig['textConstraints'];
+  textRules?: SwitchTextTrackConfig['textRules'];
+  /**
    * Conditions reported about each rendition as it resolves — the _causes_ behind a later verdict, and the copy a
-   * verdict reuses when they agree. Defaults to {@link reportUnsupportedTrackConditions}, which reports non-fMP4
-   * containers and encryption; supply your own to report a different set (a provider that never ships MPEG-TS can drop
-   * that check) or `() => []` to report nothing.
+   * verdict reuses when they agree. Defaults to `reportUnsupportedTrackConditionsWithDrm`, which reads `drm` and
+   * `keySystems` off this config and reports non-fMP4 containers plus encryption no configured system serves; supply
+   * your own to report a different set (a provider that never ships MPEG-TS can drop that check) or `() => []` to
+   * report nothing.
    */
   reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
   preferredAudioLanguage?: string;
@@ -369,22 +430,39 @@ const shareSignals = makeShareSignals<HlsVideoEngineState, HlsVideoEngineContext
  *   await engine.destroy();
  *   ```;
  */
-export function createHlsVideoEngine(
-  config: HlsVideoEngineConfig = {}
+export function createHlsVideoEngine<const KeySystems extends readonly KeySystemModule[] = typeof DEFAULT_KEY_SYSTEMS>(
+  config: HlsVideoEngineConfig<KeySystems> = {}
 ): Composition<HlsVideoEngineState, HlsVideoEngineContext> {
   // Non-zero-PTS relocation (spike): resolve the coordination seam once so the reactor
   // (model `startMediaTime`) and the loader stamps (buffer `timestampOffset`) apply the
   // SAME derive. Default is shared-`min` across selected A/V (subsumes per-type).
   const deriveStartMediaTime = config.deriveStartMediaTime ?? deriveSharedMinStartMediaTime;
+  // No license servers configured is the degenerate DRM config: the DRM-aware
+  // probe and reporter refuse encrypted renditions exactly as the DRM-less
+  // `canPlayTrack` / `reportUnsupportedTrackConditions` pair does, and
+  // `setupMediaKeys` reports SVTA 4008 for an encrypted source it can't serve.
+  // Widened back to the runtime shapes here: the behaviors read any id, and the
+  // composition's config type is the intersection of what they declare.
+  const drm: DrmSystemsConfig = config.drm ?? {};
+  const keySystems: readonly KeySystemModule[] = config.keySystems ?? DEFAULT_KEY_SYSTEMS;
   const finalConfig = {
     ...config,
     deriveStartMediaTime,
+    drm,
+    keySystems,
     // Baked (not user-overridable): this engine composes `setupAirPlay`,
     // whose native fallback `<source>` requires the MSE attachment to keep
     // sibling source alternatives part of resource selection.
     attachMediaSource: attachMediaSourceAsSourceElement,
-    canPlayTrack: config.canPlayTrack ?? canPlayTrack,
-    reportUnsupportedTrackConditions: config.reportUnsupportedTrackConditions ?? reportUnsupportedTrackConditions,
+    canPlayTrack: config.canPlayTrack ?? canPlayTrackWithDrm,
+    // The late half of DRM pruning, appended to each type's default pre-pass:
+    // once negotiation publishes a refusal, encrypted renditions prune and the
+    // emptied type reports its own verdict. Dropped with the rest of the DRM
+    // defaults by a composition that omits DRM.
+    videoConstraints: config.videoConstraints ?? [...DEFAULT_VIDEO_CONSTRAINTS, excludeRefusedKeySystems],
+    audioConstraints: config.audioConstraints ?? [...DEFAULT_AUDIO_CONSTRAINTS, excludeRefusedKeySystems],
+    reportUnsupportedTrackConditions:
+      config.reportUnsupportedTrackConditions ?? reportUnsupportedTrackConditionsWithDrm,
     resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
     // Non-zero-PTS relocation (spike): the text pipeline rebases cues onto the
     // relocated 0-based timeline. Remove `textMessagePipelines` to drop text relocation.
@@ -462,6 +540,25 @@ export function createHlsVideoEngine(
       // in setup-buffer-actors.ts.
       setupMediaSource,
       updateMediaSourceDuration,
+
+      // EME for encrypted sources (no-op for clear ones). Composed right after
+      // MSE setup and — load-bearing — before the `load*Segments` dispatchers,
+      // so the `segmentLoadingBlocked` gate is up before their first dispatch of
+      // encrypted segments.
+      //
+      // `exchangeLicenses` precedes the negotiation it consumes, also
+      // load-bearing: `createComposition` calls cleanups in registration order,
+      // and the sessions it opens must close before `setupMediaKeys` detaches
+      // the MediaKeys they belong to. Setup order costs nothing in return — its
+      // precondition is reactive on `context.mediaKeys`.
+      //
+      // `setupAirPlayFairPlay` sits ahead of `setupMediaKeys` for the same
+      // reason. Both react to the AirPlay session's falling edge — one
+      // releasing the receiver's MediaKeys, the other negotiating MSE's afresh
+      // — and registration order is what puts the detach before the attach.
+      exchangeLicenses,
+      setupAirPlayFairPlay,
+      setupMediaKeys,
 
       // ── Non-zero-PTS relocation (spike) ──────────────────────────────────
       // Establishes per-track `startMediaTime` and publishes the relocating

@@ -1,5 +1,6 @@
+import { transformerCompactLineOptions } from '@shikijs/transformers';
 import clsx from 'clsx';
-import type { BundledLanguage, Highlighter } from 'shiki';
+import type { BundledLanguage, Highlighter, SpecialLanguage } from 'shiki';
 import { hastToHtml } from 'shiki';
 
 import { shared } from '@/components/typography/styles';
@@ -7,7 +8,8 @@ import { shikiNotationTransformers } from '@/utils/shikiNotationTransformers';
 
 export interface SharedProps {
   code: string;
-  lang: BundledLanguage;
+  focusLines?: readonly number[];
+  lang: BundledLanguage | SpecialLanguage;
   highlighter: Highlighter;
 }
 
@@ -24,8 +26,13 @@ interface Highlighted {
 // it across every page in a single build.
 const highlightCache = new Map<string, Highlighted>();
 
-function highlight(code: string, lang: BundledLanguage, highlighter: Highlighter): Highlighted {
-  const cacheKey = `${lang}\0${code}`;
+function highlight(
+  code: string,
+  focusLines: readonly number[],
+  lang: BundledLanguage | SpecialLanguage,
+  highlighter: Highlighter
+): Highlighted {
+  const cacheKey = `${lang}\0${focusLines.join(',')}\0${code}`;
   const cached = highlightCache.get(cacheKey);
   if (cached) return cached;
 
@@ -35,23 +42,28 @@ function highlight(code: string, lang: BundledLanguage, highlighter: Highlighter
       light: 'gruvbox-dark-hard',
       dark: 'gruvbox-dark-soft',
     },
-    transformers: shikiNotationTransformers,
+    transformers: [
+      ...shikiNotationTransformers,
+      transformerCompactLineOptions(focusLines.map((line) => ({ line, classes: ['focused'] }))),
+    ],
   });
 
   // shiki gives us a root > pre > code > text structure
   // since we want to define pre and code ourselves, let's extract the text
-  let preProps: Record<string, unknown> = {};
-  let codeProps: Record<string, unknown> = {};
+  let preClassName: string | undefined;
+  let codeClassName: string | undefined;
 
   if (hast.type === 'root') {
     const pre = hast.children[0];
 
     if (pre && pre.type === 'element' && pre.tagName === 'pre') {
-      preProps = pre.properties;
+      preClassName = pre.properties.class?.toString();
+
       const codeNode = pre.children[0];
 
       if (codeNode && codeNode.type === 'element' && codeNode.tagName === 'code') {
-        codeProps = codeNode.properties;
+        codeClassName = codeNode.properties.class?.toString();
+
         // everything looked as expected! Let's use the code's children as the new root
         hast.children = codeNode.children;
       }
@@ -60,16 +72,16 @@ function highlight(code: string, lang: BundledLanguage, highlighter: Highlighter
 
   const result: Highlighted = {
     html: hastToHtml(hast),
-    preClassName: preProps.class as string | undefined,
-    codeClassName: codeProps.class as string | undefined,
+    preClassName,
+    codeClassName,
   };
 
   highlightCache.set(cacheKey, result);
   return result;
 }
 
-export default function Shared({ code, lang, highlighter }: SharedProps) {
-  const { html, preClassName, codeClassName } = highlight(code, lang, highlighter);
+export default function Shared({ code, focusLines = [], lang, highlighter }: SharedProps) {
+  const { html, preClassName, codeClassName } = highlight(code, focusLines, lang, highlighter);
 
   return (
     <pre className={clsx(shared.pre, preClassName)} data-language={lang}>

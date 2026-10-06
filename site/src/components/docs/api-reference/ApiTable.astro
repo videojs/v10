@@ -4,6 +4,9 @@
  *
  * Rows come from the slot as `<tbody>` groups (see `DetailRow` and `SimpleRow`), so a prop's summary, description,
  * and expandable detail travel together and share one top border.
+ *
+ * `data-apiref-*` attributes are hooks for the llms-markdown integration, which folds each entry back into one table row
+ * for the Markdown export.
  */
 import Table from '@/components/typography/Table.astro';
 import Th from '@/components/typography/Th.astro';
@@ -19,13 +22,13 @@ interface Props {
 const { columns, toggle = false } = Astro.props;
 ---
 
-<Table maxWidth={false} outerClass="my-6">
+<Table maxWidth={false} outerClass="my-6" data-apiref-table>
   <Thead>
     <Tr>
       {columns.map((column) => <Th class="whitespace-nowrap">{column}</Th>)}
       {
         toggle && (
-          <Th class="w-0 p-0">
+          <Th class="w-0 p-0" data-llms-ignore>
             <span class="sr-only">Details</span>
           </Th>
         )

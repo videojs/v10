@@ -17,13 +17,15 @@ describe('formatLegacyError', () => {
     expect(message).toContain(`HTML: ${LEGACY_ERRORS.VJS8_LEGACY_INIT.html}`);
     expect(message).toContain(`React: ${LEGACY_ERRORS.VJS8_LEGACY_INIT.react}`);
     expect(message).toContain(LEGACY_V8_LINE);
-    expect(message.endsWith('→ https://videojs.org/errors/legacy-init')).toBe(true);
+    expect(message.endsWith('→ https://videojs.org/docs/reference/api/vjs8-legacy-init')).toBe(true);
   });
 
   it('emits only the code and URL in production', () => {
     vi.stubGlobal('__DEV__', false);
 
-    expect(formatLegacyError('VJS8_LEGACY_INIT')).toBe('VJS8_LEGACY_INIT → https://videojs.org/errors/legacy-init');
+    expect(formatLegacyError('VJS8_LEGACY_INIT')).toBe(
+      'VJS8_LEGACY_INIT → https://videojs.org/docs/reference/api/vjs8-legacy-init'
+    );
   });
 
   it('formats every registered code', () => {
@@ -43,7 +45,7 @@ describe('LegacyError', () => {
     expect(error).toBeInstanceOf(Error);
     expect(error.name).toBe('LegacyError');
     expect(error.code).toBe('VJS8_LEGACY_PLUGIN');
-    expect(error.url).toBe('https://videojs.org/errors/legacy-plugin');
+    expect(error.url).toBe('https://videojs.org/docs/reference/api/vjs8-legacy-plugin');
     expect(error.message).toBe(formatLegacyError('VJS8_LEGACY_PLUGIN'));
   });
 });

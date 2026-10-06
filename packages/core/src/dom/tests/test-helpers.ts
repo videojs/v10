@@ -56,6 +56,63 @@ export function createMockVideo(overrides: MockVideoOverrides = {}): HTMLVideoEl
 }
 
 // ---------------------------------------------------------------------------
+// Unhandled rejections
+// ---------------------------------------------------------------------------
+
+interface RejectionEmitter {
+  on(event: 'unhandledRejection', listener: (reason: unknown) => void): void;
+  off(event: 'unhandledRejection', listener: (reason: unknown) => void): void;
+}
+
+/**
+ * Runs `action`, then lets Node report any rejection it left unhandled.
+ *
+ * Rejecting mocks must not be `vi.fn`s: Vitest tracks their settled results by attaching handlers, which marks the
+ * rejection handled and hides the bug under test.
+ */
+export async function collectUnhandledRejections(action: () => void): Promise<unknown[]> {
+  // SAFETY: tests run on Node, and core's test types omit Node's globals.
+  const { process } = globalThis as unknown as { process: RejectionEmitter };
+  const reasons: unknown[] = [];
+  const onRejection = (reason: unknown) => reasons.push(reason);
+
+  process.on('unhandledRejection', onRejection);
+
+  try {
+    action();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  } finally {
+    process.off('unhandledRejection', onRejection);
+  }
+
+  return reasons;
+}
+
+interface ExceptionEmitter {
+  on(event: 'uncaughtException', listener: (error: unknown) => void): void;
+  off(event: 'uncaughtException', listener: (error: unknown) => void): void;
+}
+
+/** Runs an action and observes errors that Node's AbortSignal listeners report on a later tick. */
+export async function collectUncaughtExceptions(action: () => void): Promise<unknown[]> {
+  // SAFETY: tests run on Node, and core's test types omit Node's globals.
+  const { process } = globalThis as unknown as { process: ExceptionEmitter };
+  const errors: unknown[] = [];
+  const onException = (error: unknown) => errors.push(error);
+
+  process.on('uncaughtException', onException);
+
+  try {
+    action();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  } finally {
+    process.off('uncaughtException', onException);
+  }
+
+  return errors;
+}
+
+// ---------------------------------------------------------------------------
 // Mock TimeRanges
 // ---------------------------------------------------------------------------
 

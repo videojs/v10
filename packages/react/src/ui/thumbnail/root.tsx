@@ -1,4 +1,12 @@
-import { mapCuesToThumbnails, ThumbnailCore, ThumbnailDataAttrs } from '@videojs/core';
+'use client';
+
+import {
+  mapCuesToThumbnails,
+  ThumbnailCore,
+  ThumbnailDataAttrs,
+  type ThumbnailProps,
+  type ThumbnailState,
+} from '@videojs/core';
 import { createThumbnail, selectFullscreen, selectTextTrack } from '@videojs/core/dom';
 import type { CSSProperties, ForwardedRef } from 'react';
 import { forwardRef, useCallback, useMemo, useRef, useState } from 'react';
@@ -9,7 +17,7 @@ import { useDestroy } from '../../utils/use-destroy';
 import { renderElement } from '../../utils/use-render';
 import { ThumbnailProvider } from './context';
 
-export interface ThumbnailRootProps extends UIComponentProps<'div', ThumbnailCore.State>, ThumbnailCore.RootProps {}
+export interface ThumbnailRootProps extends UIComponentProps<'div', ThumbnailState>, ThumbnailProps {}
 
 /**
  * Resolves, sizes, and clips a thumbnail for a point in time.
@@ -63,8 +71,10 @@ export const ThumbnailRoot = forwardRef(function ThumbnailRoot(
   const thumbnails = useMemo(() => {
     if (externalThumbnails && externalThumbnails.length > 0) return externalThumbnails;
 
-    return textTrack && textTrack.thumbnailCues.length > 0
-      ? mapCuesToThumbnails(textTrack.thumbnailCues, textTrack.thumbnailTrackSrc ?? undefined)
+    const thumbnailsTrack = textTrack?.thumbnailsTrack;
+
+    return thumbnailsTrack && thumbnailsTrack.cues.length > 0
+      ? mapCuesToThumbnails(thumbnailsTrack.cues, thumbnailsTrack.src ?? undefined)
       : [];
   }, [externalThumbnails, textTrack]);
 
@@ -104,8 +114,8 @@ export const ThumbnailRoot = forwardRef(function ThumbnailRoot(
         state,
         src: thumbnail?.url,
         imageStyle,
-        // Only `<track>`-sourced thumbnails follow the media element's CORS mode.
-        inheritedCrossOrigin: externalThumbnails?.length ? undefined : textTrack?.thumbnailTrackCrossOrigin,
+        // Only `<track>`-sourced thumbnails follow the media component's CORS mode.
+        inheritedCrossOrigin: externalThumbnails?.length ? undefined : textTrack?.thumbnailsTrack?.crossOrigin,
         imageRef,
       }}
     >
@@ -125,5 +135,5 @@ export const ThumbnailRoot = forwardRef(function ThumbnailRoot(
 
 export namespace ThumbnailRoot {
   export type Props = ThumbnailRootProps;
-  export type State = ThumbnailCore.State;
+  export type State = ThumbnailState;
 }

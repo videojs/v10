@@ -29,7 +29,13 @@ import basicUsageHtmlTs from "@/components/docs/demos/menu/html/css/BasicUsage.t
 
 ## Anatomy
 
+<FrameworkCase frameworks={["react"]}>
 A root menu owns one positioned Popup. Nested `Content` elements share that Popup with the root Content.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<media-menu>` is the root menu and its one positioned popup. The root and nested `<media-menu-content>` elements are its direct children and share that popup.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
   ```tsx
@@ -107,9 +113,15 @@ A root menu owns one positioned Popup. Nested `Content` elements share that Popu
 
 Menus open from a trigger and close when you select an item, click outside, move focus away, or press <kbd>Escape</kbd>. Root menus use `side` and `align` as their preferred placement. When the preferred side overflows the positioning boundary, the menu uses the opposite side if it has more space.
 
-Root menus inside a <DocsLink slug="reference/components/player-container">Container</DocsLink> join its popup group. Opening one closes any other root menu or popover that is open in the same container. Submenus remain part of their root menu instead of registering separately.
+Root menus inside a <DocsLink slug="reference/components/player-container">player container</DocsLink> join its popup group. Opening one closes any other root menu or popover that is open in the same container. Submenus remain part of their root menu instead of registering separately.
 
-In React, create a submenu by nesting another `Menu.Root` in the parent `Menu.Content`; its `Menu.Trigger` behaves as a parent item and its `Menu.Content` becomes the active Content. In HTML, add another `<media-menu-content>` as a sibling, give it an `id`, and point the parent `<media-menu-item>` at it with `commandfor`.
+<FrameworkCase frameworks={["react"]}>
+Create a submenu by nesting another `Menu.Root` in the parent `Menu.Content`; its `Menu.Trigger` behaves as a parent item and its `Menu.Content` becomes the active Content.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+To create a submenu, add another `<media-menu-content>` as a sibling, give it an `id`, and point the parent `<media-menu-item>` at it with `commandfor`.
+</FrameworkCase>
 
 Media option groups share their option state with the enclosing menu: the selected value, and whether the options are disabled, hidden, or available. The menu's trigger inherits the disabled and hidden state and exposes `data-availability`, and the menu closes if its options disappear while open. See <DocsLink slug="reference/components/playback-rate-radio-group">PlaybackRateRadioGroup</DocsLink>, <DocsLink slug="reference/components/quality-radio-group">QualityRadioGroup</DocsLink>, <DocsLink slug="reference/components/audio-track-radio-group">AudioTrackRadioGroup</DocsLink>, and <DocsLink slug="reference/components/captions-radio-group">CaptionsRadioGroup</DocsLink>.
 
@@ -148,7 +160,13 @@ Use data attributes to style open state, highlighted items, selected radio items
 
 `data-highlighted` identifies the current menu item. Its value is `"pointer"` when pointer movement caused the highlight and an empty string for other highlights, including keyboard navigation and type-ahead search. Use `[data-highlighted]` to match any highlighted item or `[data-highlighted=""]` to match highlights that were not caused by pointer movement.
 
-The root `Menu.Popup` or `<media-menu>` receives `data-open`, `data-side`, and `data-align`. Each Content receives menu state such as `data-open` and `data-submenu`; a Content with an open logical child receives `data-child-open`.
+<FrameworkCase frameworks={["react"]}>
+The root `Menu.Popup` receives `data-open`, `data-side`, and `data-align`. Each `Menu.Content` receives menu state such as `data-open` and `data-submenu`; a Content with an open logical child receives `data-child-open`.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The root `<media-menu>` receives `data-open`, `data-side`, and `data-align`. Each `<media-menu-content>` receives menu state such as `data-open` and `data-submenu`; a content element with an open logical child receives `data-child-open`.
+</FrameworkCase>
 
 Every navigable item receives `data-item`. Use `[data-item]` when one rule should target regular, radio, checkbox, and submenu-trigger items together.
 
@@ -214,7 +232,13 @@ Keyboard controls:
 - <kbd>Arrow Left</kbd>: Return to the parent menu.
 - <kbd>Escape</kbd>: Close the root menu or return from a submenu.
 
-Use `Menu.GroupLabel` or `<media-menu-group-label>` inside grouped choices so the group receives an accessible label.
+<FrameworkCase frameworks={["react"]}>
+Use `Menu.GroupLabel` inside grouped choices so the group receives an accessible label.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Use `<media-menu-group-label>` inside grouped choices so the group receives an accessible label.
+</FrameworkCase>
 
 ## Examples
 

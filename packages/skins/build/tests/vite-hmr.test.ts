@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { isObject, isString, isUndefined } from '@videojs/utils/predicate';
 import react from '@vitejs/plugin-react';
 import { createServer, type ViteDevServer } from 'vite';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { vjscPlugin } from 'vjsc/vite';
 
 const packageDir = resolve(import.meta.dirname, '../..');
@@ -96,6 +96,8 @@ describe('Skins Vite HMR', () => {
     await vi.waitFor(() => expect(send.mock.calls.some(isGeneratedCssHmrCall)).toBe(true));
 
     const restoredCss = await transformedCode(server, cssUrl);
+    const restoredCssRequest = virtualCssRequest(restoredCss);
+    const restoredCssModule = await loadedCss(server, restoredCssRequest);
 
     expect(virtualCssRequest(restoredCss)).toBe(initialCssRequest);
     expect(await loadedCssSource(server, initialCssRequest)).toContain('color:');
@@ -111,10 +113,12 @@ describe('Skins Vite HMR', () => {
     const redesignedCssRequest = virtualCssRequest(redesignedCss);
     const redesignedCssModule = await loadedCss(server, redesignedCssRequest);
 
-    expect(redesignedCss).not.toContain(updatedCssRequest);
-    expect(redesignedCssRequest).not.toBe(updatedCssRequest);
-    expect(redesignedCssModule).not.toBe(updatedCssModule);
-    await expect(loadedCss(server, updatedCssRequest)).rejects.toThrow();
+    expect(redesignedCss).not.toContain(restoredCssRequest);
+    expect(redesignedCssRequest).not.toBe(restoredCssRequest);
+    expect(redesignedCssModule).not.toBe(restoredCssModule);
+    expect(redesignedCssModule).toMatch(/color:\s*#040506\b/);
+    expect(redesignedCssModule).not.toContain('#010203');
+    expect(await loadedCssSource(server, restoredCssRequest)).toBe('');
   }, 30_000);
 
   it('reports transform errors at the authored source location', async () => {

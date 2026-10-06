@@ -2,7 +2,11 @@ import type { MediaSnapshot } from '../input-action';
 import { formatVolumeValue } from '../volume-indicator/status';
 import { DEFAULT_STATUS_ANNOUNCER_LABELS, type StatusAnnouncerLabels } from './labels';
 
-/** Derives the immediate announcement for changed playback, captions, presentation, and playback-rate state. */
+/**
+ * Derives the immediate announcement for changed playback, captions, presentation, and playback-rate state.
+ *
+ * @internal
+ */
 export function deriveStatusAnnouncement(
   previous: MediaSnapshot,
   snapshot: MediaSnapshot,
@@ -18,12 +22,12 @@ export function deriveStatusAnnouncement(
     announcements.push(snapshot.subtitlesShowing ? labels.captionsOn : labels.captionsOff);
   }
 
-  if (hasChanged(previous.fullscreen, snapshot.fullscreen)) {
-    announcements.push(snapshot.fullscreen ? labels.fullscreen : labels.exitFullscreen);
+  if (hasChanged(previous.isFullscreen, snapshot.isFullscreen)) {
+    announcements.push(snapshot.isFullscreen ? labels.fullscreen : labels.exitFullscreen);
   }
 
-  if (hasChanged(previous.pip, snapshot.pip)) {
-    announcements.push(snapshot.pip ? labels.pictureInPicture : labels.exitPictureInPicture);
+  if (hasChanged(previous.isPictureInPicture, snapshot.isPictureInPicture)) {
+    announcements.push(snapshot.isPictureInPicture ? labels.pictureInPicture : labels.exitPictureInPicture);
   }
 
   if (hasChanged(previous.playbackRate, snapshot.playbackRate)) {
@@ -33,7 +37,11 @@ export function deriveStatusAnnouncement(
   return announcements.length > 0 ? announcements.join('. ') : null;
 }
 
-/** Derives the announcement for changed volume or mute state. */
+/**
+ * Derives the announcement for changed volume or mute state.
+ *
+ * @internal
+ */
 export function deriveVolumeAnnouncement(
   previous: MediaSnapshot,
   snapshot: MediaSnapshot,

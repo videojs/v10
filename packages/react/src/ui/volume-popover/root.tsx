@@ -1,4 +1,6 @@
-import { VolumePopoverCore } from '@videojs/core';
+'use client';
+
+import { VolumePopoverCore, type VolumePopoverState as CoreVolumePopoverState } from '@videojs/core';
 import { selectVolume } from '@videojs/core/dom';
 import type { MediaVolumeState } from '@videojs/media';
 import type { ReactNode } from 'react';
@@ -16,7 +18,7 @@ const unavailableVolume: MediaVolumeState = {
   volumeAvailability: 'unsupported',
   mutedAvailability: 'unsupported',
   setVolume: () => 0,
-  toggleMuted: () => false,
+  setMuted: () => false,
 };
 
 export interface VolumePopoverRootProps extends PopoverRootProps {}
@@ -58,5 +60,5 @@ function VolumePopoverState({ children, ...props }: VolumePopoverRootProps): Rea
 
 export namespace VolumePopoverRoot {
   export type Props = VolumePopoverRootProps;
-  export type State = VolumePopoverCore.State;
+  export type State = CoreVolumePopoverState;
 }

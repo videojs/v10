@@ -57,22 +57,34 @@ export const metadataFeature = definePlayerFeature({
     /** The resolved content title. Set it through the player, not through the store. */
     title: ({ get }): string => get()[USER_TITLE] ?? get()[MEDIA_TITLE] ?? DEFAULT_TITLE,
     /**
-     * The resolved poster URL, independent of the media element's own `poster`. Set it through the player, not through
-     * the store.
+     * The resolved poster URL, independent of the media component's own `poster`. Set it through the player, not
+     * through the store.
      */
     poster: ({ get }): string => get()[USER_POSTER] ?? get()[MEDIA_POSTER] ?? DEFAULT_POSTER,
   },
   attach({ target, signal, set }) {
     const { media } = target;
-    if (!isMediaContentDataCapable(media)) return;
 
-    const sync = () =>
+    const sync = () => {
+      const contentData = isMediaContentDataCapable(media) ? media.contentData : undefined;
+
       set({
-        [MEDIA_TITLE]: media.contentData?.title,
-        [MEDIA_POSTER]: media.contentData?.poster,
+        [MEDIA_TITLE]: contentData?.title,
+        [MEDIA_POSTER]: contentData?.poster,
       });
+    };
 
-    sync();
-    listen(media, 'contentdatachange', sync, { signal });
+    const bind = () => {
+      sync();
+
+      if (!isMediaContentDataCapable(media)) return;
+
+      listen(media, 'contentdatachange', sync, { signal });
+    };
+
+    bind();
+
+    // An adapter can receive its target after the store attaches.
+    listen(media, 'loadstart', bind, { signal });
   },
 });

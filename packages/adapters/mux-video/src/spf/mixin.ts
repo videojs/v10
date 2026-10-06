@@ -9,7 +9,9 @@ import {
   toMuxContentData,
 } from '@videojs/mux';
 import { shallowEqual } from '@videojs/utils/object';
-import type { Constructor, MixinReturn } from '@videojs/utils/types';
+import type { Constructor } from '@videojs/utils/types';
+
+import { createMuxDrmSystems } from '../drm';
 
 export interface MuxAdapterProps {
   src: string;
@@ -38,6 +40,7 @@ export interface MuxAdapterAPI extends MuxAdapterProps {
  *   new value.
  * @fires contentdatachange - Fired when `contentData` changes: the derived URLs with `source`, and the metadata once it
  *   loads. Read `contentData` for the new value.
+ * @internal
  */
 export function MuxMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class MuxImpl extends BaseClass {
@@ -47,8 +50,8 @@ export function MuxMixin<Base extends Constructor<any>>(BaseClass: Base) {
     };
 
     /**
-     * Named on the error copy when this engine can't play a source: the hls.js-backed Mux Media plays the MPEG-TS and
-     * DRM-protected sources that SPF does not, and it backs both `<mux-video>` and `<mux-audio>`.
+     * Named on the error copy when this engine can't play a source: the hls.js-backed Mux Media plays the MPEG-TS
+     * sources that SPF does not, and it backs both `<mux-video>` and `<mux-audio>`.
      *
      * Names the flavor rather than an import path, because one Media is reached through three of them —
      * `@videojs/html`, `@videojs/react`, and this package — and each has a different counterpart. The flavor suffix is
@@ -70,8 +73,9 @@ export function MuxMixin<Base extends Constructor<any>>(BaseClass: Base) {
     }
 
     /**
-     * Media source URL. Setting a Mux stream URL (`https://stream.mux.com/<playback-id>.m3u8?...`) extracts the
-     * playback ID and query params into `source`; other URLs are kept as a plain `source.src`.
+     * Media source URL. Setting a Mux stream URL (`https://stream.mux.com/<playback-id>.m3u8?...`, with or without the
+     * `.m3u8` extension) extracts the playback ID and query params into `source`; other URLs are kept as a plain
+     * `source.src`.
      *
      * Only playback options carry over. Mux identity comes from the URL, and the signed `poster`, `storyboard`, and
      * `drm` tokens are scoped to a playback ID, so carrying them onto a different source would build rejected URLs.
@@ -81,12 +85,14 @@ export function MuxMixin<Base extends Constructor<any>>(BaseClass: Base) {
     }
 
     set src(value: string) {
-      // A URL already describing the current source leaves it alone. The elements
-      // reflect the derived `src` back to the host, and re-deriving would drop the
-      // params a Mux URL does not carry, such as `poster`.
-      if (super.src === value) return;
+      const parsed = parseMuxVideoURL(value);
+      // A URL already describing the current source leaves it alone, compared in
+      // its canonical `.m3u8` form. The elements reflect the derived `src` back to
+      // the host, React re-syncs the authored one on every render, and re-deriving
+      // would drop the params a Mux URL does not carry, such as `poster`.
+      if (super.src === (createMuxVideoURL(parsed) ?? value)) return;
 
-      this.source = parseMuxVideoURL(value) ?? (value ? { src: value } : null);
+      this.source = parsed ?? (value ? { src: value } : null);
     }
 
     /**
@@ -107,14 +113,23 @@ export function MuxMixin<Base extends Constructor<any>>(BaseClass: Base) {
       this.#source = source;
       this.#metadata.reset(source);
 
-      // Refresh the bag before announcing `sourcechange`, because listeners read
-      // `contentData` from that event. Announcing its own change waits until
-      // after, so `src` is in step by the time either event fires.
+      // Refresh the bag first: `sourcechange` comes from the base's own setter
+      // below, and listeners read `contentData` from that event.
       const contentDataChanged = this.#refreshContentData();
 
-      super.src = (source && (createMuxVideoURL(source) ?? source.src)) || '';
+      // Project Mux identity onto the generic source the base understands. A
+      // `drm.token` derives Mux's three license servers here, and entries naming
+      // servers outright override them — the base's resolvers read the result,
+      // so there is one licensing path rather than a Mux-shaped copy of it.
+      const { token: _token, ...named } = source?.drm ?? {};
+      const drm = { ...createMuxDrmSystems(source), ...named };
 
-      this.dispatchEvent?.(new Event('sourcechange'));
+      super.source = source
+        ? {
+            src: (createMuxVideoURL(source) ?? source.src) || '',
+            ...(Object.keys(drm).length > 0 && { drm }),
+          }
+        : null;
 
       if (contentDataChanged) this.dispatchEvent?.(new Event('contentdatachange'));
 
@@ -150,10 +165,23 @@ export function MuxMixin<Base extends Constructor<any>>(BaseClass: Base) {
     }
   }
 
-  // `MixinReturn` sources statics from `Base`, so this mixin's own needs adding
-  // back to the type or callers can't read it.
-  return MuxImpl as unknown as MixinReturn<Base, MuxAdapterAPI> & {
-    readonly alternativeMediaSuggestion: string | undefined;
-    readonly defaultProps: MuxAdapterProps;
-  };
+  // `source` is re-typed rather than intersected with the base's: this mixin
+  // accepts the wider Mux shape, whose `drm` carries a `token` that the generic
+  // key-system map — an index signature over `DrmSystemConfig` — has no place
+  // for. Intersecting the two would make every Mux source unassignable.
+  //
+  // `defaultProps` is dropped from `Base` for the same reason: it is keyed by the
+  // base's props, so leaving it in would reintroduce that `source` intersection
+  // through the static side.
+  //
+  // Statics are otherwise sourced from `Base`, so this mixin's own need adding
+  // back to the type or callers can't read them.
+  return MuxImpl as unknown as Constructor<
+    Omit<InstanceType<Base>, 'source'> & MuxAdapterAPI,
+    ConstructorParameters<Base>
+  > &
+    Omit<Base, 'prototype' | 'defaultProps'> & {
+      readonly alternativeMediaSuggestion: string | undefined;
+      readonly defaultProps: MuxAdapterProps;
+    };
 }

@@ -4,6 +4,8 @@ import {
   ThumbnailDataAttrs,
   type ThumbnailImage,
   type ThumbnailResizeResult,
+  type ThumbnailImageProps,
+  type ThumbnailProps,
 } from '@videojs/core';
 import type { ThumbnailApi } from '@videojs/core/dom';
 import { applyElementProps, applyStateDataAttrs, createThumbnail, selectTextTrack } from '@videojs/core/dom';
@@ -62,12 +64,12 @@ export class ThumbnailElement extends UIElement {
     crossOrigin: { type: String, attribute: 'crossorigin' },
     loading: { type: String },
     fetchPriority: { type: String, attribute: 'fetchpriority' },
-  } satisfies PropertyDeclarationMap<Exclude<keyof ThumbnailCore.Props, 'thumbnails'>>;
+  } satisfies PropertyDeclarationMap<Exclude<keyof (ThumbnailProps & ThumbnailImageProps), 'thumbnails'>>;
 
   time = 0;
-  crossOrigin: ThumbnailCore.Props['crossOrigin'];
-  loading: ThumbnailCore.Props['loading'];
-  fetchPriority: ThumbnailCore.Props['fetchPriority'];
+  crossOrigin: (ThumbnailProps & ThumbnailImageProps)['crossOrigin'];
+  loading: (ThumbnailProps & ThumbnailImageProps)['loading'];
+  fetchPriority: (ThumbnailProps & ThumbnailImageProps)['fetchPriority'];
 
   readonly #core = new ThumbnailCore();
   readonly #shadow = this.attachShadow({ mode: 'open' });
@@ -162,9 +164,11 @@ export class ThumbnailElement extends UIElement {
       this.#thumbnails = this.#externalThumbnails;
     } else if (textTrack !== this.#lastTextTrack) {
       this.#lastTextTrack = textTrack;
+      const thumbnailsTrack = textTrack?.thumbnailsTrack;
+
       this.#thumbnails =
-        textTrack && textTrack.thumbnailCues.length > 0
-          ? mapCuesToThumbnails(textTrack.thumbnailCues, textTrack.thumbnailTrackSrc ?? undefined)
+        thumbnailsTrack && thumbnailsTrack.cues.length > 0
+          ? mapCuesToThumbnails(thumbnailsTrack.cues, thumbnailsTrack.src ?? undefined)
           : [];
     }
 
@@ -206,12 +210,14 @@ export class ThumbnailElement extends UIElement {
   }
 
   /**
-   * Leaving `crossOrigin` unset means "follow the media element", so thumbnails keep working on a CORS-enabled player
+   * Leaving `crossOrigin` unset means "follow the media component", so thumbnails keep working on a CORS-enabled player
    * without a skin having to thread an attribute through. Only the `<track>` path inherits: `thumbnails` set directly
-   * may point at a host that has nothing to do with the media element.
+   * may point at a host that has nothing to do with the media component.
    */
-  #inheritedCrossOrigin(textTrack: MediaTextTrackState | undefined): ThumbnailCore.Props['crossOrigin'] {
-    return this.#externalThumbnails ? undefined : textTrack?.thumbnailTrackCrossOrigin;
+  #inheritedCrossOrigin(
+    textTrack: MediaTextTrackState | undefined
+  ): (ThumbnailProps & ThumbnailImageProps)['crossOrigin'] {
+    return this.#externalThumbnails ? undefined : textTrack?.thumbnailsTrack?.crossOrigin;
   }
 
   /** Sync image attributes from element properties, leaving the ones the author put on the image alone. */

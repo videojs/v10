@@ -7,18 +7,22 @@ import { useAttachMedia } from '../../utils/use-attach-media';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 import { type MediaEventProps, useMediaEvents } from '../../utils/use-media-events';
 import { useMediaInstance } from '../../utils/use-media-instance';
+import { type MediaRefProps, useMediaRef } from '../../utils/use-media-ref';
 import { useSyncProps } from '../../utils/use-sync-props';
 
-export interface TwitchVideoProps extends Partial<TwitchAdapterProps>, MediaEventProps<TwitchAdapter> {
+export interface TwitchVideoProps
+  extends Partial<TwitchAdapterProps>, MediaEventProps<TwitchAdapter>, MediaRefProps<TwitchAdapter> {
+  /** `<video>` spelling of `autoplay`, accepted so markup ports across. An explicit `autoplay` wins. */
+  autoPlay?: boolean | undefined;
   children?: ReactNode;
 }
 
 export const TwitchVideo = forwardRef<HTMLIFrameElement, TwitchVideoProps>(function TwitchVideo(
-  { children, ...rawProps },
+  { children, mediaRef, autoPlay = false, autoplay = autoPlay, ...rawProps },
   ref
 ) {
   const media = useMediaInstance(TwitchAdapter);
-  const props: Partial<TwitchAdapterProps> & Record<string, unknown> = { ...rawProps };
+  const props: Partial<TwitchAdapterProps> & Record<string, unknown> = { ...rawProps, autoplay };
   const [initialSrc] = useState(() =>
     // Server rendering has no `location` to name as the embed's parent, and Twitch
     // refuses to play in a page its URL never named. Rendering no `src` leaves the
@@ -33,8 +37,9 @@ export const TwitchVideo = forwardRef<HTMLIFrameElement, TwitchVideoProps>(funct
     media
   );
   const attachRef = useAttachMedia(media);
+  const exposeRef = useMediaRef(media, mediaRef);
   // Listeners first: `attach()` dispatches `loadstart` synchronously.
-  const composedRef = useComposedRefs(eventsRef, attachRef, ref);
+  const composedRef = useComposedRefs(eventsRef, attachRef, exposeRef, ref);
 
   return (
     <iframe

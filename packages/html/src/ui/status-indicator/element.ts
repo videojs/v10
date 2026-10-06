@@ -1,9 +1,11 @@
 import {
   createInputIndicatorLabels,
+  type DeriveCustomStatus,
   getStatusIndicatorDisplayValue,
   type InputAction,
   StatusIndicatorCore,
   StatusIndicatorDataAttrs,
+  type StatusIndicatorState,
 } from '@videojs/core';
 import { createTransition } from '@videojs/core/dom';
 import type { PropertyDeclarationMap } from '@videojs/element';
@@ -13,7 +15,7 @@ import { I18nController } from '../../i18n/controller';
 import { InputIndicatorElement, type InputIndicatorOptions } from '../input-indicator/element';
 import { LiveIndicator } from '../input-indicator/live-indicator';
 
-export class StatusIndicatorElement extends InputIndicatorElement<StatusIndicatorCore.State> {
+export class StatusIndicatorElement extends InputIndicatorElement<StatusIndicatorState> {
   static readonly tagName = 'media-status-indicator';
 
   static override properties = {
@@ -33,6 +35,20 @@ export class StatusIndicatorElement extends InputIndicatorElement<StatusIndicato
     render: renderStatusIndicator,
   });
   readonly #options = { replayOnUpdate: false } satisfies InputIndicatorOptions;
+  #deriveCustomStatus: DeriveCustomStatus | undefined;
+
+  /**
+   * Derives display details for actions without built-in feedback, such as custom hotkey actions. Called only when the
+   * built-in derivation returns `null`. Set as a JavaScript property; it has no attribute.
+   */
+  get deriveCustomStatus(): DeriveCustomStatus | undefined {
+    return this.#deriveCustomStatus;
+  }
+
+  set deriveCustomStatus(value: DeriveCustomStatus | undefined) {
+    this.#deriveCustomStatus = value;
+    this.requestUpdate();
+  }
 
   protected get core() {
     return this.#core;
@@ -55,6 +71,7 @@ export class StatusIndicatorElement extends InputIndicatorElement<StatusIndicato
       actions: parseActions(this.actions),
       closeDelay: this.closeDelay,
       labels: createInputIndicatorLabels(this.#i18n.value),
+      deriveCustomStatus: this.#deriveCustomStatus,
     });
   }
 }
@@ -63,7 +80,7 @@ function parseActions(actions: string | undefined): readonly InputAction[] | und
   return actions?.split(/[\s,]+/).filter(Boolean) as readonly InputAction[] | undefined;
 }
 
-function renderStatusIndicator(element: HTMLElement, state: StatusIndicatorCore.State): void {
+function renderStatusIndicator(element: HTMLElement, state: StatusIndicatorState): void {
   const value = element.querySelector('media-status-indicator-value');
   if (!value) return;
 

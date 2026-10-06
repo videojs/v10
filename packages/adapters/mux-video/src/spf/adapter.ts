@@ -10,12 +10,12 @@ import { type MuxAdapterProps, MuxMixin } from './mixin';
  * name. It carries no `engine` or `preferPlayback`: SPF publishes no engine-shaped config for a consumer to pass, so
  * the source is Mux identity and nothing else.
  *
- * `source.drm` is accepted but inert. SPF prunes encrypted renditions and reports unsupported DRM, and
- * `alternativeMediaSuggestion` points at the hls.js-backed import, so a protected source fails with copy that says
- * where to go.
+ * `source.drm` licenses playback: a `drm.token` derives Mux's three license servers, and entries naming servers
+ * outright override them. A source carrying neither prunes its encrypted renditions and reports unsupported DRM,
+ * exactly as an engine with no EME does.
  */
 export class MuxVideoAdapter extends MuxMixin(HlsVideoAdapter) {
-  static override readonly defaultProps: Omit<HlsVideoAdapterProps, 'src'> & MuxAdapterProps = {
+  static override readonly defaultProps: Omit<HlsVideoAdapterProps, 'src' | 'source'> & MuxAdapterProps = {
     ...HlsVideoAdapter.defaultProps,
     src: '',
     source: null,

@@ -4,6 +4,7 @@ import type {
   PartiallyResolvedTrack,
   Presentation,
   ResolvedTrack,
+  SelectionSet,
   TextTrack,
   TrackType,
   VideoTrack,
@@ -25,6 +26,24 @@ export function getTracksByType(
   type: TrackType
 ): readonly (PartiallyResolvedTrack | ResolvedTrack)[] {
   return presentation.selectionSets?.find(({ type: t }) => t === type)?.switchingSets[0]?.tracks ?? [];
+}
+
+/**
+ * Every track across the given selection sets, every switching set included — unlike {@link getTracksByType}, which
+ * reads only the first switching set of one type. Takes the selection-set list rather than the presentation so a caller
+ * that orders the sets first (`getOrderedCdnIds`) walks them the same way. Tracks may be partially or fully resolved;
+ * callers narrow as needed.
+ */
+export function getAllTracks(selectionSets: readonly SelectionSet[]): (PartiallyResolvedTrack | ResolvedTrack)[] {
+  const tracks: (PartiallyResolvedTrack | ResolvedTrack)[] = [];
+
+  for (const selectionSet of selectionSets) {
+    for (const switchingSet of selectionSet.switchingSets) {
+      for (const track of switchingSet.tracks) tracks.push(track);
+    }
+  }
+
+  return tracks;
 }
 
 /**
@@ -138,6 +157,52 @@ export function getCodecFamilies(track: { codecs?: string[] }): readonly string[
   if (!track.codecs?.length) return undefined;
 
   return [...new Set(track.codecs.map(getCodecFamily))];
+}
+
+/**
+ * A track's MIME codec string — `mimeType` plus its `codecs` — the form `MediaSource.isTypeSupported`,
+ * `addSourceBuffer` and EME's `contentType` all take. Works on partially-resolved tracks: both fields come from the
+ * multivariant playlist and are available before media-playlist resolution.
+ *
+ * The parameter is `Pick<Track, 'mimeType' | 'codecs'>` with `mimeType` required: a track without one has nothing to
+ * build from, and callers guard that before asking.
+ *
+ * @example
+ *   buildMimeCodec({ mimeType: 'video/mp4', codecs: ['avc1.42E01E'] });
+ *   // => 'video/mp4; codecs="avc1.42E01E"'
+ */
+export function buildMimeCodec(track: { mimeType: string; codecs?: string[] }): string {
+  const codecString = track.codecs?.join(',') ?? '';
+
+  return `${track.mimeType}; codecs="${codecString}"`;
+}
+
+/**
+ * The distinct MIME codec strings across a presentation's audio and video tracks, grouped by type. Includes unresolved
+ * tracks, since `CODECS` comes from the multivariant, and skips tracks with no `mimeType` or no codecs, which have
+ * nothing to build from. Text tracks carry no codecs and are excluded. An ABR ladder collapses to one entry per type.
+ *
+ * Today's consumer is key-system negotiation, which offers these as the capabilities a CDM is asked to support; nothing
+ * about the computation is specific to it.
+ */
+export function mimeCodecsByType(presentation: MaybeResolvedPresentation | undefined): {
+  video: string[];
+  audio: string[];
+} {
+  const video = new Set<string>();
+  const audio = new Set<string>();
+
+  for (const track of getAllTracks(presentation?.selectionSets ?? [])) {
+    if (track.type !== 'video' && track.type !== 'audio') continue;
+
+    if (!track.mimeType || !track.codecs?.length) continue;
+
+    const bucket = track.type === 'video' ? video : audio;
+
+    bucket.add(buildMimeCodec({ mimeType: track.mimeType, codecs: track.codecs }));
+  }
+
+  return { video: [...video], audio: [...audio] };
 }
 
 /**

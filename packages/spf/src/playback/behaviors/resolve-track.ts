@@ -4,6 +4,7 @@ import { computed, peek, type ReadonlySignal, type Signal, update } from '../../
 import { when } from '../../core/signals/when';
 import { RecurringRunner, type Reschedule, runOnce, Task } from '../../core/tasks/task';
 import { NON_FMP4_CONTAINER_MIMES, parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
+import type { ResolveKeyUri } from '../../media/hls/resolve-url';
 import type { MaybeResolvedPresentation, PartiallyResolvedTrack, ResolvedTrack } from '../../media/types';
 import { deriveStreamType, getMediaPlaylistMetadata, isResolvedPresentation, isResolvedTrack } from '../../media/types';
 import type { GetCdnId } from '../../media/utils/cdn';
@@ -68,6 +69,8 @@ interface TrackResolutionConfig<K extends SelectedTrackKey> {
   reschedule?: Reschedule<ResolvedTrack>;
   /** Report conditions found in the parsed playlist (see `primitives/report-track-conditions`); absent → report nothing. */
   reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
+  /** `EXT-X-KEY` URI handling; absent → `parseMediaPlaylist`'s default. */
+  resolveKeyUri?: ResolveKeyUri;
 }
 
 /** Engine-config slice each `resolve*` behavior reads to build its failover- decorated playlist fetch. */
@@ -80,18 +83,13 @@ interface ResolveTrackConfig {
   reschedule?: Reschedule<ResolvedTrack>;
   /** Playlist-derived condition reporting (see `primitives/report-track-conditions`). */
   reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
+  /** `EXT-X-KEY` URI handling; absent → `parseMediaPlaylist`'s default. */
+  resolveKeyUri?: ResolveKeyUri;
 }
 
 function setupTrackResolution<K extends SelectedTrackKey>({
   state,
-  config: {
-    selectedKey,
-    findTrackToResolve,
-    fetchResolvableText = defaultFetchResolvableText,
-    gateFirstParse,
-    reschedule,
-    reportUnsupportedTrackConditions,
-  },
+  config,
 }: {
   // Widened with the optional `errors` slot: reporting writes through it without
   // the behavior declaring ownership, and no-ops when `collectErrors` isn't
@@ -99,6 +97,16 @@ function setupTrackResolution<K extends SelectedTrackKey>({
   state: ResolveTrackStateMap<K> & ErrorEmitterState;
   config: TrackResolutionConfig<K>;
 }) {
+  const {
+    selectedKey,
+    findTrackToResolve,
+    fetchResolvableText = defaultFetchResolvableText,
+    gateFirstParse,
+    reschedule,
+    reportUnsupportedTrackConditions,
+    resolveKeyUri,
+  } = config;
+
   // Recurrence lives in the runner: with a `reschedule` (live) it re-runs the
   // task until the policy stops; `runOnce` (VOD) runs it exactly once. Single-
   // slot — a selection change re-schedules (abort-and-replace).
@@ -208,14 +216,16 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   const previous = live ? findTrackToResolve(live, trackId) : undefined;
                   if (!previous) throw new Error('resolve-track: selected track not found');
 
-                  const mediaTrack = parseMediaPlaylist(text, previous);
+                  const mediaTrack = parseMediaPlaylist(text, previous, { resolveKeyUri });
 
                   // Report what the parse revealed about this rendition, before
                   // committing it. Causes only — one unplayable rendition doesn't
                   // make the source unplayable, so the verdict stays with
-                  // track-switching's empty-candidate branch.
+                  // track-switching's empty-candidate branch. The reporter gets
+                  // the whole config alongside the track, so an extended one
+                  // reads its own props off it rather than closing over them.
                   if (reportUnsupportedTrackConditions) {
-                    for (const condition of reportUnsupportedTrackConditions(mediaTrack as ResolvedTrack)) {
+                    for (const condition of reportUnsupportedTrackConditions(mediaTrack as ResolvedTrack, config)) {
                       emitError(state, condition);
                     }
                   }

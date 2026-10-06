@@ -1,0 +1,14 @@
+---
+import { twMerge } from '@/utils/twMerge';
+import { STEPS_CLASS } from './DynamicSteps';
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<ol class={twMerge(STEPS_CLASS, className)}>
+  <slot />
+</ol>

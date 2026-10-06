@@ -77,10 +77,11 @@ export function diagnoseCompiledCandidate(
   css: string,
   groupOwners: ReadonlySet<string>
 ): readonly StyleDiagnostic[] {
-  let hasRoot = false;
   let scopeEscape = false;
   let complex = false;
 
+  // Tailwind nests variants under the candidate class (`&[data-open]`) or flattens them onto it
+  // (`.candidate[data-open]`), depending on whether the candidate also sets declarations of its own.
   transform({
     filename: 'candidate.css',
     code: encoder.encode(css),
@@ -88,12 +89,9 @@ export function diagnoseCompiledCandidate(
       Rule: {
         style(styleRule) {
           for (const selector of styleRule.value.selectors) {
-            if (isCandidateRoot(selector, candidate)) {
-              hasRoot = true;
-              continue;
-            }
+            if (isCandidateRoot(selector, candidate)) continue;
 
-            if (!selector.some((component) => component.type === 'nesting')) scopeEscape = true;
+            if (!isAnchoredToCandidate(selector, candidate)) scopeEscape = true;
 
             if (selectorIsComplex(selector, groupOwners)) complex = true;
           }
@@ -104,7 +102,7 @@ export function diagnoseCompiledCandidate(
 
   const diagnostics: StyleDiagnostic[] = [];
 
-  if (!hasRoot || scopeEscape) diagnostics.push(createDiagnostic('VJSC_STYLE_SCOPE_ESCAPE', rule, [candidate]));
+  if (scopeEscape) diagnostics.push(createDiagnostic('VJSC_STYLE_SCOPE_ESCAPE', rule, [candidate]));
 
   if (complex) diagnostics.push(createDiagnostic('VJSC_STYLE_COMPLEX_SELECTOR', rule, [candidate]));
 
@@ -306,6 +304,12 @@ function splitCandidate(candidate: string): { readonly variants: readonly string
 
 function isCandidateRoot(selector: Selector, candidate: string): boolean {
   return selector.length === 1 && selector[0]?.type === 'class' && selector[0].name === candidate;
+}
+
+function isAnchoredToCandidate(selector: Selector, candidate: string): boolean {
+  return selector.some(
+    (component) => component.type === 'nesting' || (component.type === 'class' && component.name === candidate)
+  );
 }
 
 function selectorIsComplex(selector: Selector, groupOwners: ReadonlySet<string>): boolean {

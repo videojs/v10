@@ -17,6 +17,7 @@ const reactPlugins = react() as Plugin[];
 const config: ViteUserConfig = {
   plugins: [demoPlaceholderPlugin(), ...reactPlugins],
   test: {
+    clearMocks: false,
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test-setup.ts'],
@@ -32,41 +33,30 @@ const config: ViteUserConfig = {
       'api-docs:generate': {
         command: 'tsx scripts/api-docs-builder/src/index.ts',
         dependsOn: workspaceTaskDependencies(),
-        input: [
-          // Keep the extractor's workspace-wide TypeScript inputs explicit.
-          // Automatic tracking also observes unrelated generated directories
-          // while Vite/Astro load this config, causing false cache misses.
-          'scripts/api-docs-builder/**',
-          'src/utils/api-reference-overrides.ts',
-          { pattern: 'package.json', base: 'workspace' },
-          { pattern: 'pnpm-lock.yaml', base: 'workspace' },
-          { pattern: 'tsconfig.base.json', base: 'workspace' },
-          {
-            pattern:
-              'packages/{cdn,core,dash.js,hls.js,html,media,mux-data,react,shaka,spf,utils,vimeo,wistia}/package.json',
-            base: 'workspace',
-          },
-          {
-            pattern: 'packages/{cdn,core,dash.js,hls.js,html,media,mux-data,react,shaka,spf,utils,vimeo,wistia}/src/**',
-            base: 'workspace',
-          },
-          { pattern: '!packages/**/*.tsbuildinfo', base: 'workspace' },
-          { pattern: '!packages/cdn/src/locales', base: 'workspace' },
-          { pattern: '!packages/cdn/src/locales/**', base: 'workspace' },
-        ],
-        output: [
-          'src/content/generated-component-reference/**',
-          'src/content/generated-util-reference/**',
-          'src/content/generated-feature-reference/**',
-          'src/content/generated-media-reference/**',
-          'src/content/generated-preset-reference/**',
-        ],
-      },
-      'cdn-manifest': {
-        command: 'tsx scripts/build-cdn-manifest.ts',
-        dependsOn: workspaceTaskDependencies('build:cdn'),
-        input: cachedTaskInputs,
-        output: ['src/content/cdn-media.json'],
+        cache: {
+          input: [
+            // Keep the extractor's workspace-wide TypeScript inputs explicit.
+            // Automatic tracking also observes unrelated generated directories
+            // while Vite/Astro load this config, causing false cache misses.
+            'scripts/api-docs-builder/**',
+            'src/utils/api-reference-overrides.ts',
+            { pattern: 'package.json', base: 'workspace' },
+            { pattern: 'pnpm-lock.yaml', base: 'workspace' },
+            { pattern: 'tsconfig.base.json', base: 'workspace' },
+            { pattern: 'packages/**/package.json', base: 'workspace' },
+            { pattern: 'packages/**/src/**', base: 'workspace' },
+            { pattern: '!packages/**/*.tsbuildinfo', base: 'workspace' },
+            { pattern: '!packages/cdn/src/locales', base: 'workspace' },
+            { pattern: '!packages/cdn/src/locales/**', base: 'workspace' },
+          ],
+          output: [
+            'src/content/generated-component-reference/**',
+            'src/content/generated-util-reference/**',
+            'src/content/generated-feature-reference/**',
+            'src/content/generated-media-reference/**',
+            'src/content/generated-preset-reference/**',
+          ],
+        },
       },
       build: {
         // Astro observes pnpm's selector-specific lifecycle metadata and host
@@ -74,20 +64,22 @@ const config: ViteUserConfig = {
         // them for cross-task cache reuse.
         command:
           "SHLVL=0 XPC_SERVICE_NAME=0 npm_lifecycle_event=vite-plus npm_lifecycle_script='astro build' astro build",
-        dependsOn: ['api-docs:generate', 'cdn-manifest'],
-        // Astro regenerates and consumes collection schemas during one build.
-        // They are tool-managed state rather than stable inputs or outputs.
-        input: [...cachedTaskInputs, '!.astro/**', '!.netlify/**'],
-        output: [...cachedTaskOutputs, '!.astro/**', '!.netlify/**'],
-        env: [
-          'OAUTH_CLIENT_ID',
-          'OAUTH_CLIENT_SECRET',
-          'OAUTH_REDIRECT_URI',
-          'OAUTH_URL',
-          'MUX_API_URL',
-          'SESSION_COOKIE_PASSWORD',
-          'SENTRY_AUTH_TOKEN',
-        ],
+        dependsOn: ['api-docs:generate'],
+        cache: {
+          // Astro regenerates and consumes collection schemas during one build.
+          // They are tool-managed state rather than stable inputs or outputs.
+          input: [...cachedTaskInputs, '!.astro/**', '!.netlify/**'],
+          output: [...cachedTaskOutputs, '!.astro/**', '!.netlify/**'],
+          env: [
+            'OAUTH_CLIENT_ID',
+            'OAUTH_CLIENT_SECRET',
+            'OAUTH_REDIRECT_URI',
+            'OAUTH_URL',
+            'MUX_API_URL',
+            'SESSION_COOKIE_PASSWORD',
+            'SENTRY_AUTH_TOKEN',
+          ],
+        },
       },
       dev: {
         // Serves whatever generated content and package builds already exist. Depending on
@@ -100,7 +92,7 @@ const config: ViteUserConfig = {
       'dev:prepare': {
         command: 'node -e ""',
         cache: false,
-        dependsOn: ['api-docs:generate', 'cdn-manifest'],
+        dependsOn: ['api-docs:generate'],
       },
       'test:ci': {
         command: 'pnpm test',

@@ -2,8 +2,6 @@
 
 [![package-badge]][package]
 
-> **⚠️ Release candidate** Close to stable. Adoption in real projects encouraged.
-
 ## Community
 
 If you need help with anything related to Video.js 10, or if you'd like to casually chat with other
@@ -14,7 +12,7 @@ members:
 
 ## License
 
-[Apache-2.0](./LICENSE)
+[Apache-2.0](../../LICENSE)
 
 [package]: https://www.npmjs.com/package/@videojs/utils
 [package-badge]: https://img.shields.io/npm/v/@videojs/utils?label=@videojs/utils

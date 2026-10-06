@@ -1,16 +1,25 @@
-'use client';
-
-export type { FlatTranslations, Locale, TranslationParams, Translations, Translator } from '@videojs/core/i18n';
+export type {
+  FlatTranslations,
+  Locale,
+  TextParams,
+  TranslationParams,
+  Translations,
+  Translator,
+} from '@videojs/core/i18n';
 
 export {
   createTranslator,
   findLocaleKeys,
   getI18nTranslations,
+  getLocaleKey,
   hasRegisteredLocale,
   isText,
   LOCALES,
+  loadLocale,
   onI18nRegistryChange,
   registerI18n,
+  resolveTranslation,
+  translateText,
 } from '@videojs/core/i18n';
 
 export { I18nContext, useLocale, useTranslator } from './context';

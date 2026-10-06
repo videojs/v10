@@ -22,7 +22,7 @@ export default styles({
       ],
       variants: {
         default: 'data-[orientation=horizontal]:min-w-18 data-[orientation=vertical]:h-18',
-        minimal: 'data-[orientation=horizontal]:min-w-20 data-[orientation=vertical]:h-20',
+        neutral: 'data-[orientation=horizontal]:min-w-20 data-[orientation=vertical]:h-20',
       },
     },
     track: {
@@ -51,10 +51,10 @@ export default styles({
     },
     thumb: {
       utilities: [
-        'absolute z-10 top-1/2 left-(--media-slider-fill) size-3 -translate-x-1/2 -translate-y-1/2 rounded-media-control bg-white',
+        'absolute z-10 top-1/2 left-(--media-slider-fill,0%) size-3 -translate-x-1/2 -translate-y-1/2 rounded-media-control bg-white',
         'select-none transition-[opacity,height,width,outline-offset,scale] duration-media-slider ease-out',
         'group-data-dragging/slider:scale-90',
-        'data-[orientation=vertical]:top-[calc(100%-var(--media-slider-fill))] data-[orientation=vertical]:left-1/2',
+        'data-[orientation=vertical]:top-[calc(100%-var(--media-slider-fill,0%))] data-[orientation=vertical]:left-1/2',
         'group-data-dragging/slider:data-[orientation=horizontal]:left-(--media-slider-pointer)',
         'group-data-dragging/slider:data-[orientation=vertical]:top-[calc(100%-var(--media-slider-pointer))]',
         'outline-transparent shadow-media-thumb',
@@ -67,7 +67,7 @@ export default styles({
           'after:shadow-[0_0_0_2px_currentColor] after:transition-[opacity,scale] after:duration-media-base after:ease-out',
           'focus-visible:after:scale-100 focus-visible:after:opacity-100',
         ],
-        minimal: ['focus-ring-media', 'focus-visible:outline-media-ring focus-visible:outline-offset-2'],
+        neutral: ['focus-ring-media', 'focus-visible:outline-media-ring focus-visible:outline-offset-2'],
       },
     },
     preview: {
@@ -85,7 +85,7 @@ export default styles({
           '@min-[30rem]/media-root:[--media-slider-preview-max-width:min(--spacing(40),100cqi)]',
           'before:top-1/2 before:left-1/2 before:size-1 before:rounded-media-control before:bg-current',
         ],
-        minimal: [
+        neutral: [
           'min-w-full',
           '[--media-slider-preview-max-width:min(--spacing(28),100cqi)]',
           'media-lg:[--media-slider-preview-max-width:min(--spacing(36),100cqi)]',

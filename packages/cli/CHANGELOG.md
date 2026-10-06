@@ -1,5 +1,83 @@
 # Changelog
 
+## [10.0.1](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0...@videojs/cli@10.0.1) (2026-10-02)
+
+
+### Miscellaneous Chores
+
+* **@videojs/cli:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/installation bumped to 10.0.1
+    * @videojs/utils bumped to 10.0.1
+
+## [10.0.0](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-rc.5...@videojs/cli@10.0.0) (2026-10-01)
+
+
+### Features
+
+* **packages:** release Video.js 10.0.0 as stable ([#3058](https://github.com/videojs/v10/issues/3058)) ([37477fc](https://github.com/videojs/v10/commit/37477fc187f36fc2ab3cbc0db7c1b2d3fc6bcca9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/installation bumped to 10.0.0
+    * @videojs/utils bumped to 10.0.0
+
+## [10.0.0-rc.5](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-rc.4...@videojs/cli@10.0.0-rc.5) (2026-10-01)
+
+
+### Bug Fixes
+
+* **packages:** name Video.js 10 in npm descriptions and keywords ([#2995](https://github.com/videojs/v10/issues/2995)) ([8fda9a3](https://github.com/videojs/v10/commit/8fda9a36bede5cf92d446e25e56a96625cd60bc9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/installation bumped to 10.0.0-rc.5
+    * @videojs/utils bumped to 10.0.0-rc.5
+
+## [10.0.0-rc.4](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-rc.3...@videojs/cli@10.0.0-rc.4) (2026-09-26)
+
+
+### Bug Fixes
+
+* **installation:** default a plain HTML page to CDN scripts ([#2983](https://github.com/videojs/v10/issues/2983)) ([f91a8dd](https://github.com/videojs/v10/commit/f91a8dd0122e6288177409d227a3b6dee4492739))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/installation bumped to 10.0.0-rc.4
+    * @videojs/utils bumped to 10.0.0-rc.4
+
+## [10.0.0-rc.3](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-rc.2...@videojs/cli@10.0.0-rc.3) (2026-09-25)
+
+
+### Features
+
+* **cli:** route installation docs by method ([#2877](https://github.com/videojs/v10/issues/2877)) ([b5a2f33](https://github.com/videojs/v10/commit/b5a2f331402ed3f2f30fbfb2c477f764bab0937e))
+* **installation:** add versioned agent instructions ([#2948](https://github.com/videojs/v10/issues/2948)) ([a602f22](https://github.com/videojs/v10/commit/a602f220aedf9c2800983daade6ca298ada007ab))
+* **site:** redesign docs site and reorganize doc sections ([#2645](https://github.com/videojs/v10/issues/2645)) ([db116f7](https://github.com/videojs/v10/commit/db116f7bb98608aca43549a1fed806ad911904e6))
+* **site:** reorganize installation guides ([#2848](https://github.com/videojs/v10/issues/2848)) ([8aff36d](https://github.com/videojs/v10/commit/8aff36dc8fb3eb73b6a393727fe76714543c30b5))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/installation bumped to 10.0.0-rc.3
+    * @videojs/utils bumped to 10.0.0-rc.3
+
 ## [10.0.0-rc.2](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-rc.1...@videojs/cli@10.0.0-rc.2) (2026-09-09)
 
 

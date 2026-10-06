@@ -16,7 +16,15 @@ export class HTMLMediaAdapter {
   destroy(): void {}
 
   // Internal — excluded by the `_` prefix.
-  _forward(): void {}
+  _forward(): void {
+    this.#privateMethod();
+  }
+
+  // ECMAScript-private — excluded even though staticName can read the key.
+  #privateMethod(): void {}
+
+  /** @internal */
+  internalMethod(): void {}
 
   // Accessor — excluded from `methods` (it's a property, not a method). Native
   // member, but re-declared on engine hosts → deduped out of nativeProperties.

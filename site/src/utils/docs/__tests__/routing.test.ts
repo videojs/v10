@@ -1,7 +1,16 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
 import type { Guide, Sidebar } from '../../../types/docs';
-import { getFrameworkFromDocsPath, resolveDocsLinkUrl, resolveFrameworkChange, resolveIndexRedirect } from '../routing';
+import {
+  buildAgnosticDocsUrl,
+  getFrameworkFromDocsPath,
+  getFrameworkFromDocsUrl,
+  isDocsGuideActive,
+  resolveDocsHref,
+  resolveDocsLinkUrl,
+  resolveFrameworkChange,
+  resolveIndexRedirect,
+} from '../routing';
 
 // Mock the validation functions from @/types/docs to use mock framework/style configuration
 // Note: This mock is hoisted, so we define MOCK_FRAMEWORK_STYLES inside the factory
@@ -98,10 +107,37 @@ describe('routing utilities', () => {
       expect(getFrameworkFromDocsPath('/docs/framework/html')).toBe('html');
     });
 
+    it('returns the framework from canonical installation routes', () => {
+      expect(getFrameworkFromDocsPath('/docs/guides/installation/react')).toBe('react');
+      expect(getFrameworkFromDocsPath('/docs/guides/installation/html')).toBe('html');
+      expect(getFrameworkFromDocsPath('/docs/guides/installation/vue')).toBe('html');
+      expect(getFrameworkFromDocsPath('/docs/guides/installation/svelte')).toBe('html');
+      expect(getFrameworkFromDocsPath('/docs/guides/installation/cdn')).toBe('html');
+      expect(getFrameworkFromDocsPath('/docs/guides/installation/shadcn')).toBeNull();
+    });
+
     it('ignores framework-agnostic and invalid routes', () => {
       expect(getFrameworkFromDocsPath('/docs/guides/installation')).toBeNull();
       expect(getFrameworkFromDocsPath('/docs/framework/vue/guides/installation')).toBeNull();
       expect(getFrameworkFromDocsPath('/blog/framework/react')).toBeNull();
+    });
+  });
+
+  describe('getFrameworkFromDocsUrl', () => {
+    it('returns the framework selected on the Shadcn route', () => {
+      expect(
+        getFrameworkFromDocsUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=html'))
+      ).toBe('html');
+      expect(
+        getFrameworkFromDocsUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=react'))
+      ).toBe('react');
+    });
+
+    it('does not invent a Shadcn framework when the query is missing or invalid', () => {
+      expect(getFrameworkFromDocsUrl(new URL('https://videojs.org/docs/guides/installation/shadcn'))).toBeNull();
+      expect(
+        getFrameworkFromDocsUrl(new URL('https://videojs.org/docs/guides/installation/shadcn?framework=vue'))
+      ).toBeNull();
     });
   });
 
@@ -116,10 +152,7 @@ describe('routing utilities', () => {
           mockSidebar
         );
 
-        expect(result.selectedFramework).toBe('react');
-        expect(result.selectedSlug).toBeTruthy();
-        expect(result.url).toContain('/docs/framework/react/');
-        expect(result.reason).toContain('params.framework');
+        expect(result.url).toBe('/docs/framework/react/concepts/everyone');
       });
 
       it('should throw error for invalid framework param', () => {
@@ -142,8 +175,7 @@ describe('routing utilities', () => {
           mockSidebar
         );
 
-        expect(result.selectedFramework).toBe('html');
-        expect(result.reason).toContain('preferences.framework');
+        expect(result.url).toBe('/docs/framework/html/concepts/everyone');
       });
 
       it('should use default framework when no preferences', () => {
@@ -152,8 +184,7 @@ describe('routing utilities', () => {
           params: {},
         });
 
-        expect(result.selectedFramework).toBe('react'); // DEFAULT_FRAMEWORK
-        expect(result.reason).toContain('default framework');
+        expect(result.url).toBe('/docs/guides/installation/react');
       });
 
       it('should use default framework when framework preference invalid', () => {
@@ -162,29 +193,28 @@ describe('routing utilities', () => {
           params: {},
         });
 
-        expect(result.selectedFramework).toBe('react'); // DEFAULT_FRAMEWORK
-        expect(result.reason).toContain('default framework');
+        expect(result.url).toBe('/docs/guides/installation/react');
       });
     });
 
     describe('slug selection', () => {
       it('should always select a valid slug for the framework', () => {
-        const result = resolveIndexRedirect({
+        const result = resolveIndexRedirect(
+          {
+            preferences: { framework: 'html' },
+            params: {},
+          },
+          [guideReactOnly, guideHtmlOnly]
+        );
+
+        expect(result.url).toBe('/docs/framework/html/guides/html-only');
+
+        const realSidebarResult = resolveIndexRedirect({
           preferences: { framework: 'react' },
           params: {},
         });
 
-        expect(result.selectedSlug).toBeTruthy();
-        expect(typeof result.selectedSlug).toBe('string');
-      });
-
-      it('should build correct URL', () => {
-        const result = resolveIndexRedirect({
-          preferences: { framework: 'react' },
-          params: {},
-        });
-
-        expect(result.url).toBe(`/docs/framework/react/${result.selectedSlug}`);
+        expect(realSidebarResult.url).toBe('/docs/guides/installation/react');
       });
     });
   });
@@ -201,10 +231,8 @@ describe('routing utilities', () => {
           mockSidebar
         );
 
-        expect(result.selectedSlug).toBe('concepts/everyone');
-        expect(result.slugChanged).toBe(false);
         expect(result.shouldReplace).toBe(true);
-        expect(result.reason).toContain('kept slug');
+        expect(result.url).toBe('/docs/framework/react/concepts/everyone');
       });
 
       it('should change slug and not use replace when slug not visible in new framework', () => {
@@ -217,10 +245,8 @@ describe('routing utilities', () => {
           mockSidebar
         );
 
-        expect(result.selectedSlug).not.toBe('guides/html-only');
-        expect(result.slugChanged).toBe(true);
+        expect(result.url).toBe('/docs/framework/react/concepts/everyone');
         expect(result.shouldReplace).toBe(false);
-        expect(result.reason).toContain('changed slug');
       });
 
       it('should change slug when guide inherits framework restriction from section', () => {
@@ -233,8 +259,7 @@ describe('routing utilities', () => {
           mockSidebar
         );
 
-        expect(result.selectedSlug).not.toBe('components/html-controller');
-        expect(result.slugChanged).toBe(true);
+        expect(result.url).toBe('/docs/framework/react/concepts/everyone');
         expect(result.shouldReplace).toBe(false);
       });
     });
@@ -279,10 +304,7 @@ describe('routing utilities', () => {
           mockSidebar
         );
 
-        expect(result.selectedFramework).toBe('react');
-        expect(result.selectedSlug).toBe('concepts/everyone');
-        expect(result.priorityLevel).toBe(1);
-        expect(result.reason).toContain('Priority 1');
+        expect(result.url).toBe('/docs/framework/react/concepts/everyone');
       });
 
       it('should use priority 1 for guide with matching framework restriction', () => {
@@ -294,8 +316,7 @@ describe('routing utilities', () => {
           mockSidebar
         );
 
-        expect(result.selectedFramework).toBe('react');
-        expect(result.priorityLevel).toBe(1);
+        expect(result.url).toBe('/docs/framework/react/concepts/react-only');
       });
     });
 
@@ -309,10 +330,7 @@ describe('routing utilities', () => {
           mockSidebar
         );
 
-        expect(result.selectedFramework).toBe('react');
-        expect(result.selectedSlug).toBe('concepts/react-only');
-        expect(result.priorityLevel).toBe(2);
-        expect(result.reason).toContain('Priority 2');
+        expect(result.url).toBe('/docs/framework/react/concepts/react-only');
       });
 
       it('should fall back when guide inherits framework restriction from section', () => {
@@ -324,8 +342,7 @@ describe('routing utilities', () => {
           mockSidebar
         );
 
-        expect(result.selectedFramework).toBe('react');
-        expect(result.priorityLevel).toBe(2);
+        expect(result.url).toBe('/docs/framework/react/components/react-hook');
       });
     });
 
@@ -339,7 +356,7 @@ describe('routing utilities', () => {
           mockSidebar
         );
 
-        expect(result.selectedSlug).toBe('concepts/everyone');
+        expect(result.url).toBe('/docs/framework/html/concepts/everyone');
       });
     });
 
@@ -382,6 +399,49 @@ describe('routing utilities', () => {
 
         expect(result.url).toBe('/docs/framework/react/concepts/everyone');
       });
+    });
+  });
+
+  describe('canonical installation routes', () => {
+    it('builds the preference-aware installation landing page', () => {
+      expect(buildAgnosticDocsUrl()).toBe('/docs');
+      expect(buildAgnosticDocsUrl(null)).toBe('/docs');
+      expect(buildAgnosticDocsUrl('guides/installation')).toBe('/docs/guides/installation');
+    });
+
+    it('keeps installation active across every installation route', () => {
+      expect(isDocsGuideActive('react', 'guides/installation', '/docs/guides/installation/react')).toBe(true);
+      expect(isDocsGuideActive('react', 'guides/installation', '/docs/guides/installation/shadcn')).toBe(true);
+      expect(isDocsGuideActive('html', 'guides/installation', '/docs/guides/installation/cdn')).toBe(true);
+      expect(isDocsGuideActive('html', 'guides/installation', '/docs/guides/installation/vue')).toBe(true);
+    });
+
+    it('still requires an exact URL for other guides', () => {
+      expect(isDocsGuideActive('html', 'guides/architecture', '/docs/framework/html/guides/architecture')).toBe(true);
+      expect(isDocsGuideActive('html', 'guides/architecture', '/docs/guides/installation/html')).toBe(false);
+    });
+
+    it('resolves the canonical framework and method URLs', () => {
+      expect(resolveDocsHref({ slug: null, framework: null })).toBe('/docs');
+      expect(resolveDocsHref({ slug: 'guides/installation', framework: null })).toBe('/docs/guides/installation');
+      expect(resolveDocsHref({ slug: null, framework: 'html' })).toBe('/docs/guides/installation/html');
+      expect(resolveDocsHref({ slug: 'guides/installation', framework: 'react' })).toBe(
+        '/docs/guides/installation/react'
+      );
+      expect(resolveDocsHref({ slug: 'guides/installation-shadcn', framework: 'react' })).toBe(
+        '/docs/guides/installation/shadcn?framework=react'
+      );
+      expect(resolveDocsHref({ slug: 'guides/installation-shadcn', framework: 'html' })).toBe(
+        '/docs/guides/installation/shadcn?framework=html'
+      );
+      expect(resolveDocsHref({ slug: 'guides/installation-cdn', framework: 'html' })).toBe(
+        '/docs/guides/installation/cdn'
+      );
+      expect(resolveDocsHref({ slug: 'guides/cdn', framework: 'html' })).toBe('/docs/framework/html/guides/cdn');
+    });
+
+    it('rejects unknown guide slugs', () => {
+      expect(() => resolveDocsHref({ slug: 'guides/does-not-exist', framework: 'html' })).toThrow(/No guide found/);
     });
   });
 });

@@ -1,4 +1,6 @@
-import type { ControlsCore } from '@videojs/core';
+'use client';
+
+import type { ControlsState } from '@videojs/core';
 import type { ForwardedRef, ReactNode } from 'react';
 import { forwardRef } from 'react';
 
@@ -6,7 +8,7 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useControlsContext } from './context';
 
-export interface ControlsContentProps extends UIComponentProps<'div', ControlsCore.State> {
+export interface ControlsContentProps extends UIComponentProps<'div', ControlsState> {
   children?: ReactNode | undefined;
 }
 
@@ -32,5 +34,5 @@ export const ControlsContent = forwardRef(function ControlsContent(
 
 export namespace ControlsContent {
   export type Props = ControlsContentProps;
-  export type State = ControlsCore.State;
+  export type State = ControlsState;
 }

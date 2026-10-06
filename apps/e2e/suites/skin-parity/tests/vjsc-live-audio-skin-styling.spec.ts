@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
+import { testCompatParity } from './compat';
 import { testRtlLayout } from './rtl';
 import {
   buttonInteractionContract,
@@ -7,12 +8,16 @@ import {
   collectPageErrors,
   emulatePreference,
   expectRenderingParity,
+  expectPopupMovement,
+  expectReducedPopupMotion,
+  failLiveManifest,
   expectSameRendering,
   normalizeErrorDialogCopy,
   openComparison,
   openSourceComparison,
   popupAncestor,
   popupContract,
+  seekToLiveEdge,
   type SkinCase,
   skinCases,
   type SkinComparison,
@@ -22,10 +27,11 @@ import {
   waitForStableText,
 } from './vjsc-skin-parity';
 
-const CASES = skinCases('live-audio');
+const CASES = skinCases('live-audio').filter((variant) => !variant.skin.startsWith('compat-'));
 const WIDTHS = [384, 672] as const;
 
 testRtlLayout(CASES);
+testCompatParity('live-audio');
 
 for (const variant of CASES) {
   test(`${variant.framework} ${variant.skin} keeps CSS and Tailwind rendering in sync`, async ({ page }, testInfo) => {
@@ -72,9 +78,7 @@ for (const variant of CASES) {
       });
     }
 
-    for (const key of ['button', 'popover', 'tooltip'] as const) {
-      expect(contracts[1]![key], `${key}: Tailwind matches CSS`).toEqual(contracts[0]![key]);
-    }
+    expect(contracts[1]!).toEqual(contracts[0]!);
 
     expect(contracts[0]!).toMatchObject({
       nestedButtons: 0,
@@ -87,11 +91,15 @@ for (const variant of CASES) {
   });
 
   test(`${variant.framework} ${variant.skin} keeps error-dialog styling in sync`, async ({ page }) => {
-    const comparison = await openVariants(page, variant, 672, { media: 'error', expectPlay: false });
+    await failLiveManifest(page);
+
+    const comparison = await openVariants(page, variant, 672, { expectPlay: false });
     const contracts: Awaited<ReturnType<typeof popupContract>>[] = [];
 
     for (const panel of comparison.panels) {
       await test.step(panel.style, async () => {
+        await expect(panel.root).toHaveAttribute('data-preset', 'live-audio');
+
         const dialog = panel.root.getByRole('alertdialog');
 
         await expect(dialog).toBeVisible({ timeout: 20_000 });
@@ -105,23 +113,31 @@ for (const variant of CASES) {
   });
 
   test(`${variant.framework} ${variant.skin} removes popup movement under reduced motion`, async ({ page }) => {
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-
     const comparison = await openVariants(page, variant, 672);
-
-    for (const panel of comparison.panels) {
-      const mute = panel.root.getByRole('button', { name: /mute/i });
-
-      await mute.hover();
+    const readPopup = async (panel: SkinPanel) => {
+      await panel.root.getByRole('button', { name: /mute/i }).hover();
 
       const volume = panel.root.getByRole('slider', { name: /volume/i });
 
       await expect(volume).toBeVisible();
-      // Reduced motion collapses popup durations to the instant token rather than removing the transition.
-      expect((await popupContract(popupAncestor(volume))).motion.every(({ duration }) => duration === '0.05s')).toBe(
-        true
-      );
+      return popupContract(popupAncestor(volume));
+    };
+
+    for (const panel of comparison.panels) expectPopupMovement(await readPopup(panel));
+
+    await page.mouse.move(0, 0);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+
+    const contracts = [];
+
+    for (const panel of comparison.panels) {
+      const contract = await readPopup(panel);
+
+      expectReducedPopupMotion(contract);
+      contracts.push(contract);
     }
+
+    expect(contracts[1]).toEqual(contracts[0]);
   });
 
   for (const preference of ['reduced-transparency', 'contrast-more', 'forced-colors'] as const) {
@@ -178,22 +194,6 @@ async function preparePanel({ root, section }: SkinPanel, width: number, expectP
     for (const element of elements) element.pause();
   });
   await root.page().evaluate(() => document.fonts.ready.then(() => undefined));
-}
-
-/** Both panels must report the same live-edge state before any paint is compared, so pull each one to the edge. */
-async function seekToLiveEdge(live: Locator) {
-  await expect(live).toBeVisible({ timeout: 20_000 });
-
-  if ((await live.getAttribute('data-live-edge')) === null && (await live.isEnabled())) {
-    try {
-      await live.click({ timeout: 2_000 });
-    } catch (error) {
-      // The stream can reach its edge and disable the button between the enabled check and the click.
-      if ((await live.getAttribute('data-live-edge')) === null) throw error;
-    }
-  }
-
-  await expect(live).toHaveAttribute('data-live-edge', '', { timeout: 20_000 });
 }
 
 async function layoutContract(root: Locator) {

@@ -1,4 +1,4 @@
-import { getElementSize, resolveCSSLength, supportsAnchorPositioning } from '@videojs/utils/dom';
+import { getElementSize, resolveCSSLength, supportsAnchorPositioning, supportsPopoverAPI } from '@videojs/utils/dom';
 import type { TextDirection } from '@videojs/utils/i18n';
 import { clamp } from '@videojs/utils/number';
 
@@ -6,8 +6,7 @@ import type { PopoverAlign, PopoverSide } from '../../../core/ui/popover/core';
 import { PopoverCSSVars } from '../../../core/ui/popover/vars';
 import { createDOMRect } from '../../utils/layout';
 
-export { getPositionedSide } from '@videojs/utils/dom';
-
+/** @internal */
 export interface PositioningOptions {
   side: PopoverSide;
   align: PopoverAlign;
@@ -20,7 +19,11 @@ export interface PositioningOffsets {
   boundaryOffset?: number;
 }
 
-/** CSS custom property names for anchor-based positioning. */
+/**
+ * CSS custom property names for anchor-based positioning.
+ *
+ * @internal
+ */
 export interface PositioningCSSVars {
   sideOffset: string;
   alignOffset: string;
@@ -255,7 +258,7 @@ function getAnchorPositionCSS(
  * Accepts a `cssVars` map so the same logic works for both popover (`--media-popover-*`) and tooltip
  * (`--media-tooltip-*`) namespaces.
  */
-export function getPositioningCSSVars(
+function getPositioningCSSVars(
   triggerRect: DOMRect,
   boundaryRect: DOMRect,
   opts: PositioningOptions,
@@ -297,7 +300,7 @@ export function getPositioningCSSVars(
  *
  * Offsets are resolved by the caller from CSS custom properties via `getComputedStyle()` and passed as `offsets`.
  */
-export function getManualPositionStyle(
+function getManualPositionStyle(
   triggerRect: DOMRect,
   popupRect: DOMRect,
   opts: PositioningOptions,
@@ -402,4 +405,38 @@ export function getPopupPositionRect(el: HTMLElement, side: PopoverSide): DOMRec
   });
 
   return createDOMRect(rect.left, rect.top, size.width, size.height);
+}
+
+/**
+ * The viewport origin of the box a `position: fixed` popup is placed against. A `[popover]` popup is placed against the
+ * viewport wherever the Popover API exists, including while it is still closed: the first position runs before
+ * `showPopover()` moves it to the top layer. Without the Popover API it stays in the page, where an ancestor with a
+ * transform, filter, or containment becomes its containing block instead, and engines disagree about which properties
+ * count. A fixed probe beside the popup lands on that origin whatever the engine decides, and the popup's own
+ * transitions cannot move it.
+ */
+export function getFixedContainingBlockOrigin(popup: HTMLElement): { x: number; y: number } {
+  const parent = popup.parentNode;
+  if (opensInTopLayer(popup) || !parent) return { x: 0, y: 0 };
+
+  const probe = popup.ownerDocument.createElement('div');
+
+  probe.style.cssText =
+    'position:fixed;left:0;top:0;width:0;height:0;margin:0;padding:0;border:0;visibility:hidden;pointer-events:none';
+  parent.insertBefore(probe, popup);
+
+  const rect = probe.getBoundingClientRect();
+
+  probe.remove();
+
+  return { x: rect.left, y: rect.top };
+}
+
+/** Move a rect into a coordinate space whose origin sits at `origin` in the viewport. */
+export function offsetRect(rect: DOMRect, origin: { x: number; y: number }): DOMRect {
+  return createDOMRect(rect.left - origin.x, rect.top - origin.y, rect.width, rect.height);
+}
+
+function opensInTopLayer(popup: HTMLElement): boolean {
+  return popup.hasAttribute('popover') && supportsPopoverAPI();
 }

@@ -1,3 +1,4 @@
+import astro from 'shiki/langs/astro.mjs';
 import bash from 'shiki/langs/bash.mjs';
 import css from 'shiki/langs/css.mjs';
 import html from 'shiki/langs/html.mjs';
@@ -14,7 +15,7 @@ import createHighlighter, { getOrCreateCachedHighlighter } from './createHighlig
 // build and dominate first-render cost on code-heavy pages.
 const serverHighlighter = await getOrCreateCachedHighlighter('server', () =>
   createHighlighter({
-    langs: [bash, css, html, javascript, ts, tsx],
+    langs: [astro, bash, css, html, javascript, ts, tsx],
   })
 );
 

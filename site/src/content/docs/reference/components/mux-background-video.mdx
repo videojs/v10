@@ -9,7 +9,13 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import MediaImports from '@/components/docs/api-reference/MediaImports.astro';
 
+<FrameworkCase frameworks={["react"]}>
 MuxBackgroundVideo is the Mux-specific name for <DocsLink slug="reference/components/hls-background-video">HlsBackgroundVideo</DocsLink>. The two names use the same implementation and API.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<mux-background-video>` is the Mux-specific name for <DocsLink slug="reference/components/hls-background-video">`<hls-background-video>`</DocsLink>. The two names use the same implementation and API.
+</FrameworkCase>
 
 Use this name when your source is a Mux HLS URL and the Mux identity makes the composition easier to read. See <DocsLink slug="guides/background-video">Add a background video</DocsLink> to compare the background-video options.
 
@@ -39,8 +45,20 @@ Pass a complete Mux HLS URL through `src`. This component does not take a playba
 ```
 </FrameworkCase>
 
+<FrameworkCase frameworks={["react"]}>
 MuxBackgroundVideo does not create a poster or preview thumbnails, and it does not send analytics data. Keep the poster in your page and add analytics separately when you need them.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<mux-background-video>` does not create a poster or preview thumbnails, and it does not send analytics data. Keep the poster in your page and add analytics separately when you need them.
+</FrameworkCase>
 
 ## API
 
-The source, error, fixed playback behavior, and CSS custom properties are identical to <DocsLink slug="reference/components/hls-background-video">HlsBackgroundVideo</DocsLink>.
+<FrameworkCase frameworks={["react"]}>
+The source, error, and fixed playback behavior are identical to <DocsLink slug="reference/components/hls-background-video">HlsBackgroundVideo</DocsLink>.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The source, error, fixed playback behavior, and CSS custom properties are identical to <DocsLink slug="reference/components/hls-background-video">`<hls-background-video>`</DocsLink>.
+</FrameworkCase>

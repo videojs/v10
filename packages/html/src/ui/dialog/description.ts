@@ -5,6 +5,10 @@ import { ContextConsumer } from '@videojs/element/context';
 import { ContextPartElement } from '../context-part-element';
 import { dialogContext } from './context';
 
+/**
+ * Text announced as its owning dialog's description. The element takes the `id` that the popup's `aria-describedby`
+ * points to.
+ */
 export class DialogDescriptionElement extends ContextPartElement<DialogState> {
   static readonly tagName: string = 'media-dialog-description';
 

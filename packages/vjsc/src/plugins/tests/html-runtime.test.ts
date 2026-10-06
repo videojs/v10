@@ -51,4 +51,16 @@ describe('html-runtime/jsx-runtime', () => {
       '<svg viewBox="0 0 18 18" preserveAspectRatio="xMidYMid meet" stroke-width="2" xlink:href="#icon"></svg>'
     );
   });
+
+  it('serializes HTML void elements without children or closing tags', () => {
+    const output = runtime.jsx(runtime.Fragment, {
+      children: [
+        runtime.jsx('img', { alt: '', children: 'ignored' }),
+        runtime.jsx('source', { src: '/video.mp4' }),
+        runtime.jsx('media-icon', {}),
+      ],
+    });
+
+    expect(String(output)).toBe('<img alt=""><source src="/video.mp4"><media-icon></media-icon>');
+  });
 });

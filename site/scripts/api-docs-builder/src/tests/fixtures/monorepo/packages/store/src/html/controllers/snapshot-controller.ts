@@ -18,6 +18,7 @@ export class SnapshotController<S, R = S> implements ReactiveController {
    * @param host - The host element.
    * @param state - The store to snapshot.
    * @param selector - Derives a value from state.
+   * @label With Selector
    */
   constructor(host: ReactiveControllerHost, state: Store<S>, selector: (state: S) => R);
   /**
@@ -36,6 +37,9 @@ export class SnapshotController<S, R = S> implements ReactiveController {
 
   /** Track state changes. */
   track(): void {}
+
+  /** Stop tracking, optionally after a delay. */
+  untrack(_delay?: number, ..._reasons: string[]): void {}
 
   hostConnected(): void {}
   hostDisconnected(): void {}

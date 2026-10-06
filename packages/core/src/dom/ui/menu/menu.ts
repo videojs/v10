@@ -1,4 +1,5 @@
 import type { State } from '@videojs/store';
+import { containsComposed, getDeepActiveElement } from '@videojs/utils/dom';
 
 import type { MenuInput, MenuState } from '../../../core/ui/menu/core';
 import { MenuItemDataAttrs } from '../../../core/ui/menu/item';
@@ -15,6 +16,7 @@ export type MenuOpenChangeReason = PopoverOpenChangeReason;
 
 export type MenuChangeDetails = PopoverChangeDetails;
 
+/** @internal */
 export interface MenuOptions {
   transition: TransitionApi;
   onOpenChange: (open: boolean, details: MenuChangeDetails) => void;
@@ -44,6 +46,7 @@ export interface MenuHighlightOptions {
   pointer?: boolean;
 }
 
+/** @internal */
 export function isMenuNavigationKey(event: UIKeyboardEvent): boolean {
   const { key } = event;
 
@@ -61,13 +64,18 @@ export function isMenuNavigationKey(event: UIKeyboardEvent): boolean {
   );
 }
 
+/** @internal */
 export function getRootPositionOptions(side: MenuState['side'], align: MenuState['align']): PositioningOptions | null {
   if (!side || !align) return null;
 
   return { side, align };
 }
 
-/** Uses Popover offset inputs while publishing Menu-owned available-size outputs. */
+/**
+ * Uses Popover offset inputs while publishing Menu-owned available-size outputs.
+ *
+ * @internal
+ */
 export const MenuPositioningCSSVars = {
   ...PopoverCSSVars,
   availableWidth: MenuCSSVars.availableWidth,
@@ -100,6 +108,8 @@ export interface MenuApi {
   highlight: (element: HTMLElement | null, options?: MenuHighlightOptions) => void;
   /** Programmatically highlight the first registered item. */
   highlightFirstItem: (options?: MenuHighlightOptions) => void;
+  /** Highlight the selected registered item, or the first navigable item. */
+  highlightInitialItem: (options?: MenuHighlightOptions) => void;
   /** Return focus to the trigger when the close reason requires it. */
   restoreFocus: (options?: FocusOptions) => void;
   open: (reason?: MenuOpenChangeReason) => void;
@@ -109,10 +119,12 @@ export interface MenuApi {
   destroy: () => void;
 }
 
+/** @internal */
 export function completeMenuItemSelection(menu: MenuApi): void {
   menu.close();
 }
 
+/** @internal */
 export function createMenu(options: MenuOptions): MenuApi {
   // Items are stored in DOM order. Framework/component lifecycle ordering is
   // not always the same as visual order, especially across nested components.
@@ -227,6 +239,10 @@ export function createMenu(options: MenuOptions): MenuApi {
     highlight(getNavigableItems()[0] ?? null, options);
   }
 
+  function highlightInitialItem(options?: MenuHighlightOptions): void {
+    highlight(getInitialHighlightItem(), options);
+  }
+
   function restoreFocus(focusOptions?: FocusOptions): void {
     if (
       lastCloseReason === 'imperative-action' ||
@@ -328,8 +344,18 @@ export function createMenu(options: MenuOptions): MenuApi {
       options.onOpenChangeComplete?.(open);
 
       // Return focus to the trigger after the close animation completes
-      // so screen readers hear the correct context.
-      if (!open) restoreFocus();
+      // if focus stayed in the closing page, so moved focus is not stolen.
+      if (!open && contentElement) {
+        const active = getDeepActiveElement(contentElement.ownerDocument);
+
+        if (
+          !(active instanceof Element) ||
+          active === contentElement.ownerDocument.body ||
+          containsComposed(contentElement, active)
+        ) {
+          restoreFocus();
+        }
+      }
     },
     closeOnEscape: options.closeOnEscape,
     closeOnOutsideClick: options.closeOnOutsideClick,
@@ -544,6 +570,7 @@ export function createMenu(options: MenuOptions): MenuApi {
     registerSubmenu,
     highlight,
     highlightFirstItem,
+    highlightInitialItem,
     restoreFocus,
     open: popover.open,
     close: popover.close,
