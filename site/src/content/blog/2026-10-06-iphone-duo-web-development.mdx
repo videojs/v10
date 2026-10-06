@@ -6,7 +6,6 @@ authors: [darius-cepulis]
 
 import Grid from '@/components/Grid.astro';
 import Figure from '@/components/typography/Figure.astro';
-import netflixFoldedPlayer from '../../assets/blog/2026-10-06-iphone-duo-web-development/netflix-folded-player.png';
 
 You would think our first post after the [Video.js v10.0.0 release](/blog/videojs-10) would be some fascinating deep dive on our composable architecture, or our compiler, or maybe a multi-part series on our library agentic experience research.
 
@@ -75,8 +74,12 @@ Which would create an effect like this
 
 Ok, that's all fine and good, but let me tell you why we're *really* here. After the Apple media event, I saw a few folks try out the new Netflix app for iPhone Duo and the folded player made perfect sense. Video in the top half, controls in the bottom, and a subtle flourish that reflected the video onto the bottom screen.
 
-<Figure src={netflixFoldedPlayer} alt="A hand holding a partially folded iPhone Duo playing Netflix, with video on the top half and large controls on the bottom half">
-  Screenshot from Dave2D's ["iPhone Duo Impressions – They NAILED This"](https://www.youtube.com/watch?v=CEgynoERrqc).
+<Figure>
+
+![A hand holding a partially folded iPhone Duo playing Netflix, with video on the top half and large controls on the bottom half](../../assets/blog/2026-10-06-iphone-duo-web-development/netflix-folded-player.png)
+
+<figcaption>Screenshot from Dave2D's ["iPhone Duo Impressions – They NAILED This"](https://www.youtube.com/watch?v=CEgynoERrqc).</figcaption>
+
 </Figure>
 
 Having spent the year in Video.js, obviously my first thought was "can we do this?"
