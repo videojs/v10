@@ -53,10 +53,10 @@ export function TableOfContentsMobile({
   const largeRailGeometry = railOnly
     ? calculateRailGeometry(headings.length, viewportLayout.availableHeight, WIDE_RAIL_GEOMETRY)
     : railGeometry;
-  const railStyle = {
+  const railStyle: RailStyle = {
     '--gap': `${railGeometry.gap}px`,
     '--lg-gap': `${largeRailGeometry.gap}px`,
-  } satisfies RailStyle;
+  };
 
   useEffect(() => {
     const updateViewportLayout = () => {
@@ -143,12 +143,12 @@ export function TableOfContentsMobile({
           {headings.map((heading) => {
             const isActive = activeId === heading.slug;
             const { width, largeWidth } = getStripeWidths(heading.depth, railOnly);
-            const stripeStyle = {
+            const stripeStyle: RailStripeStyle = {
               '--w': `${width}px`,
               '--lg-w': `${largeWidth}px`,
               '--h': `${railGeometry.stripeHeight}px`,
               '--lg-h': `${largeRailGeometry.stripeHeight}px`,
-            } satisfies RailStripeStyle;
+            };
 
             return (
               <span
