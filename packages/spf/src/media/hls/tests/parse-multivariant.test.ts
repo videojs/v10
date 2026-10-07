@@ -472,6 +472,59 @@ commentary.m3u8`;
       expect(audioTracks?.map((track) => track.name)).toEqual(['English', 'Default']);
     });
 
+    it('collapses onto the rendition whose URI the audio-only variant shares', () => {
+      const text = `#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",LANGUAGE="en",DEFAULT=YES,AUTOSELECT=YES,URI="en.m3u8"
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="French",LANGUAGE="fr",AUTOSELECT=YES,URI="fr.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=900000,RESOLUTION=1280x720,CODECS="avc1.640028,mp4a.40.2",AUDIO="audio"
+720p.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=96000,CODECS="mp4a.40.2",AUDIO="audio"
+fr.m3u8`;
+
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
+      const audioTracks = result.selectionSets.find((s) => s.type === 'audio')?.switchingSets[0]?.tracks;
+
+      expect(audioTracks?.map((track) => [track.name, track.bandwidth])).toEqual([
+        ['English', 0],
+        ['French', 96000],
+      ]);
+    });
+
+    it('collapses a shared-URI audio-only variant in an audio-only presentation', () => {
+      const text = `#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="Audio",DEFAULT=YES,AUTOSELECT=YES,URI="audio.m3u8"
+#EXT-X-STREAM-INF:BANDWIDTH=128000,CODECS="mp4a.40.2",AUDIO="audio"
+audio.m3u8`;
+
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
+
+      expect(result.selectionSets).toHaveLength(1);
+      expect(result.selectionSets[0]?.switchingSets[0]?.tracks).toHaveLength(1);
+      expect(result.selectionSets[0]?.switchingSets[0]?.tracks[0]).toMatchObject({
+        name: 'Audio',
+        bandwidth: 128000,
+        default: true,
+      });
+    });
+
+    it('drops a URI-less rendition whose group is carried only by another rendition playlist', () => {
+      const text = `#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="English",DEFAULT=YES,AUTOSELECT=YES,URI="en.m3u8"
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="Main",AUTOSELECT=YES
+#EXT-X-STREAM-INF:BANDWIDTH=128000,CODECS="mp4a.40.2",AUDIO="audio"
+en.m3u8`;
+
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
+      const audioTracks = result.selectionSets.find((s) => s.type === 'audio')?.switchingSets[0]?.tracks;
+
+      expect(audioTracks).toHaveLength(1);
+      expect(audioTracks?.[0]).toMatchObject({
+        url: 'https://example.com/en.m3u8',
+        name: 'English',
+        bandwidth: 128000,
+      });
+    });
+
     it('keeps a URI-less rendition separate from a group carried by video streams', () => {
       // Same rendition shape, but the stream referencing the group is muxed A/V, so
       // there is no audio-only track to merge into and the rendition stands alone.
