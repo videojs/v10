@@ -19,7 +19,7 @@ everything from now on:
 ## Installing
 
 The npm packages haven't changed. Keep installing from the same `@videojs/*` scope, for example
-[`@videojs/core`](https://www.npmjs.com/package/@videojs/core). Only the source repository moved.
+[`@videojs/react`](https://www.npmjs.com/package/@videojs/react). Only the source repository moved.
 
 ## Open issues and pull requests
 
