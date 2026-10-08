@@ -6,6 +6,9 @@ importers:
   .:
     configDependencies: {}
     packageManagerDependencies:
+      '@pnpm/exe':
+        specifier: 12.6.0
+        version: 12.6.0
       pnpm:
         specifier: 12.6.0
         version: 12.6.0
@@ -89,6 +92,11 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@pnpm/exe@12.6.0':
+    resolution: {integrity: sha512-CkNetlJZugjKp9vPvWqCm5ahORU6FfO46BlOqqSCKLJ+W6QcRgM0qmmPTvlgrXVvkAiH+9hE+mMp/wSaqcU5Aw==}
+    engines: {node: '>=18.*'}
+    hasBin: true
+
   pnpm@12.6.0:
     resolution: {integrity: sha512-PvaPlRyxEawgS0paFvCy3fDaVqluBBPoHYVdnwtV75JnFHCQKOHNAMQFwsX7e56OxNxGd3yAXQNzwvL/AP0g7A==}
     engines: {node: '>=18.*'}
@@ -137,6 +145,23 @@ snapshots:
 
   '@pnpm/exe.win32-x64@12.6.0':
     optional: true
+
+  '@pnpm/exe@12.6.0':
+    optionalDependencies:
+      '@pnpm/exe.android-arm64': 12.6.0
+      '@pnpm/exe.android-x64': 12.6.0
+      '@pnpm/exe.darwin-arm64': 12.6.0
+      '@pnpm/exe.darwin-x64': 12.6.0
+      '@pnpm/exe.freebsd-x64': 12.6.0
+      '@pnpm/exe.linux-arm64': 12.6.0
+      '@pnpm/exe.linux-arm64-musl': 12.6.0
+      '@pnpm/exe.linux-ppc64': 12.6.0
+      '@pnpm/exe.linux-riscv64': 12.6.0
+      '@pnpm/exe.linux-s390x': 12.6.0
+      '@pnpm/exe.linux-x64': 12.6.0
+      '@pnpm/exe.linux-x64-musl': 12.6.0
+      '@pnpm/exe.win32-arm64': 12.6.0
+      '@pnpm/exe.win32-x64': 12.6.0
 
   pnpm@12.6.0:
     optionalDependencies:
@@ -1214,6 +1239,12 @@ importers:
 
   packages/spf:
     dependencies:
+      '@svta/cml-error-codes':
+        specifier: ^0.1.1
+        version: 0.1.1(@svta/cml-utils@1.6.1)
+      '@svta/cml-utils':
+        specifier: ^1.6.1
+        version: 1.6.1
       '@videojs/media':
         specifier: workspace:*
         version: link:../media
@@ -4779,6 +4810,12 @@ packages:
     peerDependencies:
       '@svta/cml-utils': 1.5.0
 
+  '@svta/cml-error-codes@0.1.1':
+    resolution: {integrity: sha512-KsnXyRNnOrWTLEP5ldgrqc+MnoyWNvZaEUfsOCsMYL4lHiILzAy1nJHS7JEodELXD1Qmkz41tBEpqnOorh06TA==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      '@svta/cml-utils': 1.6.1
+
   '@svta/cml-id3@1.0.6':
     resolution: {integrity: sha512-63j8gkAnPOmOBWlp0hIZPvsIioZttdbg6/TgwITqMYbSLYVJ+6QGa/UtIP0I84NsfstANw6QdCn7i8SS08kn1A==}
     engines: {node: '>=20'}
@@ -4801,6 +4838,10 @@ packages:
 
   '@svta/cml-utils@1.5.0':
     resolution: {integrity: sha512-JMqclD7Akd+GSJiuaYNUHOP2wNtf/nauKeszlYeivSHfi0Lp3pmSW5PXDvJ2dO4aPmmSOQbF0ztTsW9Vcs2Whw==}
+    engines: {node: '>=20'}
+
+  '@svta/cml-utils@1.6.1':
+    resolution: {integrity: sha512-jPKb+it53Pi8rbO8fNX8qpbdE+JfDAeOXF7lcG+uVU5BCcR0wbMTT2VtFdMeVsUN57TFPAurRavE3aEUSzC+zw==}
     engines: {node: '>=20'}
 
   '@svta/cml-xml@1.1.4':
@@ -13114,6 +13155,10 @@ snapshots:
     dependencies:
       '@svta/cml-utils': 1.5.0
 
+  '@svta/cml-error-codes@0.1.1(@svta/cml-utils@1.6.1)':
+    dependencies:
+      '@svta/cml-utils': 1.6.1
+
   '@svta/cml-id3@1.0.6(@svta/cml-utils@1.5.0)':
     dependencies:
       '@svta/cml-utils': 1.5.0
@@ -13129,6 +13174,8 @@ snapshots:
       '@svta/cml-utils': 1.5.0
 
   '@svta/cml-utils@1.5.0': {}
+
+  '@svta/cml-utils@1.6.1': {}
 
   '@svta/cml-xml@1.1.4(@svta/cml-utils@1.5.0)':
     dependencies:
