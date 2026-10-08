@@ -154,19 +154,24 @@ interface PageDef {
   resource: string;
   category?: 'cdn' | 'captions' | 'background' | 'background-preset' | 'source-html' | 'source-react';
   /** The packaged skin theme; the default skin unless set. */
-  skin?: 'neutral';
+  skin?: 'neutral' | 'compat';
 }
 
 type SkinTheme = NonNullable<PageDef['skin']> | 'default';
 
 /** The custom element a packaged HTML skin registers. */
 function htmlSkinTag(media: 'video' | 'audio', skin: SkinTheme): string {
-  return skin === 'neutral' ? `${media}-neutral-skin` : `${media}-skin`;
+  return skin === 'default' ? `${media}-skin` : `${media}-${skin}-skin`;
 }
 
 /** The entry a packaged skin ships under for both frameworks, as `video/skin` or `video/neutral-skin`. */
 function skinEntry(media: 'video' | 'audio', skin: SkinTheme): string {
-  return skin === 'neutral' ? `${media}/neutral-skin` : `${media}/skin`;
+  return skin === 'default' ? `${media}/skin` : `${media}/${skin}-skin`;
+}
+
+/** The React component a packaged skin exports, as `VideoSkin` or `NeutralVideoSkin`. */
+function reactSkinComponent(media: 'Video' | 'Audio', skin: SkinTheme): string {
+  return skin === 'default' ? `${media}Skin` : `${skin[0]!.toUpperCase()}${skin.slice(1)}${media}Skin`;
 }
 
 // ---------------------------------------------------------------------------
@@ -249,12 +254,12 @@ function reactVideoPage(media: string, resource: string, config: MediaTypeConfig
   if (!reactMedia) throw new Error(`No React component mapping for media type: ${media}`);
 
   const isDefaultVideo = media === 'video';
-  const Skin = skin === 'neutral' ? 'NeutralVideoSkin' : 'VideoSkin';
+  const Skin = reactSkinComponent('Video', skin);
   const skinImport =
-    skin === 'neutral' ? `\nimport { NeutralVideoSkin } from '@videojs/react/video/neutral-skin';` : '';
+    skin === 'default' ? '' : `\nimport { ${Skin} } from '@videojs/react/${skinEntry('video', skin)}';`;
   const mediaImport = isDefaultVideo
-    ? `import { Video, VideoPlayer${skin === 'neutral' ? '' : ', VideoSkin'} } from '@videojs/react/video';${skinImport}`
-    : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { VideoPlayer${skin === 'neutral' ? '' : ', VideoSkin'} } from '@videojs/react/video';${skinImport}`;
+    ? `import { Video, VideoPlayer${skin === 'default' ? ', VideoSkin' : ''} } from '@videojs/react/video';${skinImport}`
+    : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { VideoPlayer${skin === 'default' ? ', VideoSkin' : ''} } from '@videojs/react/video';${skinImport}`;
 
   const posterProp = config.hasPoster && resourceHasPoster(resource) ? ` poster={MEDIA.${resource}.poster}` : '';
   const storyboardTrack = config.hasStoryboard
@@ -286,12 +291,12 @@ function reactAudioPage(media: string, resource: string, skin: SkinTheme): strin
   if (!reactMedia) throw new Error(`No React component mapping for media type: ${media}`);
 
   const isDefaultAudio = media === 'audio';
-  const Skin = skin === 'neutral' ? 'NeutralAudioSkin' : 'AudioSkin';
+  const Skin = reactSkinComponent('Audio', skin);
   const skinImport =
-    skin === 'neutral' ? `\nimport { NeutralAudioSkin } from '@videojs/react/audio/neutral-skin';` : '';
+    skin === 'default' ? '' : `\nimport { ${Skin} } from '@videojs/react/${skinEntry('audio', skin)}';`;
   const mediaImport = isDefaultAudio
-    ? `import { Audio, AudioPlayer${skin === 'neutral' ? '' : ', AudioSkin'} } from '@videojs/react/audio';${skinImport}`
-    : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { AudioPlayer${skin === 'neutral' ? '' : ', AudioSkin'} } from '@videojs/react/audio';${skinImport}`;
+    ? `import { Audio, AudioPlayer${skin === 'default' ? ', AudioSkin' : ''} } from '@videojs/react/audio';${skinImport}`
+    : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { AudioPlayer${skin === 'default' ? ', AudioSkin' : ''} } from '@videojs/react/audio';${skinImport}`;
 
   return `${mediaImport}
 import '@videojs/react/${skinEntry('audio', skin)}.css';
@@ -639,6 +644,40 @@ const PAGES: PageDef[] = [
     media: 'audio',
     resource: 'mp4',
     skin: 'neutral',
+  },
+
+  // Compat skins, for the browser compatibility checks
+  {
+    name: 'HTML Video Compat MP4',
+    path: 'html-video-compat-mp4',
+    framework: 'html',
+    media: 'video',
+    resource: 'mp4',
+    skin: 'compat',
+  },
+  {
+    name: 'HTML Audio Compat MP4',
+    path: 'html-audio-compat-mp4',
+    framework: 'html',
+    media: 'audio',
+    resource: 'mp4',
+    skin: 'compat',
+  },
+  {
+    name: 'React Video Compat MP4',
+    path: 'react-video-compat-mp4',
+    framework: 'react',
+    media: 'video',
+    resource: 'mp4',
+    skin: 'compat',
+  },
+  {
+    name: 'React Audio Compat MP4',
+    path: 'react-audio-compat-mp4',
+    framework: 'react',
+    media: 'audio',
+    resource: 'mp4',
+    skin: 'compat',
   },
 
   // CDN

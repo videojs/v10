@@ -1,100 +1,119 @@
 import { PlayerPage } from '../../../shared/page-objects/player';
 import { deepQuery, PAGES, readProbe } from '../probes.ts';
 import { expect, test } from '../test.ts';
-import { versions } from '../versions.ts';
 
 for (const target of PAGES) {
-  test(`${target.path}: skin fallbacks and playback`, async ({ page, caps }, testInfo) => {
-    const errors: string[] = [];
+  test.describe(() => {
+    // Evaluated before the session fixture, so skipped pages open no remote session.
+    test.skip(({ skins }) => !skins.includes(target.skin), `this project does not cover the ${target.skin} skin`);
 
-    page.on('pageerror', (error) => errors.push(error.message));
+    test(`${target.path}: skin fallbacks and playback`, async ({ page, caps, version }, testInfo) => {
+      const errors: string[] = [];
 
-    const player = new PlayerPage(page);
+      page.on('pageerror', (error) => errors.push(error.message));
 
-    await page.goto(target.path, { timeout: 60_000 });
+      const player = new PlayerPage(page);
 
-    const userAgent = await page.evaluate(() => navigator.userAgent);
+      await page.goto(target.path, { timeout: 60_000 });
 
-    await testInfo.attach('browser', { body: userAgent, contentType: 'text/plain' });
+      const userAgent = await page.evaluate(() => navigator.userAgent);
 
-    if (caps.browser === 'chrome') expect(userAgent).toContain(`Chrome/${versions.chrome}.`);
+      await testInfo.attach('browser', { body: userAgent, contentType: 'text/plain' });
 
-    if (caps.browser === 'edge') expect(userAgent).toContain(`Edg/${versions.edge}.`);
+      if (caps.browser === 'chrome') expect(userAgent).toContain(`Chrome/${version}.`);
 
-    if (caps.browser === 'playwright-firefox') expect(userAgent).toContain(`Firefox/${versions.firefox}.`);
+      if (caps.browser === 'edge') expect(userAgent).toContain(`Edg/${version}.`);
 
-    if (caps.browser === 'playwright-webkit') expect(userAgent).toContain(`Version/${versions.safari}`);
+      if (caps.browser === 'playwright-firefox') expect(userAgent).toContain(`Firefox/${version}.`);
 
-    if (caps.realMobile) {
-      const session: { os_version: string; browser_version: string; device: string } = JSON.parse(
-        await page.evaluate(() => '', 'browserstack_executor: {"action":"getSessionDetails"}')
-      );
+      if (caps.browser === 'playwright-webkit') expect(userAgent).toContain(`Version/${version}`);
 
-      await testInfo.attach('device', {
-        body: JSON.stringify({ os: session.os_version, browser: session.browser_version, device: session.device }),
-        contentType: 'application/json',
-      });
-
-      expect(userAgent).toContain(`OS ${versions.ios.replaceAll('.', '_')}`);
-    }
-
-    await player.waitForMediaReady();
-
-    // Real-device execution needs an explicit return instead of a bare expression string.
-    await expect
-      .poll(async () => {
-        const probe = await page.evaluate<ReturnType<typeof readProbe>, string>(
-          (source) => new Function(`return ${source}`)(),
-          `(${readProbe.toString()})(${deepQuery.toString()})`
+      if (caps.realMobile) {
+        const session: { os_version: string; browser_version: string; device: string } = JSON.parse(
+          await page.evaluate(() => '', 'browserstack_executor: {"action":"getSessionDetails"}')
         );
 
-        return probe?.styled;
-      })
-      .toBe(true);
+        await testInfo.attach('device', {
+          body: JSON.stringify({ os: session.os_version, browser: session.browser_version, device: session.device }),
+          contentType: 'application/json',
+        });
 
-    const probe = await page.evaluate<ReturnType<typeof readProbe>, string>(
-      (source) => new Function(`return ${source}`)(),
-      `(${readProbe.toString()})(${deepQuery.toString()})`
-    );
+        expect(userAgent).toContain(`OS ${version.replaceAll('.', '_')}`);
+      }
 
-    expect(probe).not.toBeNull();
+      await player.waitForMediaReady();
 
-    if (!probe) throw new Error('The skin root did not settle.');
+      // Real-device execution needs an explicit return instead of a bare expression string.
+      await expect
+        .poll(async () => {
+          const probe = await page.evaluate<ReturnType<typeof readProbe>, string>(
+            (source) => new Function(`return ${source}`)(),
+            `(${readProbe.toString()})(${deepQuery.toString()})`
+          );
 
-    expect(probe.visibleClosedPopovers).toBe(0);
-    expect(probe.bufferRight).not.toBeNull();
-    expect(probe.bufferRight).not.toBe('auto');
-    expect(
-      target.preset === 'audio' ? ['rgb(255, 255, 255)', 'oklch(1 0 0)'] : ['rgb(0, 0, 0)', 'oklch(0 0 0)']
-    ).toContain(probe.primaryForeground);
+          return probe?.styled;
+        })
+        .toBe(true);
 
-    if (target.preset === 'video') {
-      expect(probe.scrim).toContain('gradient');
-      expect(probe.frameBorder).not.toBe('rgb(255, 0, 0)');
+      const probe = await page.evaluate<ReturnType<typeof readProbe>, string>(
+        (source) => new Function(`return ${source}`)(),
+        `(${readProbe.toString()})(${deepQuery.toString()})`
+      );
 
-      if (!target.path.includes('neutral')) expect(probe.surfaceBlur).toContain('blur');
-    }
+      expect(probe).not.toBeNull();
 
-    // Unsupported H.264 or rejected playback must fail here.
-    await player.play();
-    await player.waitForPlayback(0.5);
-    await player.playButton.dispatchEvent('click');
-    // Poll the value directly: WebKit's pinned server lacks the newer attribute-value matcher.
-    await expect.poll(() => player.playButton.getAttribute('data-paused'), { timeout: 5_000 }).toBe('');
-    await player.seekTo(25);
-    expect(await player.getCurrentTime()).toBeGreaterThan(1);
+      if (!probe) throw new Error('The skin root did not settle.');
 
-    if (target.preset === 'audio') await page.addStyleTag({ content: 'body { padding-top: 320px; }' });
+      expect(probe.visibleClosedPopovers).toBe(0);
+      expect(probe.bufferRight).not.toBeNull();
+      expect(probe.bufferRight).not.toBe('auto');
+      expect(
+        target.preset === 'audio' ? ['rgb(255, 255, 255)', 'oklch(1 0 0)'] : ['rgb(0, 0, 0)', 'oklch(0 0 0)']
+      ).toContain(probe.primaryForeground);
 
-    await player.playerRoot.dispatchEvent('pointermove', { pointerType: 'mouse' });
+      if (target.preset === 'video') {
+        expect(probe.scrim).toContain('gradient');
+        expect(probe.frameBorder).not.toBe('rgb(255, 0, 0)');
 
-    if (target.preset === 'video') {
-      await expect.poll(() => player.controls.getAttribute('data-visible')).toBe('');
-    }
+        if (target.skin === 'default') expect(probe.surfaceBlur).toContain('blur');
+      }
 
-    await page.locator('[aria-haspopup="menu"]').first().click();
-    await expect(page.locator('[role="menu"][data-open]').first()).toBeVisible();
-    await page.screenshot({ path: testInfo.outputPath('menu.png') });
-    expect(errors).toEqual([]);
+      // Unsupported H.264 or rejected playback must fail here.
+      // Compat hides its center play button without container queries, so click whichever play button is visible.
+      // The `:visible` pseudo-class also works on the older Playwright servers the bundled engines run on.
+      await page.locator('media-play-button:visible, .media-play-button:visible').first().click();
+      // Firefox's pinned server lacks the attribute matcher, and real-device iOS throws for a missing attribute.
+      await expect
+        .poll(
+          () =>
+            player.playButton.getAttribute('data-paused').catch((error: Error) => {
+              if (error.message.includes(`Attribute 'data-paused' not found`)) return null;
+
+              throw error;
+            }),
+          { timeout: 5_000 }
+        )
+        .toBeNull();
+      await player.waitForPlayback(0.5);
+      await player.playButton.dispatchEvent('click');
+      // Poll the value directly: WebKit's pinned server lacks the newer attribute-value matcher.
+      await expect.poll(() => player.playButton.getAttribute('data-paused'), { timeout: 5_000 }).toBe('');
+      await player.seekTo(25);
+      expect(await player.getCurrentTime()).toBeGreaterThan(1);
+
+      if (target.preset === 'audio') await page.addStyleTag({ content: 'body { padding-top: 320px; }' });
+
+      await player.playerRoot.dispatchEvent('pointermove', { pointerType: 'mouse' });
+
+      if (target.preset === 'video') {
+        // The container's attribute is shared by every skin; the controls element differs between them.
+        await expect.poll(() => player.playerRoot.getAttribute('data-controls-visible')).toBe('');
+      }
+
+      await page.locator('[aria-haspopup="menu"]').first().click();
+      await expect(page.locator('[role="menu"][data-open]').first()).toBeVisible();
+      await page.screenshot({ path: testInfo.outputPath('menu.png') });
+      expect(errors).toEqual([]);
+    });
   });
 }

@@ -4,7 +4,12 @@ import { defineConfig } from '@playwright/test';
 
 import { suiteConfig, WEB_SERVER_SHUTDOWN } from '../../shared/playwright.ts';
 import type { Options } from './test.ts';
-import { versions } from './versions.ts';
+import { compatVersions, versions } from './versions.ts';
+
+// The WebKit and iOS projects run every skin, which holds only while both queries share their minimums.
+if (compatVersions.safari !== versions.safari || compatVersions.ios !== versions.ios) {
+  throw new Error('Compat has its own Safari or iOS minimum; add Compat WebKit and iOS projects.');
+}
 
 export default defineConfig<{}, Options>({
   ...suiteConfig('browserstack'),
@@ -30,11 +35,19 @@ export default defineConfig<{}, Options>({
     : [
         {
           name: `chrome-${versions.chrome}`,
-          use: { caps: { browser: 'chrome', browser_version: versions.chrome, os: 'Windows', os_version: '10' } },
+          use: {
+            caps: { browser: 'chrome', browser_version: versions.chrome, os: 'Windows', os_version: '10' },
+            version: versions.chrome,
+            skins: ['default', 'neutral'],
+          },
         },
         {
           name: `edge-${versions.edge}`,
-          use: { caps: { browser: 'edge', browser_version: versions.edge, os: 'Windows', os_version: '10' } },
+          use: {
+            caps: { browser: 'edge', browser_version: versions.edge, os: 'Windows', os_version: '10' },
+            version: versions.edge,
+            skins: ['default', 'neutral'],
+          },
         },
         // Bundled engines require a Playwright release; version checks reject any drift from browserslist.
         {
@@ -46,6 +59,39 @@ export default defineConfig<{}, Options>({
               os_version: '10',
               'browserstack.playwrightVersion': '1.41.2',
             },
+            version: versions.firefox,
+            skins: ['default', 'neutral'],
+          },
+        },
+        // Compat supports older Chrome, Edge, and Firefox than the other skins; Safari and iOS share one minimum.
+        {
+          name: `compat-chrome-${compatVersions.chrome}`,
+          use: {
+            caps: { browser: 'chrome', browser_version: compatVersions.chrome, os: 'Windows', os_version: '10' },
+            version: compatVersions.chrome,
+            skins: ['compat'],
+          },
+        },
+        {
+          name: `compat-edge-${compatVersions.edge}`,
+          use: {
+            caps: { browser: 'edge', browser_version: compatVersions.edge, os: 'Windows', os_version: '10' },
+            version: compatVersions.edge,
+            skins: ['compat'],
+          },
+        },
+        {
+          name: `compat-firefox-${compatVersions.firefox}`,
+          use: {
+            caps: {
+              browser: 'playwright-firefox',
+              os: 'Windows',
+              os_version: '10',
+              // The oldest release BrowserStack can drive with the current client; older ones fail to create a context.
+              'browserstack.playwrightVersion': '1.25.2',
+            },
+            version: compatVersions.firefox,
+            skins: ['compat'],
           },
         },
         {
@@ -57,12 +103,14 @@ export default defineConfig<{}, Options>({
               os_version: 'Big Sur',
               'browserstack.playwrightVersion': '1.35.0',
             },
+            version: versions.safari,
           },
         },
         {
           name: `ios-safari-${versions.ios}`,
           use: {
             caps: { browser: 'safari', osVersion: versions.ios, realMobile: 'true' },
+            version: versions.ios,
             // BrowserStack iOS requires an explicit viewport object.
             viewport: { width: 390, height: 844 },
           },
