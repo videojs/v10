@@ -3,3 +3,9 @@ import { safeDefine } from '../../registration/safe-define';
 import '../ui/container';
 
 safeDefine(BackgroundVideoSkinElement);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    [BackgroundVideoSkinElement.tagName]: BackgroundVideoSkinElement;
+  }
+}

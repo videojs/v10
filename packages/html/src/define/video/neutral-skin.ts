@@ -3,3 +3,9 @@ import { safeDefine } from '../../registration/safe-define';
 import '../../internal/skins/neutral-video/register';
 
 safeDefine(NeutralVideoSkinElement);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    [NeutralVideoSkinElement.tagName]: NeutralVideoSkinElement;
+  }
+}

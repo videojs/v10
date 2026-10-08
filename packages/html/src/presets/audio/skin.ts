@@ -11,9 +11,3 @@ export class AudioSkinElement extends SkinElement {
   static styles: CSSStyleSheet | string = createShadowStyle(styles);
   static template = template;
 }
-
-declare global {
-  interface HTMLElementTagNameMap {
-    [AudioSkinElement.tagName]: AudioSkinElement;
-  }
-}

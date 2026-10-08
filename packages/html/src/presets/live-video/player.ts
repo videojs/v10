@@ -12,9 +12,3 @@ export const PlayerController = LiveVideoPlayerController;
 export class LiveVideoPlayerElement extends PlayerElement {
   static readonly tagName = 'live-video-player';
 }
-
-declare global {
-  interface HTMLElementTagNameMap {
-    [LiveVideoPlayerElement.tagName]: LiveVideoPlayerElement;
-  }
-}

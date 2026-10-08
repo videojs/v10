@@ -3,3 +3,9 @@ import { safeDefine } from '../../registration/safe-define';
 import '../../internal/skins/neutral-live-audio/register';
 
 safeDefine(NeutralLiveAudioSkinElement);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    [NeutralLiveAudioSkinElement.tagName]: NeutralLiveAudioSkinElement;
+  }
+}

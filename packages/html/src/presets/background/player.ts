@@ -12,9 +12,3 @@ export const PlayerController = BackgroundVideoPlayerController;
 export class BackgroundVideoPlayerElement extends PlayerElement {
   static readonly tagName = 'background-video-player';
 }
-
-declare global {
-  interface HTMLElementTagNameMap {
-    [BackgroundVideoPlayerElement.tagName]: BackgroundVideoPlayerElement;
-  }
-}
