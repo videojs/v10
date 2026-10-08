@@ -95,6 +95,14 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
     alwaysBundle: [/^@videojs\/icons/],
   },
   alias: srcAlias,
+  outputOptions: {
+    entryFileNames(chunk) {
+      const styles = chunk.facadeModuleId?.match(/\/define\/(.+)\.css\?inline$/);
+
+      // Keep inline CSS helpers out of the public define/* wildcard exports.
+      return styles ? `internal/styles/${styles[1]}.styles.js` : '[name].js';
+    },
+  },
   // Also minifies the skins' `.css?inline` imports, which tsdown inlines into the JavaScript.
   css: { ...inlineCssConfig, minify: !isDevBuildMode(mode) },
   plugins: [copyCssPlugin({ outDir: `dist/${mode}` }), inlineTemplatePlugin({ minify: !isDevBuildMode(mode) })],
