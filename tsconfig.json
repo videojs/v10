@@ -60,6 +60,7 @@
 
     { "path": "packages/html" },
     { "path": "packages/react" },
+    { "path": "packages/react-native" },
 
     { "path": "packages/video.js" },
 
