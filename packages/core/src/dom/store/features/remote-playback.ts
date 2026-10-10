@@ -71,7 +71,7 @@ export const remotePlaybackFeature = definePlayerFeature({
       });
 
     signal.addEventListener('abort', () => {
-      media.remote?.cancelWatchAvailability?.().catch(() => {});
+      media.remote?.cancelWatchAvailability?.()?.catch(() => {});
     });
   },
 });
