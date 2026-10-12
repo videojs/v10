@@ -1,1 +1,0 @@
-export { formatPercent } from './percent';

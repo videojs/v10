@@ -1,5 +1,0 @@
-{
-  "imports": {
-    "@videojs/installation": "../../../packages/installation/dist/index.js"
-  }
-}
